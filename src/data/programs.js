@@ -116,33 +116,23 @@ export const programs = [
 
   // South Region
   {
-    id: 'charlotte-goats',
-    name: 'Charlotte Goats',
+    id: 'combine-academy-goats',
+    name: 'Combine Academy Goats',
     city: 'Charlotte',
     state: 'NC',
     region: 'South',
-    logo: '/logos/charlotte-goats.png',
+    logo: '/logos/combine-academy-goats.png',
     coordinates: [35.2271, -80.8431],
     website: ''
   },
   {
-    id: 'the-mambas',
-    name: 'The Mambas',
+    id: 'academy-central-florida',
+    name: 'The Academy of Central Florida',
     city: 'Orlando',
     state: 'FL',
     region: 'South',
-    logo: '/logos/the-mambas.png',
+    logo: '/logos/academy-central-florida.png',
     coordinates: [28.5383, -81.3792],
-    website: ''
-  },
-  {
-    id: 'prolific-miami',
-    name: 'Prolific Miami',
-    city: 'Miami',
-    state: 'FL',
-    region: 'South',
-    logo: '/logos/prolific-miami.png',
-    coordinates: [25.7617, -80.1918],
     website: ''
   }
 ]
