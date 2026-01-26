@@ -9,13 +9,32 @@
   background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
   color: white;
   padding: 1.5rem 2rem;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   z-index: 1000;
 }
 
 .header-content {
   max-width: 1200px;
-  margin: 0 auto;
+}
+
+/* Add Program Button */
+.add-btn {
+  background: white;
+  color: #000;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.add-btn:hover {
+  background: #f0f0f0;
+  transform: scale(1.02);
 }
 
 .title {
@@ -158,6 +177,26 @@
   text-decoration: underline;
 }
 
+/* Delete Button in Popup */
+.delete-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: #fff;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.delete-btn:hover {
+  background: #e74c3c;
+  color: white;
+}
+
 /* Footer */
 .footer {
   background: #1a1a1a;
@@ -195,6 +234,9 @@
 @media (max-width: 768px) {
   .header {
     padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
 
   .title {
@@ -205,8 +247,12 @@
     font-size: 0.8rem;
   }
 
+  .add-btn {
+    width: 100%;
+  }
+
   .map-container {
-    height: calc(100vh - 100px);
+    height: calc(100vh - 160px);
   }
 
   .logo-marker {

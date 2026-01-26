@@ -1,9 +1,13 @@
-import { useState, useMemo, useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
+import { useState, useEffect, useMemo } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import { programs } from './data/programs'
+import { programs as defaultPrograms } from './data/programs'
+import AddProgramForm from './components/AddProgramForm'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
+
+// LocalStorage key
+const STORAGE_KEY = 'adidas-select-programs'
 
 // Create custom icon for each program logo
 const createLogoIcon = (logoUrl) => {
@@ -20,13 +24,45 @@ const createLogoIcon = (logoUrl) => {
   })
 }
 
-// Pre-create all icons to avoid re-renders
-const programIcons = {}
-programs.forEach(program => {
-  programIcons[program.id] = createLogoIcon(program.logo)
-})
-
 function App() {
+  const [programs, setPrograms] = useState([])
+  const [isFormOpen, setIsFormOpen] = useState(false)
+
+  // Load programs from localStorage on mount
+  useEffect(() => {
+    const savedPrograms = localStorage.getItem(STORAGE_KEY)
+    if (savedPrograms) {
+      setPrograms(JSON.parse(savedPrograms))
+    } else {
+      // Use default programs if none saved
+      setPrograms(defaultPrograms)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultPrograms))
+    }
+  }, [])
+
+  // Create icons for all programs (memoized to prevent re-renders)
+  const programIcons = useMemo(() => {
+    const icons = {}
+    programs.forEach(program => {
+      icons[program.id] = createLogoIcon(program.logo)
+    })
+    return icons
+  }, [programs])
+
+  // Add a new program
+  const handleAddProgram = (newProgram) => {
+    const updatedPrograms = [...programs, newProgram]
+    setPrograms(updatedPrograms)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPrograms))
+  }
+
+  // Delete a program
+  const handleDeleteProgram = (programId) => {
+    const updatedPrograms = programs.filter(p => p.id !== programId)
+    setPrograms(updatedPrograms)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPrograms))
+  }
+
   // Center of continental US
   const mapCenter = [39.8283, -98.5795]
   const mapZoom = 4
@@ -38,6 +74,9 @@ function App() {
           <h1 className="title">adidas Select Programs</h1>
           <p className="subtitle">Interactive Map of Programs Across the United States</p>
         </div>
+        <button className="add-btn" onClick={() => setIsFormOpen(true)}>
+          + Add Program
+        </button>
       </header>
 
       <main className="main">
@@ -74,6 +113,12 @@ function App() {
                       Visit Website
                     </a>
                   )}
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDeleteProgram(program.id)}
+                  >
+                    Remove
+                  </button>
                 </div>
               </Popup>
             </Marker>
@@ -82,8 +127,14 @@ function App() {
       </main>
 
       <footer className="footer">
-        <p>Click on a program logo to view details</p>
+        <p>Click on a logo to view details | {programs.length} programs on the map</p>
       </footer>
+
+      <AddProgramForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onAdd={handleAddProgram}
+      />
     </div>
   )
 }
