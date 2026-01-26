@@ -15,9 +15,9 @@ const createLogoIcon = (logoUrl) => {
         <img src="${logoUrl}" alt="Program Logo" onerror="this.style.display='none'" />
       </div>
     `,
-    iconSize: [50, 50],
-    iconAnchor: [25, 25],
-    popupAnchor: [0, -25]
+    iconSize: [35, 35],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -17]
   })
 }
 
