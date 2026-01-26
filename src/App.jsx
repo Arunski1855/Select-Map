@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import { subscribeToPrograms, addProgram, deleteProgram, getPrograms } from './storage'
+import { subscribeToPrograms, addProgram, deleteProgram } from './firebase'
 import AddProgramForm from './components/AddProgramForm'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -31,11 +31,18 @@ function App() {
   const [activeTab, setActiveTab] = useState('basketball')
   const [programs, setPrograms] = useState([])
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load programs when tab changes
+  // Subscribe to Firebase for real-time updates
   useEffect(() => {
-    const loadedPrograms = getPrograms(activeTab)
-    setPrograms(loadedPrograms)
+    setIsLoading(true)
+
+    const unsubscribe = subscribeToPrograms(activeTab, (data) => {
+      setPrograms(data)
+      setIsLoading(false)
+    })
+
+    return () => unsubscribe()
   }, [activeTab])
 
   // Create icons for all programs (memoized to prevent re-renders)
@@ -50,18 +57,24 @@ function App() {
   }, [programs])
 
   // Add a new program
-  const handleAddProgram = (newProgram) => {
-    addProgram(activeTab, newProgram)
-    // Reload programs
-    setPrograms(getPrograms(activeTab))
+  const handleAddProgram = async (newProgram) => {
+    try {
+      await addProgram(activeTab, newProgram)
+    } catch (err) {
+      console.error('Error adding program:', err)
+      alert('Could not add program. Please try again.')
+    }
   }
 
   // Delete a program
-  const handleDeleteProgram = (programId) => {
+  const handleDeleteProgram = async (programId) => {
     if (window.confirm('Are you sure you want to remove this program?')) {
-      deleteProgram(activeTab, programId)
-      // Reload programs
-      setPrograms(getPrograms(activeTab))
+      try {
+        await deleteProgram(activeTab, programId)
+      } catch (err) {
+        console.error('Error deleting program:', err)
+        alert('Could not remove program. Please try again.')
+      }
     }
   }
 
@@ -98,57 +111,61 @@ function App() {
       </nav>
 
       <main className="main">
-        <MapContainer
-          key={activeTab}
-          center={mapCenter}
-          zoom={mapZoom}
-          className="map-container"
-          zoomControl={true}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          />
+        {isLoading ? (
+          <div className="loading">Loading programs...</div>
+        ) : (
+          <MapContainer
+            key={activeTab}
+            center={mapCenter}
+            zoom={mapZoom}
+            className="map-container"
+            zoomControl={true}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            />
 
-          {programs.map((program) => (
-            program && program.id && program.coordinates && (
-              <Marker
-                key={program.id}
-                position={program.coordinates}
-                icon={programIcons[program.id]}
-              >
-                <Popup className="program-popup">
-                  <div className="popup-content">
-                    <h3 className="popup-title">{program.name}</h3>
-                    <p className="popup-location">{program.city}, {program.state}</p>
-                    <p className="popup-region">{program.region}</p>
-                    {program.website && (
-                      <a
-                        href={program.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="popup-link"
+            {programs.map((program) => (
+              program && program.id && program.coordinates && (
+                <Marker
+                  key={program.id}
+                  position={program.coordinates}
+                  icon={programIcons[program.id]}
+                >
+                  <Popup className="program-popup">
+                    <div className="popup-content">
+                      <h3 className="popup-title">{program.name}</h3>
+                      <p className="popup-location">{program.city}, {program.state}</p>
+                      <p className="popup-region">{program.region}</p>
+                      {program.website && (
+                        <a
+                          href={program.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="popup-link"
+                        >
+                          Visit Website
+                        </a>
+                      )}
+                      <button
+                        className="delete-btn"
+                        onClick={() => handleDeleteProgram(program.id)}
                       >
-                        Visit Website
-                      </a>
-                    )}
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDeleteProgram(program.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            )
-          ))}
-        </MapContainer>
+                        Remove
+                      </button>
+                    </div>
+                  </Popup>
+                </Marker>
+              )
+            ))}
+          </MapContainer>
+        )}
       </main>
 
       <footer className="footer">
-        <p>{activeTabInfo?.icon} {programs.length} programs on the map</p>
+        <p>{activeTabInfo?.icon} {programs.length} programs | Shared with all users</p>
       </footer>
 
       <AddProgramForm
