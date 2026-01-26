@@ -23,8 +23,8 @@ const createLogoIcon = (logoUrl) => {
 
 // Tab configuration
 const TABS = [
-  { id: 'basketball', name: 'Select Basketball', icon: '🏀' },
-  { id: 'football', name: 'Select Football (Mahomes)', icon: '🏈' }
+  { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
+  { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' }
 ]
 
 function App() {
@@ -88,7 +88,10 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-content">
-          <h1 className="title">adidas Select Programs</h1>
+          <div className="title-row">
+            <img src="/logos/adidas-logo.png" alt="adidas" className="header-logo" />
+            <h1 className="title">adidas Select Programs</h1>
+          </div>
           <p className="subtitle">{activeTabInfo?.name} - Interactive Map</p>
         </div>
         <button className="add-btn" onClick={() => setIsFormOpen(true)}>
@@ -104,7 +107,7 @@ function App() {
             className={`tab ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            <span className="tab-icon">{tab.icon}</span>
+            <img src={tab.icon} alt="" className="tab-icon" />
             <span className="tab-name">{tab.name}</span>
           </button>
         ))}
@@ -165,7 +168,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <p>{activeTabInfo?.icon} {programs.length} programs | Shared with all users</p>
+        <p>{programs.length} programs | Shared with all users</p>
       </footer>
 
       <AddProgramForm

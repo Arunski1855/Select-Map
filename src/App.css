@@ -19,6 +19,18 @@
   max-width: 1200px;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  filter: invert(1);
+}
+
 /* Add Program Button */
 .add-btn {
   background: white;
@@ -89,7 +101,9 @@
 }
 
 .tab-icon {
-  font-size: 1.25rem;
+  height: 24px;
+  width: auto;
+  object-fit: contain;
 }
 
 .tab-name {
@@ -309,6 +323,14 @@
     text-align: center;
   }
 
+  .title-row {
+    justify-content: center;
+  }
+
+  .header-logo {
+    height: 30px;
+  }
+
   .title {
     font-size: 1.5rem;
   }
@@ -327,6 +349,10 @@
 
   .tab {
     padding: 0.75rem 1rem;
+  }
+
+  .tab-icon {
+    height: 20px;
   }
 
   .tab-name {
