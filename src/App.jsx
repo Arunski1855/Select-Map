@@ -7,17 +7,17 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 
 // Create custom icon for each program logo
-const createLogoIcon = (logoUrl) => {
+const createLogoIcon = (logoUrl, programName) => {
   return L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker">
-        <img src="${logoUrl}" alt="Program Logo" onerror="this.style.display='none'" />
+      <div class="logo-marker" title="${programName}">
+        <img src="${logoUrl}" alt="${programName}" onerror="this.style.display='none'" />
       </div>
     `,
-    iconSize: [35, 35],
-    iconAnchor: [17, 17],
-    popupAnchor: [0, -17]
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -14]
   })
 }
 
@@ -50,7 +50,7 @@ function App() {
     const icons = {}
     programs.forEach(program => {
       if (program && program.id) {
-        icons[program.id] = createLogoIcon(program.logo)
+        icons[program.id] = createLogoIcon(program.logo, program.name)
       }
     })
     return icons

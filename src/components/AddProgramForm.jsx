@@ -24,7 +24,7 @@ const US_STATES = [
 
 const REGIONS = ['East', 'West', 'Midwest', 'South']
 
-function AddProgramForm({ isOpen, onClose, onAdd }) {
+function AddProgramForm({ isOpen, onClose, onAdd, sport }) {
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -36,6 +36,11 @@ function AddProgramForm({ isOpen, onClose, onAdd }) {
   const [logoData, setLogoData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Placeholder examples based on sport
+  const placeholders = sport === 'basketball'
+    ? { name: 'e.g., Corona Centennial', city: 'e.g., Corona' }
+    : { name: 'e.g., Grimsley High School', city: 'e.g., Greensboro' }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -147,7 +152,7 @@ function AddProgramForm({ isOpen, onClose, onAdd }) {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              placeholder="e.g., California Huskies"
+              placeholder={placeholders.name}
             />
           </div>
 
@@ -160,7 +165,7 @@ function AddProgramForm({ isOpen, onClose, onAdd }) {
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                placeholder="e.g., Los Angeles"
+                placeholder={placeholders.city}
               />
             </div>
 
