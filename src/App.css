@@ -861,6 +861,139 @@
   text-align: center;
 }
 
+/* Admin Button */
+.admin-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Admin Panel Modal */
+.admin-modal {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.admin-modal h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.admin-description {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.add-user-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.add-user-form input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.add-user-form input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.add-user-form button {
+  padding: 0.75rem 1.25rem;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.add-user-form button:hover {
+  opacity: 0.9;
+}
+
+.add-user-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.allowed-users-list h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.allowed-users-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.allowed-users-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.allowed-users-list li:last-child {
+  border-bottom: none;
+}
+
+.allowed-users-list span {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.remove-user-btn {
+  background: none;
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-user-btn:hover {
+  background: var(--danger-color);
+  color: white;
+}
+
+.no-users {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
 /* Footer */
 .footer {
   background: #1a1a1a;

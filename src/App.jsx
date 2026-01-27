@@ -12,7 +12,10 @@ import {
   logOut,
   onAuthChange,
   addProgramHistory,
-  subscribeToProgramHistory
+  subscribeToProgramHistory,
+  subscribeToAllowedUsers,
+  addAllowedUser,
+  removeAllowedUser
 } from './firebase'
 import AddProgramForm from './components/AddProgramForm'
 import 'leaflet/dist/leaflet.css'
@@ -194,6 +197,87 @@ function HistoryModal({ isOpen, onClose, program, sport }) {
   )
 }
 
+// Admin Panel Component for managing allowed users
+function AdminPanel({ isOpen, onClose, allowedUsers }) {
+  const [newEmail, setNewEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleAddUser = async (e) => {
+    e.preventDefault()
+    if (!newEmail.trim()) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      await addAllowedUser(newEmail.trim())
+      setNewEmail('')
+    } catch (err) {
+      setError('Failed to add user')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRemoveUser = async (email) => {
+    if (window.confirm(`Remove ${email} from allowed users?`)) {
+      try {
+        await removeAllowedUser(email)
+      } catch (err) {
+        alert('Failed to remove user')
+      }
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="admin-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Manage Authorized Users</h2>
+        <p className="admin-description">
+          Only users on this list can add, edit, or remove programs.
+        </p>
+
+        <form onSubmit={handleAddUser} className="add-user-form">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="Enter email address"
+            required
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Adding...' : 'Add User'}
+          </button>
+        </form>
+
+        {error && <p className="error-message">{error}</p>}
+
+        <div className="allowed-users-list">
+          <h3>Authorized Users ({allowedUsers.length})</h3>
+          {allowedUsers.length === 0 ? (
+            <p className="no-users">No users added yet. Add your email first!</p>
+          ) : (
+            <ul>
+              {allowedUsers.map(email => (
+                <li key={email}>
+                  <span>{email}</span>
+                  <button onClick={() => handleRemoveUser(email)} className="remove-user-btn">
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('basketball')
   const [programs, setPrograms] = useState([])
@@ -208,10 +292,21 @@ function App() {
   const [user, setUser] = useState(null)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [historyProgram, setHistoryProgram] = useState(null)
+  const [allowedUsers, setAllowedUsers] = useState([])
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false)
+
+  // Check if current user is allowed to edit
+  const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
 
   // Subscribe to auth state
   useEffect(() => {
     const unsubscribe = onAuthChange(setUser)
+    return () => unsubscribe()
+  }, [])
+
+  // Subscribe to allowed users list
+  useEffect(() => {
+    const unsubscribe = subscribeToAllowedUsers(setAllowedUsers)
     return () => unsubscribe()
   }, [])
 
@@ -329,6 +424,8 @@ function App() {
   const handleAddClick = () => {
     if (!user) {
       setIsAuthModalOpen(true)
+    } else if (!isUserAllowed) {
+      alert('Your account is not authorized to add programs. Please contact an administrator.')
     } else {
       setIsFormOpen(true)
     }
@@ -363,6 +460,11 @@ function App() {
           {user ? (
             <div className="user-menu">
               <span className="user-email">{user.email}</span>
+              {isUserAllowed && (
+                <button className="admin-btn" onClick={() => setIsAdminPanelOpen(true)}>
+                  Admin
+                </button>
+              )}
               <button className="logout-btn" onClick={logOut}>Sign Out</button>
             </div>
           ) : (
@@ -521,7 +623,7 @@ function App() {
                           )}
                         </div>
                       )}
-                      {user && (
+                      {isUserAllowed && (
                         <>
                           <button className="edit-btn" onClick={() => openEditForm(program)}>
                             Edit
@@ -567,6 +669,12 @@ function App() {
         onClose={() => setHistoryProgram(null)}
         program={historyProgram}
         sport={activeTab}
+      />
+
+      <AdminPanel
+        isOpen={isAdminPanelOpen}
+        onClose={() => setIsAdminPanelOpen(false)}
+        allowedUsers={allowedUsers}
       />
     </div>
   )

@@ -83,6 +83,39 @@ export const onAuthChange = (callback) => {
   return onAuthStateChanged(auth, callback)
 }
 
+// Allowed users functions
+export const subscribeToAllowedUsers = (callback) => {
+  const allowedRef = ref(database, 'allowedUsers')
+  return onValue(allowedRef, (snapshot) => {
+    const data = snapshot.val()
+    const emails = data ? Object.values(data).map(u => u.email.toLowerCase()) : []
+    callback(emails)
+  })
+}
+
+export const addAllowedUser = async (email) => {
+  const allowedRef = ref(database, 'allowedUsers')
+  const newRef = push(allowedRef)
+  await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
+}
+
+export const removeAllowedUser = async (email) => {
+  const allowedRef = ref(database, 'allowedUsers')
+  return new Promise((resolve) => {
+    onValue(allowedRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        Object.entries(data).forEach(([key, value]) => {
+          if (value.email.toLowerCase() === email.toLowerCase()) {
+            remove(ref(database, `allowedUsers/${key}`))
+          }
+        })
+      }
+      resolve()
+    }, { onlyOnce: true })
+  })
+}
+
 // Add program history entry
 export const addProgramHistory = async (sport, programId, action, userEmail, details = {}) => {
   const historyRef = ref(database, `history/${sport}/${programId}`)
