@@ -585,54 +585,90 @@ function App() {
                   icon={programIcons[program.id]}
                 >
                   <Popup className="program-popup">
-                    <div className="popup-content">
-                      <h3 className="popup-title">{program.name}</h3>
-                      <p className="popup-location">{program.city}, {program.state}</p>
-                      <p className="popup-region">{program.region}</p>
-                      {program.conference && (
-                        <p className="popup-detail"><strong>Conference:</strong> {program.conference}</p>
-                      )}
-                      {program.headCoach && (
-                        <p className="popup-detail"><strong>Head Coach:</strong> {program.headCoach}</p>
-                      )}
-                      {program.ranking && (
-                        <p className="popup-detail"><strong>Ranking:</strong> {program.ranking}</p>
-                      )}
-                      {program.topProspects && (
-                        <p className="popup-detail"><strong>Top Prospects:</strong> {program.topProspects}</p>
-                      )}
-                      <div className="popup-links">
-                        {program.website && (
-                          <a href={program.website} target="_blank" rel="noopener noreferrer" className="popup-link">
-                            Website
-                          </a>
+                    <div className="popup-card">
+                      <div
+                        className="popup-header"
+                        style={{ backgroundColor: REGIONS[program.region]?.color || '#333' }}
+                      >
+                        <span className="popup-region-tag">{program.region}</span>
+                      </div>
+                      <div className="popup-body">
+                        <div className="popup-top">
+                          <div className="popup-logo-container">
+                            <img src={program.logo} alt={program.name} className="popup-logo" />
+                          </div>
+                          <div className="popup-info">
+                            <h3 className="popup-title">{program.name}</h3>
+                            <p className="popup-location">{program.city}, {program.state}</p>
+                          </div>
+                        </div>
+
+                        {(program.conference || program.headCoach || program.ranking || program.topProspects) && (
+                          <div className="popup-details">
+                            {program.conference && (
+                              <div className="popup-detail-row">
+                                <span className="detail-icon">🏆</span>
+                                <span className="detail-text">{program.conference}</span>
+                              </div>
+                            )}
+                            {program.headCoach && (
+                              <div className="popup-detail-row">
+                                <span className="detail-icon">👤</span>
+                                <span className="detail-text">{program.headCoach}</span>
+                              </div>
+                            )}
+                            {program.ranking && (
+                              <div className="popup-detail-row">
+                                <span className="detail-icon">📊</span>
+                                <span className="detail-text">{program.ranking}</span>
+                              </div>
+                            )}
+                            {program.topProspects && (
+                              <div className="popup-detail-row">
+                                <span className="detail-icon">⭐</span>
+                                <span className="detail-text">{program.topProspects}</span>
+                              </div>
+                            )}
+                          </div>
                         )}
-                        {program.roster && (
-                          <a href={program.roster} target="_blank" rel="noopener noreferrer" className="popup-link">
-                            Roster
-                          </a>
+
+                        {(program.website || program.roster) && (
+                          <div className="popup-links">
+                            {program.website && (
+                              <a href={program.website} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
+                                <span>🌐</span> Website
+                              </a>
+                            )}
+                            {program.roster && (
+                              <a href={program.roster} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
+                                <span>📋</span> Roster
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {program.gallery && program.gallery.length > 0 && (
+                          <div className="popup-gallery">
+                            {program.gallery.slice(0, 4).map((img, idx) => (
+                              <img key={idx} src={img} alt="Gallery" className="gallery-thumb" />
+                            ))}
+                            {program.gallery.length > 4 && (
+                              <span className="gallery-more">+{program.gallery.length - 4}</span>
+                            )}
+                          </div>
+                        )}
+
+                        {isUserAllowed && (
+                          <div className="popup-actions">
+                            <button className="popup-edit-btn" onClick={() => openEditForm(program)}>
+                              ✏️ Edit
+                            </button>
+                            <button className="popup-delete-btn" onClick={() => handleDeleteProgram(program.id)}>
+                              🗑️ Remove
+                            </button>
+                          </div>
                         )}
                       </div>
-                      {program.gallery && program.gallery.length > 0 && (
-                        <div className="popup-gallery">
-                          {program.gallery.slice(0, 3).map((img, idx) => (
-                            <img key={idx} src={img} alt="Gallery" className="gallery-thumb" />
-                          ))}
-                          {program.gallery.length > 3 && (
-                            <span className="gallery-more">+{program.gallery.length - 3}</span>
-                          )}
-                        </div>
-                      )}
-                      {isUserAllowed && (
-                        <>
-                          <button className="edit-btn" onClick={() => openEditForm(program)}>
-                            Edit
-                          </button>
-                          <button className="delete-btn" onClick={() => handleDeleteProgram(program.id)}>
-                            Remove
-                          </button>
-                        </>
-                      )}
                     </div>
                   </Popup>
                 </Marker>
