@@ -28,6 +28,31 @@ const database = getDatabase(app)
 const auth = getAuth(app)
 const googleProvider = new GoogleAuthProvider()
 
+// Default allowed users (always have access)
+const DEFAULT_ALLOWED_USERS = [
+  'dashiell.sperling@gmail.com'
+]
+
+// Initialize default allowed users on app start
+const initializeAllowedUsers = async () => {
+  const allowedRef = ref(database, 'allowedUsers')
+  onValue(allowedRef, async (snapshot) => {
+    const data = snapshot.val()
+    const existingEmails = data ? Object.values(data).map(u => u.email.toLowerCase()) : []
+
+    // Add default users if they don't exist
+    for (const email of DEFAULT_ALLOWED_USERS) {
+      if (!existingEmails.includes(email.toLowerCase())) {
+        const newRef = push(allowedRef)
+        await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
+      }
+    }
+  }, { onlyOnce: true })
+}
+
+// Run initialization
+initializeAllowedUsers()
+
 // Add a program to Firebase
 export const addProgram = async (sport, program) => {
   const sportRef = ref(database, `programs/${sport}`)
