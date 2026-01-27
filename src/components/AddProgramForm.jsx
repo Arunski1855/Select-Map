@@ -50,6 +50,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
   const [formData, setFormData] = useState(initialFormState)
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoData, setLogoData] = useState(null)
+  const [gallery, setGallery] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -72,10 +73,12 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
+      setGallery(editProgram.gallery || [])
     } else {
       setFormData(initialFormState)
       setLogoPreview(null)
       setLogoData(null)
+      setGallery([])
     }
   }, [editProgram])
 
@@ -105,6 +108,29 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
       reader.readAsDataURL(file)
       setError('')
     }
+  }
+
+  const handleGalleryUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length + gallery.length > 10) {
+      setError('Maximum 10 gallery images allowed')
+      return
+    }
+
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) return
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setGallery(prev => [...prev, e.target.result])
+      }
+      reader.readAsDataURL(file)
+    })
+    setError('')
+  }
+
+  const removeGalleryImage = (index) => {
+    setGallery(prev => prev.filter((_, i) => i !== index))
   }
 
   const getCoordinates = async (city, state) => {
@@ -173,6 +199,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         topProspects: formData.topProspects || '',
         conference: formData.conference || '',
         logo: logoData,
+        gallery: gallery,
         coordinates: coordinates
       }
 
@@ -186,6 +213,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
       setFormData(initialFormState)
       setLogoPreview(null)
       setLogoData(null)
+      setGallery([])
       onClose()
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -198,6 +226,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
     setFormData(initialFormState)
     setLogoPreview(null)
     setLogoData(null)
+    setGallery([])
     setError('')
     onClose()
   }
@@ -367,6 +396,33 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
             {logoPreview && (
               <div className="logo-preview">
                 <img src={logoPreview} alt="Logo preview" />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="gallery">Gallery Images (optional, max 10)</label>
+            <input
+              type="file"
+              id="gallery"
+              accept="image/*"
+              multiple
+              onChange={handleGalleryUpload}
+            />
+            {gallery.length > 0 && (
+              <div className="gallery-preview">
+                {gallery.map((img, index) => (
+                  <div key={index} className="gallery-item">
+                    <img src={img} alt={`Gallery ${index + 1}`} />
+                    <button
+                      type="button"
+                      className="gallery-remove"
+                      onClick={() => removeGalleryImage(index)}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

@@ -1,5 +1,14 @@
 import { initializeApp } from 'firebase/app'
 import { getDatabase, ref, push, onValue, remove, set } from 'firebase/database'
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
+} from 'firebase/auth'
 
 // Firebase configuration
 const firebaseConfig = {
@@ -16,6 +25,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
+const auth = getAuth(app)
+const googleProvider = new GoogleAuthProvider()
 
 // Add a program to Firebase
 export const addProgram = async (sport, program) => {
@@ -51,4 +62,48 @@ export const subscribeToPrograms = (sport, callback) => {
   return unsubscribe
 }
 
-export { database }
+// Authentication functions
+export const signIn = (email, password) => {
+  return signInWithEmailAndPassword(auth, email, password)
+}
+
+export const signUp = (email, password) => {
+  return createUserWithEmailAndPassword(auth, email, password)
+}
+
+export const signInWithGoogle = () => {
+  return signInWithPopup(auth, googleProvider)
+}
+
+export const logOut = () => {
+  return signOut(auth)
+}
+
+export const onAuthChange = (callback) => {
+  return onAuthStateChanged(auth, callback)
+}
+
+// Add program history entry
+export const addProgramHistory = async (sport, programId, action, userEmail, details = {}) => {
+  const historyRef = ref(database, `history/${sport}/${programId}`)
+  const newRef = push(historyRef)
+  await set(newRef, {
+    id: newRef.key,
+    action,
+    userEmail,
+    timestamp: Date.now(),
+    details
+  })
+}
+
+// Get program history
+export const subscribeToProgramHistory = (sport, programId, callback) => {
+  const historyRef = ref(database, `history/${sport}/${programId}`)
+  return onValue(historyRef, (snapshot) => {
+    const data = snapshot.val()
+    const history = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : []
+    callback(history)
+  })
+}
+
+export { database, auth }

@@ -144,3 +144,133 @@ input[type="file"] {
 input[type="file"]:hover {
   border-color: #999;
 }
+
+/* Gallery Preview */
+.gallery-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.gallery-item {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.gallery-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.gallery-remove:hover {
+  background: #c0392b;
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .modal-content {
+  background: #2d2d2d;
+  color: #fff;
+}
+
+[data-theme="dark"] .modal-content h2 {
+  color: #fff;
+}
+
+[data-theme="dark"] .modal-close {
+  color: #aaa;
+}
+
+[data-theme="dark"] .modal-close:hover {
+  background: #3d3d3d;
+  color: #fff;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+  background: #1a1a1a;
+  border-color: #444;
+  color: #fff;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus {
+  border-color: #888;
+}
+
+[data-theme="dark"] .form-group input::placeholder {
+  color: #888;
+}
+
+[data-theme="dark"] .logo-preview,
+[data-theme="dark"] .gallery-preview {
+  background: #3d3d3d;
+}
+
+[data-theme="dark"] input[type="file"] {
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] input[type="file"]:hover {
+  border-color: #666;
+}
+
+[data-theme="dark"] .submit-btn {
+  background: #fff;
+  color: #000;
+}
+
+[data-theme="dark"] .submit-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+[data-theme="dark"] .submit-btn:disabled {
+  background: #666;
+}
+
+[data-theme="dark"] .error-message {
+  background: #3d2020;
+  color: #ff8080;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 1.5rem;
+    width: 95%;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
