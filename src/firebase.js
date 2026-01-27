@@ -30,7 +30,11 @@ const googleProvider = new GoogleAuthProvider()
 
 // Default allowed users (always have access)
 const DEFAULT_ALLOWED_USERS = [
-  'dashiell.sperling@gmail.com'
+  'dashiell.sperling@gmail.com',
+  'derek.stucker@adidas.com',
+  'thomas.bauman@adidas.com',
+  'spencer.pickering@adidas.com',
+  'bo.rodriguez@adidas.com'
 ]
 
 // Initialize default allowed users on app start
