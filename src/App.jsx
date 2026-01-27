@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import { subscribeToPrograms, addProgram, deleteProgram } from './firebase'
+import { subscribeToPrograms, addProgram, deleteProgram, editProgram } from './firebase'
 import AddProgramForm from './components/AddProgramForm'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -32,6 +32,7 @@ function App() {
   const [programs, setPrograms] = useState([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [editingProgram, setEditingProgram] = useState(null)
 
   // Subscribe to Firebase for real-time updates
   useEffect(() => {
@@ -76,6 +77,28 @@ function App() {
         alert('Could not remove program. Please try again.')
       }
     }
+  }
+
+  // Edit a program
+  const handleEditProgram = async (updatedProgram) => {
+    try {
+      await editProgram(activeTab, updatedProgram)
+    } catch (err) {
+      console.error('Error editing program:', err)
+      alert('Could not update program. Please try again.')
+    }
+  }
+
+  // Open form for editing
+  const openEditForm = (program) => {
+    setEditingProgram(program)
+    setIsFormOpen(true)
+  }
+
+  // Close form and reset editing state
+  const closeForm = () => {
+    setIsFormOpen(false)
+    setEditingProgram(null)
   }
 
   // Center of continental US
@@ -142,16 +165,46 @@ function App() {
                       <h3 className="popup-title">{program.name}</h3>
                       <p className="popup-location">{program.city}, {program.state}</p>
                       <p className="popup-region">{program.region}</p>
-                      {program.website && (
-                        <a
-                          href={program.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="popup-link"
-                        >
-                          Visit Website
-                        </a>
+                      {program.conference && (
+                        <p className="popup-detail"><strong>Conference:</strong> {program.conference}</p>
                       )}
+                      {program.headCoach && (
+                        <p className="popup-detail"><strong>Head Coach:</strong> {program.headCoach}</p>
+                      )}
+                      {program.ranking && (
+                        <p className="popup-detail"><strong>Ranking:</strong> {program.ranking}</p>
+                      )}
+                      {program.topProspects && (
+                        <p className="popup-detail"><strong>Top Prospects:</strong> {program.topProspects}</p>
+                      )}
+                      <div className="popup-links">
+                        {program.website && (
+                          <a
+                            href={program.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="popup-link"
+                          >
+                            Website
+                          </a>
+                        )}
+                        {program.roster && (
+                          <a
+                            href={program.roster}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="popup-link"
+                          >
+                            Roster
+                          </a>
+                        )}
+                      </div>
+                      <button
+                        className="edit-btn"
+                        onClick={() => openEditForm(program)}
+                      >
+                        Edit
+                      </button>
                       <button
                         className="delete-btn"
                         onClick={() => handleDeleteProgram(program.id)}
@@ -173,9 +226,11 @@ function App() {
 
       <AddProgramForm
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={closeForm}
         onAdd={handleAddProgram}
+        onEdit={handleEditProgram}
         sport={activeTab}
+        editProgram={editingProgram}
       />
     </div>
   )

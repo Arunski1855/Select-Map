@@ -31,6 +31,12 @@ export const deleteProgram = async (sport, programId) => {
   await remove(programRef)
 }
 
+// Edit/Update a program in Firebase
+export const editProgram = async (sport, program) => {
+  const programRef = ref(database, `programs/${sport}/${program.id}`)
+  await set(programRef, program)
+}
+
 // Subscribe to programs (real-time updates)
 export const subscribeToPrograms = (sport, callback) => {
   const sportRef = ref(database, `programs/${sport}`)

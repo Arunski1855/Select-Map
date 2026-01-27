@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './AddProgramForm.css'
 
 // US States for dropdown
@@ -24,18 +24,51 @@ const US_STATES = [
 
 const REGIONS = ['East', 'West', 'Midwest', 'South']
 
-function AddProgramForm({ isOpen, onClose, onAdd, sport }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    city: '',
-    state: '',
-    region: '',
-    website: ''
-  })
+const initialFormState = {
+  name: '',
+  city: '',
+  state: '',
+  region: '',
+  website: '',
+  roster: '',
+  headCoach: '',
+  ranking: '',
+  topProspects: '',
+  conference: ''
+}
+
+function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
+  const [formData, setFormData] = useState(initialFormState)
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoData, setLogoData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const isEditMode = !!editProgram
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editProgram) {
+      setFormData({
+        name: editProgram.name || '',
+        city: editProgram.city || '',
+        state: editProgram.state || '',
+        region: editProgram.region || '',
+        website: editProgram.website || '',
+        roster: editProgram.roster || '',
+        headCoach: editProgram.headCoach || '',
+        ranking: editProgram.ranking || '',
+        topProspects: editProgram.topProspects || '',
+        conference: editProgram.conference || ''
+      })
+      setLogoPreview(editProgram.logo)
+      setLogoData(editProgram.logo)
+    } else {
+      setFormData(initialFormState)
+      setLogoPreview(null)
+      setLogoData(null)
+    }
+  }, [editProgram])
 
   // Placeholder examples based on sport
   const placeholders = sport === 'basketball'
@@ -101,8 +134,13 @@ function AddProgramForm({ isOpen, onClose, onAdd, sport }) {
     setIsLoading(true)
 
     try {
-      // Get coordinates from city/state
-      const coordinates = await getCoordinates(formData.city, formData.state)
+      // Get coordinates from city/state (or use existing if editing same location)
+      let coordinates
+      if (isEditMode && editProgram.city === formData.city && editProgram.state === formData.state) {
+        coordinates = editProgram.coordinates
+      } else {
+        coordinates = await getCoordinates(formData.city, formData.state)
+      }
 
       if (!coordinates) {
         setError('Could not find location. Please check city and state.')
@@ -110,21 +148,30 @@ function AddProgramForm({ isOpen, onClose, onAdd, sport }) {
         return
       }
 
-      const newProgram = {
-        id: `program-${Date.now()}`,
+      const programData = {
+        id: isEditMode ? editProgram.id : `program-${Date.now()}`,
         name: formData.name,
         city: formData.city,
         state: formData.state,
         region: formData.region,
         website: formData.website || '',
+        roster: formData.roster || '',
+        headCoach: formData.headCoach || '',
+        ranking: formData.ranking || '',
+        topProspects: formData.topProspects || '',
+        conference: formData.conference || '',
         logo: logoData,
         coordinates: coordinates
       }
 
-      onAdd(newProgram)
+      if (isEditMode) {
+        onEdit(programData)
+      } else {
+        onAdd(programData)
+      }
 
       // Reset form
-      setFormData({ name: '', city: '', state: '', region: '', website: '' })
+      setFormData(initialFormState)
       setLogoPreview(null)
       setLogoData(null)
       onClose()
@@ -135,13 +182,21 @@ function AddProgramForm({ isOpen, onClose, onAdd, sport }) {
     }
   }
 
+  const handleClose = () => {
+    setFormData(initialFormState)
+    setLogoPreview(null)
+    setLogoData(null)
+    setError('')
+    onClose()
+  }
+
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>&times;</button>
-        <h2>Add New Program</h2>
+        <button className="modal-close" onClick={handleClose}>&times;</button>
+        <h2>{isEditMode ? 'Edit Program' : 'Add New Program'}</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -187,35 +242,101 @@ function AddProgramForm({ isOpen, onClose, onAdd, sport }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="region">Region *</label>
-            <select
-              id="region"
-              name="region"
-              value={formData.region}
-              onChange={handleInputChange}
-            >
-              <option value="">Select Region</option>
-              {REGIONS.map(region => (
-                <option key={region} value={region}>{region}</option>
-              ))}
-            </select>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="region">Region *</label>
+              <select
+                id="region"
+                name="region"
+                value={formData.region}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Region</option>
+                {REGIONS.map(region => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="conference">Conference</label>
+              <input
+                type="text"
+                id="conference"
+                name="conference"
+                value={formData.conference}
+                onChange={handleInputChange}
+                placeholder="e.g., Big South"
+              />
+            </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="website">Website (optional)</label>
+            <label htmlFor="headCoach">Head Coach</label>
             <input
-              type="url"
-              id="website"
-              name="website"
-              value={formData.website}
+              type="text"
+              id="headCoach"
+              name="headCoach"
+              value={formData.headCoach}
               onChange={handleInputChange}
-              placeholder="https://..."
+              placeholder="e.g., John Smith"
             />
           </div>
 
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="ranking">Ranking</label>
+              <input
+                type="text"
+                id="ranking"
+                name="ranking"
+                value={formData.ranking}
+                onChange={handleInputChange}
+                placeholder="e.g., #5 National"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="topProspects">Top Prospects</label>
+              <input
+                type="text"
+                id="topProspects"
+                name="topProspects"
+                value={formData.topProspects}
+                onChange={handleInputChange}
+                placeholder="e.g., 3 five-stars"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="website">Website</label>
+              <input
+                type="url"
+                id="website"
+                name="website"
+                value={formData.website}
+                onChange={handleInputChange}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="roster">Roster Link</label>
+              <input
+                type="url"
+                id="roster"
+                name="roster"
+                value={formData.roster}
+                onChange={handleInputChange}
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+
           <div className="form-group">
-            <label htmlFor="logo">Logo *</label>
+            <label htmlFor="logo">Logo {!isEditMode && '*'}</label>
             <input
               type="file"
               id="logo"
@@ -232,7 +353,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, sport }) {
           {error && <p className="error-message">{error}</p>}
 
           <button type="submit" className="submit-btn" disabled={isLoading}>
-            {isLoading ? 'Adding...' : 'Add Program'}
+            {isLoading ? (isEditMode ? 'Saving...' : 'Adding...') : (isEditMode ? 'Save Changes' : 'Add Program')}
           </button>
         </form>
       </div>

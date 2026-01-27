@@ -261,6 +261,42 @@
   text-decoration: underline;
 }
 
+.popup-detail {
+  font-size: 0.85rem;
+  color: #444;
+  margin: 4px 0;
+}
+
+.popup-detail strong {
+  color: #222;
+}
+
+.popup-links {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* Edit Button in Popup */
+.edit-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: #fff;
+  color: #0066cc;
+  border: 1px solid #0066cc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.edit-btn:hover {
+  background: #0066cc;
+  color: white;
+}
+
 /* Delete Button in Popup */
 .delete-btn {
   display: block;
