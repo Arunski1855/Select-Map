@@ -22,7 +22,16 @@ const US_STATES = [
   { abbr: 'WI', name: 'Wisconsin' }, { abbr: 'WY', name: 'Wyoming' }
 ]
 
-const REGIONS = ['East', 'West', 'Midwest', 'South']
+// Canadian Provinces for dropdown
+const CA_PROVINCES = [
+  { abbr: 'AB', name: 'Alberta' }, { abbr: 'BC', name: 'British Columbia' },
+  { abbr: 'MB', name: 'Manitoba' }, { abbr: 'NB', name: 'New Brunswick' },
+  { abbr: 'NL', name: 'Newfoundland and Labrador' }, { abbr: 'NS', name: 'Nova Scotia' },
+  { abbr: 'ON', name: 'Ontario' }, { abbr: 'PE', name: 'Prince Edward Island' },
+  { abbr: 'QC', name: 'Quebec' }, { abbr: 'SK', name: 'Saskatchewan' }
+]
+
+const REGIONS = ['Canada', 'Mid Atlantic', 'South', 'Midwest', 'West']
 
 const initialFormState = {
   name: '',
@@ -72,8 +81,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
 
   // Placeholder examples based on sport
   const placeholders = sport === 'basketball'
-    ? { name: 'e.g., Corona Centennial', city: 'e.g., Corona' }
-    : { name: 'e.g., Grimsley High School', city: 'e.g., Greensboro' }
+    ? { name: 'e.g., Corona Centennial', city: 'e.g., Corona', coach: 'e.g., Jeff Kaufman' }
+    : { name: 'e.g., Grimsley High School', city: 'e.g., Greensboro', coach: 'e.g., John Smith' }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -100,7 +109,10 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
 
   const getCoordinates = async (city, state) => {
     try {
-      const query = encodeURIComponent(`${city}, ${state}, USA`)
+      // Check if state is a Canadian province
+      const isCanadian = CA_PROVINCES.some(prov => prov.abbr === state)
+      const country = isCanadian ? 'Canada' : 'USA'
+      const query = encodeURIComponent(`${city}, ${state}, ${country}`)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`,
         { headers: { 'User-Agent': 'AdidasSelectMap/1.0' } }
@@ -225,19 +237,28 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
             </div>
 
             <div className="form-group">
-              <label htmlFor="state">State *</label>
+              <label htmlFor="state">State/Province *</label>
               <select
                 id="state"
                 name="state"
                 value={formData.state}
                 onChange={handleInputChange}
               >
-                <option value="">Select State</option>
-                {US_STATES.map(state => (
-                  <option key={state.abbr} value={state.abbr}>
-                    {state.name}
-                  </option>
-                ))}
+                <option value="">Select State/Province</option>
+                <optgroup label="United States">
+                  {US_STATES.map(state => (
+                    <option key={state.abbr} value={state.abbr}>
+                      {state.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Canada">
+                  {CA_PROVINCES.map(prov => (
+                    <option key={prov.abbr} value={prov.abbr}>
+                      {prov.name}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
           </div>
@@ -279,7 +300,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
               name="headCoach"
               value={formData.headCoach}
               onChange={handleInputChange}
-              placeholder="e.g., John Smith"
+              placeholder={placeholders.coach}
             />
           </div>
 
