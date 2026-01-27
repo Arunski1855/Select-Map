@@ -1,9 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap } from 'react-leaflet'
+import { useState, useEffect, useMemo } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import 'leaflet.markercluster'
-import 'leaflet.markercluster/dist/MarkerCluster.css'
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import {
   subscribeToPrograms,
   addProgram,
@@ -50,96 +47,6 @@ const TABS = [
   { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
   { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' }
 ]
-
-// Marker Cluster Component
-function MarkerClusterGroup({ programs, programIcons, onEditClick, onDeleteClick, user }) {
-  const map = useMap()
-  const clusterRef = useRef(null)
-
-  useEffect(() => {
-    if (!map) return
-
-    // Create cluster group
-    const cluster = L.markerClusterGroup({
-      chunkedLoading: true,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      maxClusterRadius: 50,
-      iconCreateFunction: (cluster) => {
-        const count = cluster.getChildCount()
-        let size = 'small'
-        if (count > 10) size = 'medium'
-        if (count > 25) size = 'large'
-        return L.divIcon({
-          html: `<div class="cluster-marker cluster-${size}"><span>${count}</span></div>`,
-          className: 'custom-cluster-icon',
-          iconSize: L.point(40, 40)
-        })
-      }
-    })
-
-    clusterRef.current = cluster
-
-    // Add markers to cluster
-    programs.forEach(program => {
-      if (program && program.id && program.coordinates) {
-        const marker = L.marker(program.coordinates, {
-          icon: programIcons[program.id]
-        })
-
-        // Create popup content
-        const popupContent = document.createElement('div')
-        popupContent.className = 'popup-content'
-        popupContent.innerHTML = `
-          <h3 class="popup-title">${program.name}</h3>
-          <p class="popup-location">${program.city}, ${program.state}</p>
-          <p class="popup-region">${program.region}</p>
-          ${program.conference ? `<p class="popup-detail"><strong>Conference:</strong> ${program.conference}</p>` : ''}
-          ${program.headCoach ? `<p class="popup-detail"><strong>Head Coach:</strong> ${program.headCoach}</p>` : ''}
-          ${program.ranking ? `<p class="popup-detail"><strong>Ranking:</strong> ${program.ranking}</p>` : ''}
-          ${program.topProspects ? `<p class="popup-detail"><strong>Top Prospects:</strong> ${program.topProspects}</p>` : ''}
-          <div class="popup-links">
-            ${program.website ? `<a href="${program.website}" target="_blank" rel="noopener noreferrer" class="popup-link">Website</a>` : ''}
-            ${program.roster ? `<a href="${program.roster}" target="_blank" rel="noopener noreferrer" class="popup-link">Roster</a>` : ''}
-          </div>
-          ${program.gallery && program.gallery.length > 0 ? `
-            <div class="popup-gallery">
-              ${program.gallery.slice(0, 3).map(img => `<img src="${img}" alt="Gallery" class="gallery-thumb" />`).join('')}
-              ${program.gallery.length > 3 ? `<span class="gallery-more">+${program.gallery.length - 3}</span>` : ''}
-            </div>
-          ` : ''}
-        `
-
-        // Add edit/delete buttons if user is logged in
-        if (user) {
-          const editBtn = document.createElement('button')
-          editBtn.className = 'edit-btn'
-          editBtn.textContent = 'Edit'
-          editBtn.onclick = () => onEditClick(program)
-          popupContent.appendChild(editBtn)
-
-          const deleteBtn = document.createElement('button')
-          deleteBtn.className = 'delete-btn'
-          deleteBtn.textContent = 'Remove'
-          deleteBtn.onclick = () => onDeleteClick(program.id)
-          popupContent.appendChild(deleteBtn)
-        }
-
-        marker.bindPopup(popupContent)
-        cluster.addLayer(marker)
-      }
-    })
-
-    map.addLayer(cluster)
-
-    return () => {
-      map.removeLayer(cluster)
-    }
-  }, [map, programs, programIcons, onEditClick, onDeleteClick, user])
-
-  return null
-}
 
 // Auth Modal Component
 function AuthModal({ isOpen, onClose, onSuccess }) {
@@ -568,13 +475,67 @@ function App() {
               }
             />
 
-            <MarkerClusterGroup
-              programs={filteredPrograms}
-              programIcons={programIcons}
-              onEditClick={openEditForm}
-              onDeleteClick={handleDeleteProgram}
-              user={user}
-            />
+            {filteredPrograms.map(program => (
+              program && program.coordinates && (
+                <Marker
+                  key={program.id}
+                  position={program.coordinates}
+                  icon={programIcons[program.id]}
+                >
+                  <Popup className="program-popup">
+                    <div className="popup-content">
+                      <h3 className="popup-title">{program.name}</h3>
+                      <p className="popup-location">{program.city}, {program.state}</p>
+                      <p className="popup-region">{program.region}</p>
+                      {program.conference && (
+                        <p className="popup-detail"><strong>Conference:</strong> {program.conference}</p>
+                      )}
+                      {program.headCoach && (
+                        <p className="popup-detail"><strong>Head Coach:</strong> {program.headCoach}</p>
+                      )}
+                      {program.ranking && (
+                        <p className="popup-detail"><strong>Ranking:</strong> {program.ranking}</p>
+                      )}
+                      {program.topProspects && (
+                        <p className="popup-detail"><strong>Top Prospects:</strong> {program.topProspects}</p>
+                      )}
+                      <div className="popup-links">
+                        {program.website && (
+                          <a href={program.website} target="_blank" rel="noopener noreferrer" className="popup-link">
+                            Website
+                          </a>
+                        )}
+                        {program.roster && (
+                          <a href={program.roster} target="_blank" rel="noopener noreferrer" className="popup-link">
+                            Roster
+                          </a>
+                        )}
+                      </div>
+                      {program.gallery && program.gallery.length > 0 && (
+                        <div className="popup-gallery">
+                          {program.gallery.slice(0, 3).map((img, idx) => (
+                            <img key={idx} src={img} alt="Gallery" className="gallery-thumb" />
+                          ))}
+                          {program.gallery.length > 3 && (
+                            <span className="gallery-more">+{program.gallery.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                      {user && (
+                        <>
+                          <button className="edit-btn" onClick={() => openEditForm(program)}>
+                            Edit
+                          </button>
+                          <button className="delete-btn" onClick={() => handleDeleteProgram(program.id)}>
+                            Remove
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </Popup>
+                </Marker>
+              )
+            ))}
           </MapContainer>
         )}
       </main>
