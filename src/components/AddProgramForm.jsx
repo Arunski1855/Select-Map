@@ -31,6 +31,14 @@ const CA_PROVINCES = [
   { abbr: 'QC', name: 'Quebec' }, { abbr: 'SK', name: 'Saskatchewan' }
 ]
 
+// Bahamas Islands for dropdown
+const BS_ISLANDS = [
+  { abbr: 'NP', name: 'Nassau / New Providence' }, { abbr: 'GBI', name: 'Grand Bahama' },
+  { abbr: 'AB', name: 'Abaco' }, { abbr: 'EL', name: 'Eleuthera' },
+  { abbr: 'EX', name: 'Exuma' }, { abbr: 'AN', name: 'Andros' },
+  { abbr: 'BI', name: 'Bimini' }, { abbr: 'LI', name: 'Long Island' }
+]
+
 const REGIONS = ['Canada', 'Mid Atlantic', 'South', 'Midwest', 'West']
 
 const initialFormState = {
@@ -137,7 +145,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
     try {
       // Check if state is a Canadian province
       const isCanadian = CA_PROVINCES.some(prov => prov.abbr === state)
-      const country = isCanadian ? 'Canada' : 'USA'
+      const isBahamian = BS_ISLANDS.some(isl => isl.abbr === state)
+      const country = isBahamian ? 'Bahamas' : isCanadian ? 'Canada' : 'USA'
       const query = encodeURIComponent(`${city}, ${state}, ${country}`)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`,
@@ -285,6 +294,13 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                   {CA_PROVINCES.map(prov => (
                     <option key={prov.abbr} value={prov.abbr}>
                       {prov.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Bahamas">
+                  {BS_ISLANDS.map(isl => (
+                    <option key={isl.abbr} value={isl.abbr}>
+                      {isl.name}
                     </option>
                   ))}
                 </optgroup>
