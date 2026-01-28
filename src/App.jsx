@@ -15,9 +15,14 @@ import {
   subscribeToProgramHistory,
   subscribeToAllowedUsers,
   addAllowedUser,
-  removeAllowedUser
+  removeAllowedUser,
+  addEvent,
+  deleteEvent,
+  editEvent,
+  subscribeToEvents
 } from './firebase'
 import AddProgramForm from './components/AddProgramForm'
+import AddEventForm from './components/AddEventForm'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 
@@ -48,7 +53,8 @@ const createLogoIcon = (logoUrl, programName) => {
 // Tab configuration
 const TABS = [
   { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
-  { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' }
+  { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' },
+  { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' }
 ]
 
 // Auth Modal Component
@@ -295,6 +301,13 @@ function App() {
   const [allowedUsers, setAllowedUsers] = useState([])
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false)
 
+  // Events state
+  const [events, setEvents] = useState([])
+  const [isEventsLoading, setIsEventsLoading] = useState(true)
+  const [isEventFormOpen, setIsEventFormOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState(null)
+  const [selectedEventId, setSelectedEventId] = useState(null)
+
   // Check if current user is allowed to edit
   const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
 
@@ -310,8 +323,9 @@ function App() {
     return () => unsubscribe()
   }, [])
 
-  // Subscribe to Firebase for real-time updates
+  // Subscribe to Firebase for real-time updates (programs)
   useEffect(() => {
+    if (activeTab === 'events') return
     setIsLoading(true)
 
     const unsubscribe = subscribeToPrograms(activeTab, (data) => {
@@ -321,6 +335,16 @@ function App() {
 
     return () => unsubscribe()
   }, [activeTab])
+
+  // Subscribe to events
+  useEffect(() => {
+    setIsEventsLoading(true)
+    const unsubscribe = subscribeToEvents((data) => {
+      setEvents(data)
+      setIsEventsLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
   // Apply dark mode to document
   useEffect(() => {
@@ -366,6 +390,77 @@ function App() {
     })
     return counts
   }, [programs])
+
+  // Sort events by date (upcoming first), past events at end
+  const sortedEvents = useMemo(() => {
+    const now = new Date().toISOString().split('T')[0]
+    return [...events].sort((a, b) => {
+      const aUpcoming = a.date >= now
+      const bUpcoming = b.date >= now
+      if (aUpcoming && !bUpcoming) return -1
+      if (!aUpcoming && bUpcoming) return 1
+      return aUpcoming ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
+    })
+  }, [events])
+
+  // Event icons for map
+  const eventIcons = useMemo(() => {
+    const icons = {}
+    events.forEach(event => {
+      if (event && event.id && event.photo) {
+        icons[event.id] = createLogoIcon(event.photo, event.name)
+      } else if (event && event.id) {
+        icons[event.id] = L.divIcon({
+          className: 'custom-logo-marker',
+          html: `<div class="logo-marker event-marker-icon" title="${event.name}"><span>E</span></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -14]
+        })
+      }
+    })
+    return icons
+  }, [events])
+
+  // Event handlers
+  const handleAddEvent = async (eventData) => {
+    try {
+      await addEvent(eventData)
+    } catch (err) {
+      console.error('Error adding event:', err)
+      alert('Could not add event. Please try again.')
+    }
+  }
+
+  const handleEditEvent = async (eventData) => {
+    try {
+      await editEvent(eventData)
+    } catch (err) {
+      console.error('Error editing event:', err)
+      alert('Could not update event. Please try again.')
+    }
+  }
+
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm('Are you sure you want to remove this event?')) {
+      try {
+        await deleteEvent(eventId)
+      } catch (err) {
+        console.error('Error deleting event:', err)
+        alert('Could not remove event. Please try again.')
+      }
+    }
+  }
+
+  const openEditEventForm = (event) => {
+    setEditingEvent(event)
+    setIsEventFormOpen(true)
+  }
+
+  const closeEventForm = () => {
+    setIsEventFormOpen(false)
+    setEditingEvent(null)
+  }
 
   // Add a new program
   const handleAddProgram = async (newProgram) => {
@@ -425,7 +520,9 @@ function App() {
     if (!user) {
       setIsAuthModalOpen(true)
     } else if (!isUserAllowed) {
-      alert('Your account is not authorized to add programs. Please contact an administrator.')
+      alert('Your account is not authorized. Please contact an administrator.')
+    } else if (activeTab === 'events') {
+      setIsEventFormOpen(true)
     } else {
       setIsFormOpen(true)
     }
@@ -474,31 +571,33 @@ function App() {
           )}
 
           <button className="add-btn" onClick={handleAddClick}>
-            + Add Program
+            + Add {activeTab === 'events' ? 'Event' : 'Program'}
           </button>
         </div>
       </header>
 
-      {/* Dashboard Stats */}
-      <div className="dashboard">
-        <div className="dashboard-stats">
-          <div className="stat-item stat-total">
-            <span className="stat-value">{regionCounts.total}</span>
-            <span className="stat-label">Total Programs</span>
-          </div>
-          {Object.keys(REGIONS).map(region => (
-            <div
-              key={region}
-              className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
-              style={{ '--region-color': REGIONS[region].color }}
-              onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
-            >
-              <span className="stat-value">{regionCounts[region] || 0}</span>
-              <span className="stat-label">{region}</span>
+      {/* Dashboard Stats (programs only) */}
+      {activeTab !== 'events' && (
+        <div className="dashboard">
+          <div className="dashboard-stats">
+            <div className="stat-item stat-total">
+              <span className="stat-value">{regionCounts.total}</span>
+              <span className="stat-label">Total Programs</span>
             </div>
-          ))}
+            {Object.keys(REGIONS).map(region => (
+              <div
+                key={region}
+                className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
+                style={{ '--region-color': REGIONS[region].color }}
+                onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
+              >
+                <span className="stat-value">{regionCounts[region] || 0}</span>
+                <span className="stat-label">{region}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Tab Navigation */}
       <nav className="tabs">
@@ -514,8 +613,8 @@ function App() {
         ))}
       </nav>
 
-      {/* Search and Filter Bar */}
-      <div className="toolbar">
+      {/* Search and Filter Bar (programs only) */}
+      {activeTab !== 'events' && <div className="toolbar">
         <div className="search-box">
           <input
             type="text"
@@ -555,132 +654,292 @@ function App() {
             </button>
           </div>
         )}
-      </div>
+      </div>}
 
       <main className="main">
-        {isLoading ? (
-          <div className="loading">Loading programs...</div>
-        ) : (
-          <MapContainer
-            key={`${activeTab}-${darkMode}`}
-            center={mapCenter}
-            zoom={mapZoom}
-            className="map-container"
-            zoomControl={true}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url={darkMode
-                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              }
-            />
-
-            {filteredPrograms.map(program => (
-              program && program.coordinates && (
-                <Marker
-                  key={program.id}
-                  position={program.coordinates}
-                  icon={programIcons[program.id]}
+        {activeTab === 'events' ? (
+          /* Events Split Layout */
+          <div className="events-split-layout">
+            <div className="events-map-panel">
+              {isEventsLoading ? (
+                <div className="loading">Loading events...</div>
+              ) : (
+                <MapContainer
+                  key={`events-${darkMode}`}
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  className="map-container"
+                  zoomControl={true}
+                  scrollWheelZoom={true}
                 >
-                  <Popup className="program-popup">
-                    <div className="popup-card">
-                      <div
-                        className="popup-header"
-                        style={{ backgroundColor: REGIONS[program.region]?.color || '#333' }}
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url={darkMode
+                      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                    }
+                  />
+                  {events.map(event => (
+                    event && event.coordinates && (
+                      <Marker
+                        key={event.id}
+                        position={event.coordinates}
+                        icon={eventIcons[event.id]}
                       >
-                        <span className="popup-region-tag">{program.region}</span>
-                      </div>
-                      <div className="popup-body">
-                        <div className="popup-top">
-                          <div className="popup-logo-container">
-                            <img src={program.logo} alt={program.name} className="popup-logo" />
+                        <Popup className="program-popup">
+                          <div className="popup-card">
+                            <div className="popup-header" style={{ backgroundColor: '#000' }}>
+                              <span className="popup-region-tag">Event</span>
+                            </div>
+                            <div className="popup-body">
+                              <div className="popup-top">
+                                {event.photo && (
+                                  <div className="popup-logo-container">
+                                    <img src={event.photo} alt={event.name} className="popup-logo" />
+                                  </div>
+                                )}
+                                <div className="popup-info">
+                                  <h3 className="popup-title">{event.name}</h3>
+                                  <p className="popup-location">{event.city}, {event.state}</p>
+                                </div>
+                              </div>
+                              <div className="popup-details">
+                                <div className="popup-detail-row">
+                                  <span className="detail-icon">📅</span>
+                                  <span className="detail-text">
+                                    {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    {event.endDate && ` - ${new Date(event.endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                                  </span>
+                                </div>
+                                {event.hostPartner && (
+                                  <div className="popup-detail-row">
+                                    <span className="detail-icon">🤝</span>
+                                    <span className="detail-text">{event.hostPartner}</span>
+                                  </div>
+                                )}
+                                {event.description && (
+                                  <div className="popup-detail-row">
+                                    <span className="detail-icon">📝</span>
+                                    <span className="detail-text">{event.description}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {event.registrationLink && (
+                                <div className="popup-links">
+                                  <a href={event.registrationLink} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
+                                    <span>🔗</span> Register
+                                  </a>
+                                </div>
+                              )}
+                              {isUserAllowed && (
+                                <div className="popup-actions">
+                                  <button className="popup-edit-btn" onClick={() => openEditEventForm(event)}>
+                                    ✏️ Edit
+                                  </button>
+                                  <button className="popup-delete-btn" onClick={() => handleDeleteEvent(event.id)}>
+                                    🗑️ Remove
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div className="popup-info">
-                            <h3 className="popup-title">{program.name}</h3>
-                            <p className="popup-location">{program.city}, {program.state}</p>
+                        </Popup>
+                      </Marker>
+                    )
+                  ))}
+                </MapContainer>
+              )}
+            </div>
+
+            <div className="events-list-panel">
+              <div className="events-list-header">
+                <h2>Upcoming Events</h2>
+                <span className="events-count">{events.length} events</span>
+              </div>
+              <div className="events-list">
+                {sortedEvents.length === 0 ? (
+                  <div className="events-empty">No events yet. Add your first event!</div>
+                ) : (
+                  sortedEvents.map(event => {
+                    const now = new Date().toISOString().split('T')[0]
+                    const isPast = event.date < now
+                    const isWithin2Weeks = !isPast && (new Date(event.date) - new Date()) <= 14 * 24 * 60 * 60 * 1000
+
+                    return (
+                      <div
+                        key={event.id}
+                        className={`event-card ${isPast ? 'event-past' : ''} ${selectedEventId === event.id ? 'event-selected' : ''}`}
+                        onClick={() => setSelectedEventId(event.id)}
+                      >
+                        {isWithin2Weeks && <span className="event-badge">Upcoming</span>}
+                        {isPast && <span className="event-badge event-badge-past">Past</span>}
+                        {event.photo && (
+                          <div className="event-card-photo">
+                            <img src={event.photo} alt={event.name} />
+                          </div>
+                        )}
+                        <div className="event-card-info">
+                          <h3 className="event-card-name">{event.name}</h3>
+                          <p className="event-card-location">{event.city}, {event.state}</p>
+                          <p className="event-card-date">
+                            {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {event.endDate && ` - ${new Date(event.endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                          </p>
+                          {event.hostPartner && (
+                            <p className="event-card-host">Host: {event.hostPartner}</p>
+                          )}
+                          {event.description && (
+                            <p className="event-card-desc">{event.description}</p>
+                          )}
+                          <div className="event-card-actions">
+                            {event.registrationLink && (
+                              <a href={event.registrationLink} target="_blank" rel="noopener noreferrer" className="event-register-btn">
+                                Register
+                              </a>
+                            )}
+                            {isUserAllowed && (
+                              <>
+                                <button className="event-edit-btn" onClick={(e) => { e.stopPropagation(); openEditEventForm(event) }}>Edit</button>
+                                <button className="event-delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event.id) }}>Remove</button>
+                              </>
+                            )}
                           </div>
                         </div>
-
-                        {(program.conference || program.headCoach || program.ranking || program.topProspects) && (
-                          <div className="popup-details">
-                            {program.conference && (
-                              <div className="popup-detail-row">
-                                <span className="detail-icon">🏆</span>
-                                <span className="detail-text">{program.conference}</span>
-                              </div>
-                            )}
-                            {program.headCoach && (
-                              <div className="popup-detail-row">
-                                <span className="detail-icon">👤</span>
-                                <span className="detail-text">{program.headCoach}</span>
-                              </div>
-                            )}
-                            {program.ranking && (
-                              <div className="popup-detail-row">
-                                <span className="detail-icon">📊</span>
-                                <span className="detail-text">{program.ranking}</span>
-                              </div>
-                            )}
-                            {program.topProspects && (
-                              <div className="popup-detail-row">
-                                <span className="detail-icon">⭐</span>
-                                <span className="detail-text">{program.topProspects}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {(program.website || program.roster) && (
-                          <div className="popup-links">
-                            {program.website && (
-                              <a href={program.website} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
-                                <span>🌐</span> Website
-                              </a>
-                            )}
-                            {program.roster && (
-                              <a href={program.roster} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
-                                <span>📋</span> Roster
-                              </a>
-                            )}
-                          </div>
-                        )}
-
-                        {program.gallery && program.gallery.length > 0 && (
-                          <div className="popup-gallery">
-                            {program.gallery.slice(0, 4).map((img, idx) => (
-                              <img key={idx} src={img} alt="Gallery" className="gallery-thumb" />
-                            ))}
-                            {program.gallery.length > 4 && (
-                              <span className="gallery-more">+{program.gallery.length - 4}</span>
-                            )}
-                          </div>
-                        )}
-
-                        {isUserAllowed && (
-                          <div className="popup-actions">
-                            <button className="popup-edit-btn" onClick={() => openEditForm(program)}>
-                              ✏️ Edit
-                            </button>
-                            <button className="popup-delete-btn" onClick={() => handleDeleteProgram(program.id)}>
-                              🗑️ Remove
-                            </button>
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              )
-            ))}
-          </MapContainer>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Programs Map */
+          isLoading ? (
+            <div className="loading">Loading programs...</div>
+          ) : (
+            <MapContainer
+              key={`${activeTab}-${darkMode}`}
+              center={mapCenter}
+              zoom={mapZoom}
+              className="map-container"
+              zoomControl={true}
+              scrollWheelZoom={true}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url={darkMode
+                  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                }
+              />
+
+              {filteredPrograms.map(program => (
+                program && program.coordinates && (
+                  <Marker
+                    key={program.id}
+                    position={program.coordinates}
+                    icon={programIcons[program.id]}
+                  >
+                    <Popup className="program-popup">
+                      <div className="popup-card">
+                        <div
+                          className="popup-header"
+                          style={{ backgroundColor: REGIONS[program.region]?.color || '#333' }}
+                        >
+                          <span className="popup-region-tag">{program.region}</span>
+                        </div>
+                        <div className="popup-body">
+                          <div className="popup-top">
+                            <div className="popup-logo-container">
+                              <img src={program.logo} alt={program.name} className="popup-logo" />
+                            </div>
+                            <div className="popup-info">
+                              <h3 className="popup-title">{program.name}</h3>
+                              <p className="popup-location">{program.city}, {program.state}</p>
+                            </div>
+                          </div>
+
+                          {(program.conference || program.headCoach || program.ranking || program.topProspects) && (
+                            <div className="popup-details">
+                              {program.conference && (
+                                <div className="popup-detail-row">
+                                  <span className="detail-icon">🏆</span>
+                                  <span className="detail-text">{program.conference}</span>
+                                </div>
+                              )}
+                              {program.headCoach && (
+                                <div className="popup-detail-row">
+                                  <span className="detail-icon">👤</span>
+                                  <span className="detail-text">{program.headCoach}</span>
+                                </div>
+                              )}
+                              {program.ranking && (
+                                <div className="popup-detail-row">
+                                  <span className="detail-icon">📊</span>
+                                  <span className="detail-text">{program.ranking}</span>
+                                </div>
+                              )}
+                              {program.topProspects && (
+                                <div className="popup-detail-row">
+                                  <span className="detail-icon">⭐</span>
+                                  <span className="detail-text">{program.topProspects}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {(program.website || program.roster) && (
+                            <div className="popup-links">
+                              {program.website && (
+                                <a href={program.website} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
+                                  <span>🌐</span> Website
+                                </a>
+                              )}
+                              {program.roster && (
+                                <a href={program.roster} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
+                                  <span>📋</span> Roster
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          {program.gallery && program.gallery.length > 0 && (
+                            <div className="popup-gallery">
+                              {program.gallery.slice(0, 4).map((img, idx) => (
+                                <img key={idx} src={img} alt="Gallery" className="gallery-thumb" />
+                              ))}
+                              {program.gallery.length > 4 && (
+                                <span className="gallery-more">+{program.gallery.length - 4}</span>
+                              )}
+                            </div>
+                          )}
+
+                          {isUserAllowed && (
+                            <div className="popup-actions">
+                              <button className="popup-edit-btn" onClick={() => openEditForm(program)}>
+                                ✏️ Edit
+                              </button>
+                              <button className="popup-delete-btn" onClick={() => handleDeleteProgram(program.id)}>
+                                🗑️ Remove
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )
+              ))}
+            </MapContainer>
+          )
         )}
       </main>
 
       <footer className="footer">
         <p>
-          {filteredPrograms.length} programs displayed
+          {activeTab === 'events'
+            ? `${events.length} events`
+            : `${filteredPrograms.length} programs displayed`}
           {user && ` | Signed in as ${user.email}`}
         </p>
       </footer>
@@ -711,6 +970,14 @@ function App() {
         isOpen={isAdminPanelOpen}
         onClose={() => setIsAdminPanelOpen(false)}
         allowedUsers={allowedUsers}
+      />
+
+      <AddEventForm
+        isOpen={isEventFormOpen}
+        onClose={closeEventForm}
+        onAdd={handleAddEvent}
+        onEdit={handleEditEvent}
+        editEvent={editingEvent}
       />
     </div>
   )

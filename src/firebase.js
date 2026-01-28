@@ -168,4 +168,35 @@ export const subscribeToProgramHistory = (sport, programId, callback) => {
   })
 }
 
+// Event CRUD functions
+export const addEvent = async (eventData) => {
+  const eventsRef = ref(database, 'events')
+  const newRef = push(eventsRef)
+  await set(newRef, { ...eventData, id: newRef.key })
+  return newRef.key
+}
+
+export const deleteEvent = async (eventId) => {
+  const eventRef = ref(database, `events/${eventId}`)
+  await remove(eventRef)
+}
+
+export const editEvent = async (eventData) => {
+  const eventRef = ref(database, `events/${eventData.id}`)
+  await set(eventRef, eventData)
+}
+
+export const subscribeToEvents = (callback) => {
+  const eventsRef = ref(database, 'events')
+  const unsubscribe = onValue(eventsRef, (snapshot) => {
+    const data = snapshot.val()
+    const events = data ? Object.values(data) : []
+    callback(events)
+  }, (error) => {
+    console.error('Firebase events error:', error)
+    callback([])
+  })
+  return unsubscribe
+}
+
 export { database, auth }
