@@ -459,6 +459,11 @@
   border-radius: 50%;
 }
 
+.logo-marker.logo-contain img {
+  object-fit: contain;
+  padding: 2px;
+}
+
 /* Popup Styling */
 .leaflet-popup-content-wrapper {
   background: var(--bg-primary);

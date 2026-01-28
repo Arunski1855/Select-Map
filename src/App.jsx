@@ -36,12 +36,12 @@ const REGIONS = {
 }
 
 // Create custom icon for each program logo
-const createLogoIcon = (logoUrl, programName) => {
+const createLogoIcon = (logoUrl, name, useContain = false) => {
   return L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker" title="${programName}">
-        <img src="${logoUrl}" alt="${programName}" onerror="this.style.display='none'" />
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}" title="${name}">
+        <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
       </div>
     `,
     iconSize: [28, 28],
@@ -382,6 +382,35 @@ function App() {
     return icons
   }, [filteredPrograms])
 
+  // Offset overlapping program markers
+  const adjustedPositions = useMemo(() => {
+    const positions = {}
+    const seen = {}
+    filteredPrograms.forEach(program => {
+      if (!program || !program.coordinates) return
+      const key = `${program.coordinates[0].toFixed(3)},${program.coordinates[1].toFixed(3)}`
+      if (!seen[key]) seen[key] = []
+      seen[key].push(program.id)
+    })
+    filteredPrograms.forEach(program => {
+      if (!program || !program.coordinates) return
+      const key = `${program.coordinates[0].toFixed(3)},${program.coordinates[1].toFixed(3)}`
+      const group = seen[key]
+      if (group.length > 1) {
+        const idx = group.indexOf(program.id)
+        const angle = (2 * Math.PI * idx) / group.length
+        const offset = 0.015
+        positions[program.id] = [
+          program.coordinates[0] + offset * Math.cos(angle),
+          program.coordinates[1] + offset * Math.sin(angle)
+        ]
+      } else {
+        positions[program.id] = program.coordinates
+      }
+    })
+    return positions
+  }, [filteredPrograms])
+
   // Count programs by region
   const regionCounts = useMemo(() => {
     const counts = { total: programs.length }
@@ -408,7 +437,7 @@ function App() {
     const icons = {}
     events.forEach(event => {
       if (event && event.id && event.photo) {
-        icons[event.id] = createLogoIcon(event.photo, event.name)
+        icons[event.id] = createLogoIcon(event.photo, event.name, true)
       } else if (event && event.id) {
         icons[event.id] = L.divIcon({
           className: 'custom-logo-marker',
@@ -838,7 +867,7 @@ function App() {
                 program && program.coordinates && (
                   <Marker
                     key={program.id}
-                    position={program.coordinates}
+                    position={adjustedPositions[program.id] || program.coordinates}
                     icon={programIcons[program.id]}
                   >
                     <Popup className="program-popup">
