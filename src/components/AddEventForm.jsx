@@ -206,7 +206,7 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                placeholder="e.g., Indianapolis"
+                placeholder="e.g., Miami"
               />
             </div>
 
@@ -241,7 +241,7 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
               name="hostPartner"
               value={formData.hostPartner}
               onChange={handleInputChange}
-              placeholder="e.g., Indiana Sports Corp"
+              placeholder="e.g., Miami Dade"
             />
           </div>
 
