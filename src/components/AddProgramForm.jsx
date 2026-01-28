@@ -33,10 +33,10 @@ const CA_PROVINCES = [
 
 // Bahamas Islands for dropdown
 const BS_ISLANDS = [
-  { abbr: 'NP', name: 'Nassau / New Providence' }, { abbr: 'GBI', name: 'Grand Bahama' },
-  { abbr: 'AB', name: 'Abaco' }, { abbr: 'EL', name: 'Eleuthera' },
-  { abbr: 'EX', name: 'Exuma' }, { abbr: 'AN', name: 'Andros' },
-  { abbr: 'BI', name: 'Bimini' }, { abbr: 'LI', name: 'Long Island' }
+  { abbr: 'BS-NP', name: 'Nassau / New Providence' }, { abbr: 'BS-GBI', name: 'Grand Bahama' },
+  { abbr: 'BS-AB', name: 'Abaco' }, { abbr: 'BS-EL', name: 'Eleuthera' },
+  { abbr: 'BS-EX', name: 'Exuma' }, { abbr: 'BS-AN', name: 'Andros' },
+  { abbr: 'BS-BI', name: 'Bimini' }, { abbr: 'BS-LI', name: 'Long Island' }
 ]
 
 const REGIONS = ['Canada', 'Mid Atlantic', 'South', 'Midwest', 'West']
@@ -145,9 +145,10 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
     try {
       // Check if state is a Canadian province
       const isCanadian = CA_PROVINCES.some(prov => prov.abbr === state)
-      const isBahamian = BS_ISLANDS.some(isl => isl.abbr === state)
-      const country = isBahamian ? 'Bahamas' : isCanadian ? 'Canada' : 'USA'
-      const query = encodeURIComponent(`${city}, ${state}, ${country}`)
+      const bahamasIsland = BS_ISLANDS.find(isl => isl.abbr === state)
+      const country = bahamasIsland ? 'Bahamas' : isCanadian ? 'Canada' : 'USA'
+      const region = bahamasIsland ? bahamasIsland.name : state
+      const query = encodeURIComponent(`${city}, ${region}, ${country}`)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`,
         { headers: { 'User-Agent': 'AdidasSelectMap/1.0' } }
