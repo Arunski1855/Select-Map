@@ -37,7 +37,8 @@ const initialFormState = {
   date: '',
   endDate: '',
   description: '',
-  registrationLink: ''
+  registrationLink: '',
+  proposed: false
 }
 
 function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
@@ -59,7 +60,8 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
         date: editEvent.date || '',
         endDate: editEvent.endDate || '',
         description: editEvent.description || '',
-        registrationLink: editEvent.registrationLink || ''
+        registrationLink: editEvent.registrationLink || '',
+        proposed: editEvent.proposed || false
       })
       setPhotoPreview(editEvent.photo)
       setPhotoData(editEvent.photo)
@@ -147,6 +149,7 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
         endDate: formData.endDate || '',
         description: formData.description || '',
         registrationLink: formData.registrationLink || '',
+        proposed: formData.proposed || false,
         photo: photoData || '',
         coordinates: coordinates
       }
@@ -267,6 +270,19 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
                 onChange={handleInputChange}
               />
             </div>
+          </div>
+
+          <div className="form-group form-checkbox">
+            <label>
+              <input
+                type="checkbox"
+                name="proposed"
+                checked={formData.proposed}
+                onChange={(e) => setFormData(prev => ({ ...prev, proposed: e.target.checked }))}
+              />
+              Proposed Event
+            </label>
+            <span className="checkbox-hint">Mark if this event is not yet confirmed</span>
           </div>
 
           <div className="form-group">

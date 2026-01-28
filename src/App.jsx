@@ -688,8 +688,8 @@ function App() {
                       >
                         <Popup className="program-popup">
                           <div className="popup-card">
-                            <div className="popup-header" style={{ backgroundColor: '#000' }}>
-                              <span className="popup-region-tag">Event</span>
+                            <div className="popup-header" style={{ backgroundColor: event.proposed ? '#e67e22' : '#000' }}>
+                              <span className="popup-region-tag">{event.proposed ? 'Proposed Event' : 'Event'}</span>
                             </div>
                             <div className="popup-body">
                               <div className="popup-top">
@@ -771,8 +771,9 @@ function App() {
                         className={`event-card ${isPast ? 'event-past' : ''} ${selectedEventId === event.id ? 'event-selected' : ''}`}
                         onClick={() => setSelectedEventId(event.id)}
                       >
-                        {isWithin2Weeks && <span className="event-badge">Upcoming</span>}
-                        {isPast && <span className="event-badge event-badge-past">Past</span>}
+                        {event.proposed && <span className="event-badge event-badge-proposed">Proposed</span>}
+                        {!event.proposed && isWithin2Weeks && <span className="event-badge">Upcoming</span>}
+                        {!event.proposed && isPast && <span className="event-badge event-badge-past">Past</span>}
                         {event.photo && (
                           <div className="event-card-photo">
                             <img src={event.photo} alt={event.name} />
