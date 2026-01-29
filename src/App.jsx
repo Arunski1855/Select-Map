@@ -357,13 +357,6 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
               </div>
             )}
 
-            {program.topProspects && (
-              <div className="detail-prospects">
-                <span className="detail-label">Top Prospects</span>
-                <p className="detail-prospects-text">{program.topProspects}</p>
-              </div>
-            )}
-
             <div className="detail-links-section">
               {program.website && (
                 <a href={program.website} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
@@ -400,6 +393,13 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                     <img key={idx} src={img} alt={`Gallery ${idx + 1}`} className="detail-gallery-img" />
                   ))}
                 </div>
+              </div>
+            )}
+
+            {program.topProspects && (
+              <div className="detail-prospects">
+                <span className="detail-label">Top Prospects</span>
+                <p className="detail-prospects-text">{program.topProspects}</p>
               </div>
             )}
 
