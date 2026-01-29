@@ -916,8 +916,6 @@ function App() {
     const node = mapRef.current
     if (!node || isExporting) return
     setIsExporting(true)
-    // Wait for React to re-render with spread-out markers
-    await new Promise(r => setTimeout(r, 600))
     try {
       const dataUrl = await toPng(node, {
         cacheBust: true,
@@ -1035,50 +1033,32 @@ function App() {
     const pos = {}
     progs.forEach(p => { pos[p.id] = [p.coordinates[0], p.coordinates[1]] })
 
-    if (!isExporting) {
-      // Normal view: only separate exact duplicates
-      const seen = {}
-      progs.forEach(p => {
-        const key = `${p.coordinates[0].toFixed(3)},${p.coordinates[1].toFixed(3)}`
-        if (!seen[key]) seen[key] = []
-        seen[key].push(p.id)
-      })
-      Object.values(seen).forEach(group => {
-        if (group.length > 1) {
-          group.forEach((id, idx) => {
-            const angle = (2 * Math.PI * idx) / group.length
-            pos[id] = [pos[id][0] + 0.015 * Math.cos(angle), pos[id][1] + 0.015 * Math.sin(angle)]
-          })
-        }
-      })
-    } else {
-      // Export mode: force-directed repulsion so logos don't overlap in screenshot
-      const MIN_DIST = 0.55
-      const ITERATIONS = 12
-      for (let iter = 0; iter < ITERATIONS; iter++) {
-        for (let i = 0; i < progs.length; i++) {
-          for (let j = i + 1; j < progs.length; j++) {
-            const a = progs[i], b = progs[j]
-            const dLat = pos[b.id][0] - pos[a.id][0]
-            const dLng = pos[b.id][1] - pos[a.id][1]
-            const dist = Math.sqrt(dLat * dLat + dLng * dLng)
-            if (dist < MIN_DIST && dist > 0) {
-              const push = (MIN_DIST - dist) / 2
-              const nLat = dLat / dist
-              const nLng = dLng / dist
-              pos[a.id] = [pos[a.id][0] - nLat * push, pos[a.id][1] - nLng * push]
-              pos[b.id] = [pos[b.id][0] + nLat * push, pos[b.id][1] + nLng * push]
-            } else if (dist === 0) {
-              const angle = (2 * Math.PI * i) / progs.length
-              pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5 * Math.cos(angle), pos[a.id][1] - MIN_DIST * 0.5 * Math.sin(angle)]
-              pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5 * Math.cos(angle), pos[b.id][1] + MIN_DIST * 0.5 * Math.sin(angle)]
-            }
+    // Force-directed repulsion: push nearby markers apart so logos breathe
+    const MIN_DIST = 0.55
+    const ITERATIONS = 12
+    for (let iter = 0; iter < ITERATIONS; iter++) {
+      for (let i = 0; i < progs.length; i++) {
+        for (let j = i + 1; j < progs.length; j++) {
+          const a = progs[i], b = progs[j]
+          const dLat = pos[b.id][0] - pos[a.id][0]
+          const dLng = pos[b.id][1] - pos[a.id][1]
+          const dist = Math.sqrt(dLat * dLat + dLng * dLng)
+          if (dist < MIN_DIST && dist > 0) {
+            const push = (MIN_DIST - dist) / 2
+            const nLat = dLat / dist
+            const nLng = dLng / dist
+            pos[a.id] = [pos[a.id][0] - nLat * push, pos[a.id][1] - nLng * push]
+            pos[b.id] = [pos[b.id][0] + nLat * push, pos[b.id][1] + nLng * push]
+          } else if (dist === 0) {
+            const angle = (2 * Math.PI * i) / progs.length
+            pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5 * Math.cos(angle), pos[a.id][1] - MIN_DIST * 0.5 * Math.sin(angle)]
+            pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5 * Math.cos(angle), pos[b.id][1] + MIN_DIST * 0.5 * Math.sin(angle)]
           }
         }
       }
     }
     return pos
-  }, [filteredPrograms, isExporting])
+  }, [filteredPrograms])
 
   // Count programs by region
   const regionCounts = useMemo(() => {
