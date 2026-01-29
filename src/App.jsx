@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import { useState, useEffect, useMemo } from 'react'
+import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
   subscribeToPrograms,
@@ -209,12 +209,30 @@ function HistoryModal({ isOpen, onClose, program, sport }) {
   )
 }
 
-// Map click handler to fly to marker
+// Dynamic tile layer that swaps without remounting the map
+function DynamicTileLayer({ darkMode }) {
+  const map = useMap()
+  const url = darkMode
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+
+  useEffect(() => {
+    const tileLayer = L.tileLayer(url, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    })
+    tileLayer.addTo(map)
+    return () => { map.removeLayer(tileLayer) }
+  }, [url, map])
+
+  return null
+}
+
+// Map click handler to center on marker
 function FlyToMarker({ position }) {
   const map = useMap()
   useEffect(() => {
     if (position) {
-      map.flyTo(position, Math.max(map.getZoom(), 8), { duration: 0.5 })
+      map.panTo(position, { duration: 0.3 })
     }
   }, [position, map])
   return null
@@ -976,20 +994,14 @@ function App() {
                 <div className="loading">Loading events...</div>
               ) : (
                 <MapContainer
-                  key={`events-${darkMode}`}
+                  key="events"
                   center={mapCenter}
                   zoom={mapZoom}
                   className="map-container"
                   zoomControl={true}
                   scrollWheelZoom={true}
                 >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    url={darkMode
-                      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                    }
-                  />
+                  <DynamicTileLayer darkMode={darkMode} />
                   {events.map(event => (
                     event && event.coordinates && (
                       <Marker
@@ -1131,20 +1143,14 @@ function App() {
               <div className="loading">Loading programs...</div>
             ) : (
               <MapContainer
-                key={`${activeTab}-${darkMode}`}
+                key={activeTab}
                 center={mapCenter}
                 zoom={mapZoom}
                 className="map-container"
                 zoomControl={true}
                 scrollWheelZoom={true}
               >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  url={darkMode
-                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                  }
-                />
+                <DynamicTileLayer darkMode={darkMode} />
                 {selectedProgram && (
                   <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
                 )}

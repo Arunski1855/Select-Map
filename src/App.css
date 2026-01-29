@@ -2165,12 +2165,12 @@
   /* Events split layout on mobile */
   .events-split-layout {
     flex-direction: column;
-    height: calc(100vh - 160px);
+    height: calc(100vh - 120px);
   }
 
   .events-map-panel {
-    flex: 1;
-    min-height: 200px;
+    flex: 3;
+    min-height: 0;
   }
 
   .events-map-panel .map-container {
@@ -2178,11 +2178,11 @@
   }
 
   .events-list-panel {
+    flex: 2;
     width: 100%;
     border-left: none;
     border-top: 1px solid var(--border-color);
-    height: 40%;
-    max-height: 40%;
+    min-height: 0;
   }
 
   .events-list-header {
