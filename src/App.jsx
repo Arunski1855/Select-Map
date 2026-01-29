@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
   subscribeToPrograms,
@@ -19,7 +19,13 @@ import {
   addEvent,
   deleteEvent,
   editEvent,
-  subscribeToEvents
+  subscribeToEvents,
+  addNote,
+  deleteNote,
+  subscribeToNotes,
+  addScheduleEntry,
+  deleteScheduleEntry,
+  subscribeToSchedule
 } from './firebase'
 import AddProgramForm from './components/AddProgramForm'
 import AddEventForm from './components/AddEventForm'
@@ -203,6 +209,281 @@ function HistoryModal({ isOpen, onClose, program, sport }) {
   )
 }
 
+// Map click handler to fly to marker
+function FlyToMarker({ position }) {
+  const map = useMap()
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, Math.max(map.getZoom(), 8), { duration: 0.5 })
+    }
+  }, [position, map])
+  return null
+}
+
+// Detail Panel Component (slide-out drawer)
+function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete }) {
+  const [activeDetailTab, setActiveDetailTab] = useState('info')
+  const [notes, setNotes] = useState([])
+  const [schedule, setSchedule] = useState([])
+  const [newNote, setNewNote] = useState('')
+  const [newGame, setNewGame] = useState({ date: '', opponent: '', result: '', score: '' })
+  const [noteLoading, setNoteLoading] = useState(false)
+
+  useEffect(() => {
+    if (!program || !sport) return
+    const unsub1 = subscribeToNotes(sport, program.id, setNotes)
+    const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
+    return () => { unsub1(); unsub2() }
+  }, [program, sport])
+
+  useEffect(() => {
+    setActiveDetailTab('info')
+  }, [program?.id])
+
+  if (!isOpen || !program) return null
+
+  const handleAddNote = async (e) => {
+    e.preventDefault()
+    if (!newNote.trim() || !user) return
+    setNoteLoading(true)
+    try {
+      await addNote(sport, program.id, {
+        text: newNote.trim(),
+        author: user.email,
+        timestamp: Date.now()
+      })
+      setNewNote('')
+    } catch (err) {
+      console.error('Error adding note:', err)
+    } finally {
+      setNoteLoading(false)
+    }
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await deleteNote(sport, program.id, noteId)
+    } catch (err) {
+      console.error('Error deleting note:', err)
+    }
+  }
+
+  const handleAddGame = async (e) => {
+    e.preventDefault()
+    if (!newGame.date || !newGame.opponent) return
+    try {
+      await addScheduleEntry(sport, program.id, {
+        date: newGame.date,
+        opponent: newGame.opponent,
+        result: newGame.result || '',
+        score: newGame.score || '',
+        addedBy: user?.email || '',
+        timestamp: Date.now()
+      })
+      setNewGame({ date: '', opponent: '', result: '', score: '' })
+    } catch (err) {
+      console.error('Error adding game:', err)
+    }
+  }
+
+  const handleDeleteGame = async (entryId) => {
+    try {
+      await deleteScheduleEntry(sport, program.id, entryId)
+    } catch (err) {
+      console.error('Error deleting game:', err)
+    }
+  }
+
+  const regionColor = REGIONS[program.region]?.color || '#333'
+
+  return (
+    <div className={`detail-panel ${isOpen ? 'open' : ''}`}>
+      <div className="detail-panel-header" style={{ background: regionColor }}>
+        <button className="detail-panel-close" onClick={onClose}>&times;</button>
+        <span className="detail-panel-region">{program.region}</span>
+      </div>
+
+      <div className="detail-panel-profile">
+        <div className="detail-panel-logo">
+          <img src={program.logo} alt={program.name} />
+        </div>
+        <div className="detail-panel-title">
+          <h2>{program.name}</h2>
+          <p>{program.city}, {program.state}</p>
+        </div>
+      </div>
+
+      <div className="detail-panel-tabs">
+        {['info', 'schedule', 'notes'].map(tab => (
+          <button
+            key={tab}
+            className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
+            onClick={() => setActiveDetailTab(tab)}
+          >
+            {tab === 'info' ? 'Details' : tab === 'schedule' ? 'Schedule' : `Notes (${notes.length})`}
+          </button>
+        ))}
+      </div>
+
+      <div className="detail-panel-content">
+        {activeDetailTab === 'info' && (
+          <div className="detail-info-tab">
+            {(program.conference || program.headCoach || program.ranking || program.topProspects) && (
+              <div className="detail-section">
+                {program.conference && (
+                  <div className="detail-row"><span className="detail-label">Conference</span><span>{program.conference}</span></div>
+                )}
+                {program.headCoach && (
+                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
+                )}
+                {program.ranking && (
+                  <div className="detail-row"><span className="detail-label">Ranking</span><span>{program.ranking}</span></div>
+                )}
+                {program.topProspects && (
+                  <div className="detail-row"><span className="detail-label">Top Prospects</span><span>{program.topProspects}</span></div>
+                )}
+              </div>
+            )}
+
+            <div className="detail-links-section">
+              {program.website && (
+                <a href={program.website} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
+                  Website
+                </a>
+              )}
+              {program.roster && (
+                <a href={program.roster} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
+                  Roster
+                </a>
+              )}
+              {program.maxprepsUrl && (
+                <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-maxpreps">
+                  MaxPreps
+                </a>
+              )}
+            </div>
+
+            {program.gallery && program.gallery.length > 0 && (
+              <div className="detail-gallery">
+                <h4>Gallery</h4>
+                <div className="detail-gallery-grid">
+                  {program.gallery.map((img, idx) => (
+                    <img key={idx} src={img} alt={`Gallery ${idx + 1}`} className="detail-gallery-img" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isUserAllowed && (
+              <div className="detail-actions">
+                <button className="detail-edit-btn" onClick={() => onEdit(program)}>Edit Program</button>
+                <button className="detail-delete-btn" onClick={() => onDelete(program.id)}>Remove</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeDetailTab === 'schedule' && (
+          <div className="detail-schedule-tab">
+            {program.maxprepsUrl && (
+              <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="maxpreps-banner">
+                View full schedule & results on MaxPreps &rarr;
+              </a>
+            )}
+
+            {isUserAllowed && (
+              <form className="add-game-form" onSubmit={handleAddGame}>
+                <h4>Add Game</h4>
+                <div className="game-form-row">
+                  <input type="date" value={newGame.date} onChange={e => setNewGame(g => ({ ...g, date: e.target.value }))} required />
+                  <input type="text" placeholder="Opponent" value={newGame.opponent} onChange={e => setNewGame(g => ({ ...g, opponent: e.target.value }))} required />
+                </div>
+                <div className="game-form-row">
+                  <select value={newGame.result} onChange={e => setNewGame(g => ({ ...g, result: e.target.value }))}>
+                    <option value="">Result</option>
+                    <option value="W">Win</option>
+                    <option value="L">Loss</option>
+                    <option value="T">Tie</option>
+                    <option value="upcoming">Upcoming</option>
+                  </select>
+                  <input type="text" placeholder="Score (e.g. 72-65)" value={newGame.score} onChange={e => setNewGame(g => ({ ...g, score: e.target.value }))} />
+                </div>
+                <button type="submit" className="add-game-btn">Add Game</button>
+              </form>
+            )}
+
+            {schedule.length === 0 ? (
+              <p className="detail-empty">No games added yet.</p>
+            ) : (
+              <div className="schedule-list">
+                {schedule.map(game => (
+                  <div key={game.id} className={`schedule-item ${game.result === 'W' ? 'win' : game.result === 'L' ? 'loss' : ''}`}>
+                    <div className="schedule-date">
+                      {new Date(game.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                    <div className="schedule-details">
+                      <span className="schedule-opponent">{game.opponent}</span>
+                      {game.score && <span className="schedule-score">{game.score}</span>}
+                    </div>
+                    {game.result && game.result !== 'upcoming' && (
+                      <span className={`schedule-result ${game.result}`}>{game.result}</span>
+                    )}
+                    {game.result === 'upcoming' && (
+                      <span className="schedule-result upcoming">TBD</span>
+                    )}
+                    {isUserAllowed && (
+                      <button className="schedule-delete" onClick={() => handleDeleteGame(game.id)}>&times;</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeDetailTab === 'notes' && (
+          <div className="detail-notes-tab">
+            {!isUserAllowed ? (
+              <p className="detail-empty">Sign in to view internal notes.</p>
+            ) : (
+              <>
+                <form className="add-note-form" onSubmit={handleAddNote}>
+                  <textarea
+                    value={newNote}
+                    onChange={e => setNewNote(e.target.value)}
+                    placeholder="Add an internal note..."
+                    rows={3}
+                  />
+                  <button type="submit" disabled={noteLoading || !newNote.trim()}>
+                    {noteLoading ? 'Adding...' : 'Add Note'}
+                  </button>
+                </form>
+
+                {notes.length === 0 ? (
+                  <p className="detail-empty">No notes yet.</p>
+                ) : (
+                  <div className="notes-list">
+                    {notes.map(note => (
+                      <div key={note.id} className="note-item">
+                        <div className="note-header">
+                          <span className="note-author">{note.author}</span>
+                          <span className="note-time">{new Date(note.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="note-text">{note.text}</p>
+                        <button className="note-delete" onClick={() => handleDeleteNote(note.id)}>&times;</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Admin Panel Component for managing allowed users
 function AdminPanel({ isOpen, onClose, allowedUsers }) {
   const [newEmail, setNewEmail] = useState('')
@@ -300,6 +581,7 @@ function App() {
   const [historyProgram, setHistoryProgram] = useState(null)
   const [allowedUsers, setAllowedUsers] = useState([])
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false)
+  const [selectedProgram, setSelectedProgram] = useState(null)
 
   // Events state
   const [events, setEvents] = useState([])
@@ -843,125 +1125,56 @@ function App() {
             </div>
           </div>
         ) : (
-          /* Programs Map */
-          isLoading ? (
-            <div className="loading">Loading programs...</div>
-          ) : (
-            <MapContainer
-              key={`${activeTab}-${darkMode}`}
-              center={mapCenter}
-              zoom={mapZoom}
-              className="map-container"
-              zoomControl={true}
-              scrollWheelZoom={true}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url={darkMode
-                  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                }
-              />
+          /* Programs Map + Detail Panel */
+          <div className="programs-layout">
+            {isLoading ? (
+              <div className="loading">Loading programs...</div>
+            ) : (
+              <MapContainer
+                key={`${activeTab}-${darkMode}`}
+                center={mapCenter}
+                zoom={mapZoom}
+                className="map-container"
+                zoomControl={true}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                  url={darkMode
+                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                  }
+                />
+                {selectedProgram && (
+                  <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
+                )}
 
-              {filteredPrograms.map(program => (
-                program && program.coordinates && (
-                  <Marker
-                    key={program.id}
-                    position={adjustedPositions[program.id] || program.coordinates}
-                    icon={programIcons[program.id]}
-                  >
-                    <Popup className="program-popup">
-                      <div className="popup-card">
-                        <div
-                          className="popup-header"
-                          style={{ backgroundColor: REGIONS[program.region]?.color || '#333' }}
-                        >
-                          <span className="popup-region-tag">{program.region}</span>
-                        </div>
-                        <div className="popup-body">
-                          <div className="popup-top">
-                            <div className="popup-logo-container">
-                              <img src={program.logo} alt={program.name} className="popup-logo" />
-                            </div>
-                            <div className="popup-info">
-                              <h3 className="popup-title">{program.name}</h3>
-                              <p className="popup-location">{program.city}, {program.state}</p>
-                            </div>
-                          </div>
+                {filteredPrograms.map(program => (
+                  program && program.coordinates && (
+                    <Marker
+                      key={program.id}
+                      position={adjustedPositions[program.id] || program.coordinates}
+                      icon={programIcons[program.id]}
+                      eventHandlers={{
+                        click: () => setSelectedProgram(program)
+                      }}
+                    />
+                  )
+                ))}
+              </MapContainer>
+            )}
 
-                          {(program.conference || program.headCoach || program.ranking || program.topProspects) && (
-                            <div className="popup-details">
-                              {program.conference && (
-                                <div className="popup-detail-row">
-                                  <span className="detail-icon">🏆</span>
-                                  <span className="detail-text">{program.conference}</span>
-                                </div>
-                              )}
-                              {program.headCoach && (
-                                <div className="popup-detail-row">
-                                  <span className="detail-icon">👤</span>
-                                  <span className="detail-text">{program.headCoach}</span>
-                                </div>
-                              )}
-                              {program.ranking && (
-                                <div className="popup-detail-row">
-                                  <span className="detail-icon">📊</span>
-                                  <span className="detail-text">{program.ranking}</span>
-                                </div>
-                              )}
-                              {program.topProspects && (
-                                <div className="popup-detail-row">
-                                  <span className="detail-icon">⭐</span>
-                                  <span className="detail-text">{program.topProspects}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {(program.website || program.roster) && (
-                            <div className="popup-links">
-                              {program.website && (
-                                <a href={program.website} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
-                                  <span>🌐</span> Website
-                                </a>
-                              )}
-                              {program.roster && (
-                                <a href={program.roster} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
-                                  <span>📋</span> Roster
-                                </a>
-                              )}
-                            </div>
-                          )}
-
-                          {program.gallery && program.gallery.length > 0 && (
-                            <div className="popup-gallery">
-                              {program.gallery.slice(0, 4).map((img, idx) => (
-                                <img key={idx} src={img} alt="Gallery" className="gallery-thumb" />
-                              ))}
-                              {program.gallery.length > 4 && (
-                                <span className="gallery-more">+{program.gallery.length - 4}</span>
-                              )}
-                            </div>
-                          )}
-
-                          {isUserAllowed && (
-                            <div className="popup-actions">
-                              <button className="popup-edit-btn" onClick={() => openEditForm(program)}>
-                                ✏️ Edit
-                              </button>
-                              <button className="popup-delete-btn" onClick={() => handleDeleteProgram(program.id)}>
-                                🗑️ Remove
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )
-              ))}
-            </MapContainer>
-          )
+            <DetailPanel
+              program={selectedProgram}
+              sport={activeTab}
+              isOpen={!!selectedProgram}
+              onClose={() => setSelectedProgram(null)}
+              isUserAllowed={isUserAllowed}
+              user={user}
+              onEdit={(p) => { setSelectedProgram(null); openEditForm(p) }}
+              onDelete={(id) => { setSelectedProgram(null); handleDeleteProgram(id) }}
+            />
+          </div>
         )}
       </main>
 

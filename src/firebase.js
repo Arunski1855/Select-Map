@@ -199,4 +199,48 @@ export const subscribeToEvents = (callback) => {
   return unsubscribe
 }
 
+// Internal notes for programs
+export const addNote = async (sport, programId, noteData) => {
+  const notesRef = ref(database, `notes/${sport}/${programId}`)
+  const newRef = push(notesRef)
+  await set(newRef, { ...noteData, id: newRef.key })
+  return newRef.key
+}
+
+export const deleteNote = async (sport, programId, noteId) => {
+  const noteRef = ref(database, `notes/${sport}/${programId}/${noteId}`)
+  await remove(noteRef)
+}
+
+export const subscribeToNotes = (sport, programId, callback) => {
+  const notesRef = ref(database, `notes/${sport}/${programId}`)
+  return onValue(notesRef, (snapshot) => {
+    const data = snapshot.val()
+    const notes = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : []
+    callback(notes)
+  })
+}
+
+// Schedule/results for programs
+export const addScheduleEntry = async (sport, programId, entry) => {
+  const schedRef = ref(database, `schedule/${sport}/${programId}`)
+  const newRef = push(schedRef)
+  await set(newRef, { ...entry, id: newRef.key })
+  return newRef.key
+}
+
+export const deleteScheduleEntry = async (sport, programId, entryId) => {
+  const entryRef = ref(database, `schedule/${sport}/${programId}/${entryId}`)
+  await remove(entryRef)
+}
+
+export const subscribeToSchedule = (sport, programId, callback) => {
+  const schedRef = ref(database, `schedule/${sport}/${programId}`)
+  return onValue(schedRef, (snapshot) => {
+    const data = snapshot.val()
+    const entries = data ? Object.values(data).sort((a, b) => a.date.localeCompare(b.date)) : []
+    callback(entries)
+  })
+}
+
 export { database, auth }

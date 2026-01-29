@@ -51,7 +51,8 @@ const initialFormState = {
   headCoach: '',
   ranking: '',
   topProspects: '',
-  conference: ''
+  conference: '',
+  maxprepsUrl: ''
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
@@ -77,7 +78,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         headCoach: editProgram.headCoach || '',
         ranking: editProgram.ranking || '',
         topProspects: editProgram.topProspects || '',
-        conference: editProgram.conference || ''
+        conference: editProgram.conference || '',
+        maxprepsUrl: editProgram.maxprepsUrl || ''
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -208,6 +210,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         ranking: formData.ranking || '',
         topProspects: formData.topProspects || '',
         conference: formData.conference || '',
+        maxprepsUrl: formData.maxprepsUrl || '',
         logo: logoData,
         gallery: gallery,
         coordinates: coordinates
@@ -400,6 +403,18 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                 placeholder="https://..."
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="maxprepsUrl">MaxPreps URL</label>
+            <input
+              type="url"
+              id="maxprepsUrl"
+              name="maxprepsUrl"
+              value={formData.maxprepsUrl}
+              onChange={handleInputChange}
+              placeholder="https://www.maxpreps.com/high-schools/..."
+            />
           </div>
 
           <div className="form-group">
