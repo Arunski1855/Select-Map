@@ -1029,27 +1029,45 @@ function App() {
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
     const positions = {}
-    const seen = {}
-    filteredPrograms.forEach(program => {
-      if (!program || !program.coordinates) return
-      const key = `${program.coordinates[0].toFixed(3)},${program.coordinates[1].toFixed(3)}`
-      if (!seen[key]) seen[key] = []
-      seen[key].push(program.id)
+    const THRESHOLD = 0.6 // ~40 miles — groups nearby programs
+    const OFFSET = 0.35   // spread distance in degrees
+
+    // Build groups of programs that are within THRESHOLD of each other
+    const groups = []
+    const assigned = new Set()
+    const progs = filteredPrograms.filter(p => p && p.coordinates)
+
+    progs.forEach(program => {
+      if (assigned.has(program.id)) return
+      const group = [program]
+      assigned.add(program.id)
+      progs.forEach(other => {
+        if (assigned.has(other.id)) return
+        const dLat = Math.abs(program.coordinates[0] - other.coordinates[0])
+        const dLng = Math.abs(program.coordinates[1] - other.coordinates[1])
+        if (dLat < THRESHOLD && dLng < THRESHOLD) {
+          group.push(other)
+          assigned.add(other.id)
+        }
+      })
+      groups.push(group)
     })
-    filteredPrograms.forEach(program => {
-      if (!program || !program.coordinates) return
-      const key = `${program.coordinates[0].toFixed(3)},${program.coordinates[1].toFixed(3)}`
-      const group = seen[key]
-      if (group.length > 1) {
-        const idx = group.indexOf(program.id)
-        const angle = (2 * Math.PI * idx) / group.length
-        const offset = 0.015
-        positions[program.id] = [
-          program.coordinates[0] + offset * Math.cos(angle),
-          program.coordinates[1] + offset * Math.sin(angle)
-        ]
+
+    groups.forEach(group => {
+      if (group.length === 1) {
+        positions[group[0].id] = group[0].coordinates
       } else {
-        positions[program.id] = program.coordinates
+        // Center of the group
+        const cLat = group.reduce((s, p) => s + p.coordinates[0], 0) / group.length
+        const cLng = group.reduce((s, p) => s + p.coordinates[1], 0) / group.length
+        const spread = OFFSET * Math.max(1, group.length / 4)
+        group.forEach((program, idx) => {
+          const angle = (2 * Math.PI * idx) / group.length
+          positions[program.id] = [
+            cLat + spread * Math.cos(angle),
+            cLng + spread * Math.sin(angle)
+          ]
+        })
       }
     })
     return positions
