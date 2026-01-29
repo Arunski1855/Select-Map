@@ -1969,35 +1969,39 @@
 /* Responsive Styles */
 @media (max-width: 768px) {
   .header {
-    padding: 1rem;
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
+    padding: 0.6rem 1rem;
+    flex-direction: row;
+    gap: 0.5rem;
+    text-align: left;
   }
 
   .header-content {
-    width: 100%;
+    width: auto;
+    flex: 1;
+    min-width: 0;
   }
 
   .title-row {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .header-logo {
-    height: 30px;
+    height: 24px;
   }
 
   .title {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
 
   .subtitle {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
+    display: none;
   }
 
   .header-actions {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    justify-content: flex-end;
+    gap: 0.5rem;
   }
 
   .user-email {
@@ -2005,47 +2009,53 @@
   }
 
   .add-btn {
-    flex: 1;
-    max-width: 200px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .admin-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
   }
 
   .dashboard {
-    padding: 0.5rem;
+    padding: 0.4rem;
   }
 
   .stat-item {
-    padding: 0.4rem 0.6rem;
-    min-width: 60px;
+    padding: 0.3rem 0.5rem;
+    min-width: 55px;
   }
 
   .stat-value {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
   .stat-label {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
   }
 
   .tabs {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .tab {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.25rem;
   }
 
   .tab-icon {
-    height: 20px;
+    height: 16px;
   }
 
   .tab-name {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
   }
 
   .toolbar {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    padding: 0.5rem;
   }
 
   .search-box {
@@ -2059,22 +2069,25 @@
   .filter-info {
     justify-content: center;
     flex-wrap: wrap;
+    font-size: 0.75rem;
   }
 
   .map-container {
-    height: calc(100vh - 400px);
-    min-height: 300px;
+    height: calc(100vh - 200px);
+    min-height: 250px;
   }
 
+  /* Programs layout on mobile */
   .programs-layout {
-    height: auto;
+    height: calc(100vh - 200px);
+    position: relative;
   }
 
   .programs-layout .map-container {
-    height: calc(100vh - 400px) !important;
-    min-height: 300px;
+    height: 100% !important;
   }
 
+  /* Detail panel as bottom sheet on mobile */
   .detail-panel {
     width: 100%;
     position: fixed;
@@ -2082,34 +2095,102 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 60vh;
+    height: 45vh;
+    max-height: 45vh;
     transform: translateY(100%);
-    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
-    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+    border-radius: 14px 14px 0 0;
+    z-index: 1001;
   }
 
   .detail-panel.open {
     transform: translateY(0);
   }
 
+  .detail-panel-header {
+    padding: 6px 14px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .detail-panel-header::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 4px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+  }
+
+  .detail-panel-region {
+    font-size: 0.6rem;
+  }
+
+  .detail-panel-close {
+    width: 24px;
+    height: 24px;
+    font-size: 1rem;
+  }
+
+  .detail-panel-profile {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .detail-panel-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .detail-panel-title h2 {
+    font-size: 0.9rem;
+  }
+
+  .detail-panel-title p {
+    font-size: 0.72rem;
+  }
+
+  .detail-tab {
+    padding: 8px 0;
+    font-size: 0.72rem;
+  }
+
+  .detail-panel-content {
+    padding: 12px;
+  }
+
+  /* Events split layout on mobile */
   .events-split-layout {
     flex-direction: column;
-    height: auto;
+    height: calc(100vh - 160px);
   }
 
   .events-map-panel {
-    height: 300px;
+    flex: 1;
+    min-height: 200px;
   }
 
   .events-map-panel .map-container {
-    height: 300px !important;
+    height: 100% !important;
   }
 
   .events-list-panel {
     width: 100%;
     border-left: none;
     border-top: 1px solid var(--border-color);
-    max-height: 50vh;
+    height: 40%;
+    max-height: 40%;
+  }
+
+  .events-list-header {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .events-list-header h2 {
+    font-size: 0.9rem;
   }
 
   .logo-marker {
@@ -2117,59 +2198,97 @@
     height: 24px;
   }
 
-  .popup-content {
-    padding: 12px 16px;
-    padding-right: 32px;
-  }
-
-  .popup-title {
-    font-size: 1rem;
-  }
-
   .auth-modal,
   .history-modal {
     padding: 1.5rem;
     width: 95%;
   }
+
+  .footer {
+    padding: 0.4rem;
+    font-size: 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {
+  .header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .header-logo {
+    height: 20px;
+  }
+
+  .title {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+
   .header-actions {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
 
   .theme-toggle,
   .login-btn,
   .logout-btn {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.85rem;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
   }
 
   .add-btn {
-    padding: 0.6rem 1rem;
-    font-size: 0.9rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .admin-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
   }
 
   .dashboard-stats {
-    gap: 0.25rem;
+    gap: 0.2rem;
   }
 
   .stat-item {
-    padding: 0.3rem 0.4rem;
-    min-width: 50px;
+    padding: 0.25rem 0.35rem;
+    min-width: 45px;
   }
 
   .stat-value {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .stat-label {
-    font-size: 0.55rem;
+    font-size: 0.5rem;
+  }
+
+  .tab {
+    padding: 0.4rem 0.2rem;
+  }
+
+  .tab-icon {
+    height: 14px;
+  }
+
+  .tab-name {
+    font-size: 0.6rem;
   }
 
   .map-container {
-    height: calc(100vh - 420px);
-    min-height: 250px;
+    height: calc(100vh - 180px);
+    min-height: 200px;
+  }
+
+  .programs-layout {
+    height: calc(100vh - 180px);
+  }
+
+  .detail-panel {
+    height: 50vh;
+    max-height: 50vh;
+  }
+
+  .events-split-layout {
+    height: calc(100vh - 140px);
   }
 }
