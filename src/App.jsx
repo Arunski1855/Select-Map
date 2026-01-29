@@ -1034,8 +1034,9 @@ function App() {
     progs.forEach(p => { pos[p.id] = [p.coordinates[0], p.coordinates[1]] })
 
     // Force-directed repulsion: push nearby markers apart so logos breathe
-    const MIN_DIST = 0.55
-    const ITERATIONS = 12
+    // ~1.8° min separation ≈ logo width at typical US zoom level
+    const MIN_DIST = 1.8
+    const ITERATIONS = 20
     for (let iter = 0; iter < ITERATIONS; iter++) {
       for (let i = 0; i < progs.length; i++) {
         for (let j = i + 1; j < progs.length; j++) {
