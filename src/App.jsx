@@ -916,11 +916,14 @@ function App() {
     const node = mapRef.current
     if (!node || isExporting) return
     setIsExporting(true)
+    // Wait for React to re-render with spread-out markers
+    await new Promise(r => setTimeout(r, 600))
     try {
       const dataUrl = await toPng(node, {
         cacheBust: true,
         backgroundColor: '#ffffff',
-        pixelRatio: 2
+        pixelRatio: 2,
+        style: { padding: '10px' }
       })
       const link = document.createElement('a')
       const tabName = activeTab === 'events' ? 'events' : activeTab
@@ -1029,39 +1032,53 @@ function App() {
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
     const progs = filteredPrograms.filter(p => p && p.coordinates)
-    // Start each marker at its real position
     const pos = {}
     progs.forEach(p => { pos[p.id] = [p.coordinates[0], p.coordinates[1]] })
 
-    // Force-directed repulsion: push overlapping markers apart
-    // MIN_DIST is the minimum separation in degrees (~0.3° ≈ 20mi at mid-latitudes)
-    const MIN_DIST = 0.3
-    const ITERATIONS = 8
-
-    for (let iter = 0; iter < ITERATIONS; iter++) {
-      for (let i = 0; i < progs.length; i++) {
-        for (let j = i + 1; j < progs.length; j++) {
-          const a = progs[i], b = progs[j]
-          const dLat = pos[b.id][0] - pos[a.id][0]
-          const dLng = pos[b.id][1] - pos[a.id][1]
-          const dist = Math.sqrt(dLat * dLat + dLng * dLng)
-          if (dist < MIN_DIST && dist > 0) {
-            const push = (MIN_DIST - dist) / 2
-            const nLat = dLat / dist
-            const nLng = dLng / dist
-            pos[a.id] = [pos[a.id][0] - nLat * push, pos[a.id][1] - nLng * push]
-            pos[b.id] = [pos[b.id][0] + nLat * push, pos[b.id][1] + nLng * push]
-          } else if (dist === 0) {
-            // Exact same coords — nudge apart
-            const angle = Math.random() * 2 * Math.PI
-            pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5 * Math.cos(angle), pos[a.id][1] - MIN_DIST * 0.5 * Math.sin(angle)]
-            pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5 * Math.cos(angle), pos[b.id][1] + MIN_DIST * 0.5 * Math.sin(angle)]
+    if (!isExporting) {
+      // Normal view: only separate exact duplicates
+      const seen = {}
+      progs.forEach(p => {
+        const key = `${p.coordinates[0].toFixed(3)},${p.coordinates[1].toFixed(3)}`
+        if (!seen[key]) seen[key] = []
+        seen[key].push(p.id)
+      })
+      Object.values(seen).forEach(group => {
+        if (group.length > 1) {
+          group.forEach((id, idx) => {
+            const angle = (2 * Math.PI * idx) / group.length
+            pos[id] = [pos[id][0] + 0.015 * Math.cos(angle), pos[id][1] + 0.015 * Math.sin(angle)]
+          })
+        }
+      })
+    } else {
+      // Export mode: force-directed repulsion so logos don't overlap in screenshot
+      const MIN_DIST = 0.55
+      const ITERATIONS = 12
+      for (let iter = 0; iter < ITERATIONS; iter++) {
+        for (let i = 0; i < progs.length; i++) {
+          for (let j = i + 1; j < progs.length; j++) {
+            const a = progs[i], b = progs[j]
+            const dLat = pos[b.id][0] - pos[a.id][0]
+            const dLng = pos[b.id][1] - pos[a.id][1]
+            const dist = Math.sqrt(dLat * dLat + dLng * dLng)
+            if (dist < MIN_DIST && dist > 0) {
+              const push = (MIN_DIST - dist) / 2
+              const nLat = dLat / dist
+              const nLng = dLng / dist
+              pos[a.id] = [pos[a.id][0] - nLat * push, pos[a.id][1] - nLng * push]
+              pos[b.id] = [pos[b.id][0] + nLat * push, pos[b.id][1] + nLng * push]
+            } else if (dist === 0) {
+              const angle = (2 * Math.PI * i) / progs.length
+              pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5 * Math.cos(angle), pos[a.id][1] - MIN_DIST * 0.5 * Math.sin(angle)]
+              pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5 * Math.cos(angle), pos[b.id][1] + MIN_DIST * 0.5 * Math.sin(angle)]
+            }
           }
         }
       }
     }
     return pos
-  }, [filteredPrograms])
+  }, [filteredPrograms, isExporting])
 
   // Count programs by region
   const regionCounts = useMemo(() => {
