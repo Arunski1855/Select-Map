@@ -326,9 +326,10 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
           <img src={program.logo} alt={program.name} />
         </div>
         <div className="detail-panel-title">
-          <h2>{program.name}</h2>
+          <h2>{program.name} <span className="detail-region-badge" style={{ background: regionColor }}>{program.region}</span></h2>
           <p>{program.city}, {program.state}</p>
         </div>
+        <button className="detail-panel-close detail-close-mobile" onClick={onClose}>&times;</button>
       </div>
 
       <div className="detail-panel-tabs">
