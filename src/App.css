@@ -1600,6 +1600,16 @@
   background: #002d7a;
 }
 
+.detail-link-tca {
+  background: #000000;
+  color: white;
+  border-color: #000000;
+}
+
+.detail-link-tca:hover {
+  background: #333333;
+}
+
 .detail-gallery {
   margin-bottom: 14px;
 }

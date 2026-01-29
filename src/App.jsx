@@ -380,6 +380,11 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                   MaxPreps
                 </a>
               )}
+              {program.tcaStoreUrl && (
+                <a href={program.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-tca">
+                  TCA Store
+                </a>
+              )}
             </div>
 
             {program.gallery && program.gallery.length > 0 && (

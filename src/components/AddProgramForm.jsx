@@ -52,7 +52,8 @@ const initialFormState = {
   ranking: '',
   topProspects: '',
   conference: '',
-  maxprepsUrl: ''
+  maxprepsUrl: '',
+  tcaStoreUrl: ''
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
@@ -79,7 +80,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         ranking: editProgram.ranking || '',
         topProspects: editProgram.topProspects || '',
         conference: editProgram.conference || '',
-        maxprepsUrl: editProgram.maxprepsUrl || ''
+        maxprepsUrl: editProgram.maxprepsUrl || '',
+        tcaStoreUrl: editProgram.tcaStoreUrl || ''
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -211,6 +213,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         topProspects: formData.topProspects || '',
         conference: formData.conference || '',
         maxprepsUrl: formData.maxprepsUrl || '',
+        tcaStoreUrl: formData.tcaStoreUrl || '',
         logo: logoData,
         gallery: gallery,
         coordinates: coordinates
@@ -414,6 +417,18 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
               value={formData.maxprepsUrl}
               onChange={handleInputChange}
               placeholder="https://www.maxpreps.com/high-schools/..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="tcaStoreUrl">TCA Store URL</label>
+            <input
+              type="url"
+              id="tcaStoreUrl"
+              name="tcaStoreUrl"
+              value={formData.tcaStoreUrl}
+              onChange={handleInputChange}
+              placeholder="https://..."
             />
           </div>
 
