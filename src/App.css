@@ -2030,6 +2030,42 @@
   color: #88c0ff !important;
 }
 
+/* Export Button in Dashboard */
+.stat-export {
+  background: var(--bg-tertiary) !important;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.stat-export:hover {
+  border-color: var(--text-primary);
+}
+
+.stat-export .stat-value {
+  font-size: 1.2rem;
+}
+
+/* Small export button for events header */
+.export-btn-small {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.export-btn-small:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
 /* Advanced Filters */
 .filter-toggle-btn {
   background: var(--bg-primary);

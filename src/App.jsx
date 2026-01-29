@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { toPng } from 'html-to-image'
 import {
   subscribeToPrograms,
   addProgram,
@@ -906,6 +907,31 @@ function App() {
 
   // Analytics
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+
+  // Ref for map screenshot
+  const mapRef = useRef(null)
+
+  const handleExportMap = useCallback(async () => {
+    const node = mapRef.current
+    if (!node || isExporting) return
+    setIsExporting(true)
+    try {
+      const dataUrl = await toPng(node, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2
+      })
+      const link = document.createElement('a')
+      const tabName = activeTab === 'events' ? 'events' : activeTab
+      link.download = `adidas-select-${tabName}-map-${new Date().toISOString().split('T')[0]}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error('Export failed:', err)
+    }
+    setIsExporting(false)
+  }, [activeTab, isExporting])
 
   // Check if current user is allowed to edit
   const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
@@ -1258,6 +1284,10 @@ function App() {
               <span className="stat-value">&#9776;</span>
               <span className="stat-label">Analytics</span>
             </div>
+            <div className="stat-item stat-export" onClick={handleExportMap}>
+              <span className="stat-value">{isExporting ? '...' : '&#8681;'}</span>
+              <span className="stat-label">Export</span>
+            </div>
           </div>
         </div>
       )}
@@ -1345,7 +1375,7 @@ function App() {
       <main className="main">
         {activeTab === 'events' ? (
           /* Events Split Layout */
-          <div className="events-split-layout">
+          <div className="events-split-layout" ref={mapRef}>
             <div className="events-map-panel">
               {isEventsLoading ? (
                 <div className="loading">Loading events...</div>
@@ -1438,6 +1468,9 @@ function App() {
                   {calendarSelectedDate && (
                     <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
                   )}
+                  <button className="export-btn-small" onClick={handleExportMap} title="Export map as PNG">
+                    {isExporting ? '...' : '⤓'}
+                  </button>
                   <span className="events-count">{sortedEvents.length}</span>
                   <div className="view-toggle">
                     <button
@@ -1521,7 +1554,7 @@ function App() {
           </div>
         ) : (
           /* Programs Map + Detail Panel */
-          <div className="programs-layout">
+          <div className="programs-layout" ref={mapRef}>
             {isLoading ? (
               <div className="loading">Loading programs...</div>
             ) : (
