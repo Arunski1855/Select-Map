@@ -1283,19 +1283,6 @@ function App() {
           )}
         </div>
 
-        <div className="filter-box">
-          <select
-            value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="region-filter"
-          >
-            <option value="all">All Regions</option>
-            {Object.keys(REGIONS).map(region => (
-              <option key={region} value={region}>{region}</option>
-            ))}
-          </select>
-        </div>
-
         <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
           {showFilters ? 'Less Filters' : 'More Filters'}
         </button>
