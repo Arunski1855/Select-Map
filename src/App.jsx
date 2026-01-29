@@ -584,6 +584,282 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
   )
 }
 
+// Calendar View Component
+function EventCalendar({ events, onSelectDate, selectedDate }) {
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
+
+  const daysInMonth = new Date(viewDate.year, viewDate.month + 1, 0).getDate()
+  const firstDayOfWeek = new Date(viewDate.year, viewDate.month, 1).getDay()
+  const monthName = new Date(viewDate.year, viewDate.month).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+
+  // Build a map of date -> events
+  const eventsByDate = useMemo(() => {
+    const map = {}
+    events.forEach(event => {
+      if (!event.date) return
+      const start = event.date
+      const end = event.endDate || event.date
+      // Mark each day in the range
+      let d = new Date(start + 'T00:00:00')
+      const endD = new Date(end + 'T00:00:00')
+      while (d <= endD) {
+        const key = d.toISOString().split('T')[0]
+        if (!map[key]) map[key] = []
+        map[key].push(event)
+        d.setDate(d.getDate() + 1)
+      }
+    })
+    return map
+  }, [events])
+
+  const prevMonth = () => {
+    setViewDate(v => {
+      const m = v.month - 1
+      return m < 0 ? { year: v.year - 1, month: 11 } : { year: v.year, month: m }
+    })
+  }
+
+  const nextMonth = () => {
+    setViewDate(v => {
+      const m = v.month + 1
+      return m > 11 ? { year: v.year + 1, month: 0 } : { year: v.year, month: m }
+    })
+  }
+
+  const today = new Date().toISOString().split('T')[0]
+
+  const cells = []
+  // Empty cells for days before the 1st
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    cells.push(<div key={`empty-${i}`} className="cal-cell cal-empty" />)
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${viewDate.year}-${String(viewDate.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const dayEvents = eventsByDate[dateStr] || []
+    const isToday = dateStr === today
+    const isSelected = dateStr === selectedDate
+    cells.push(
+      <div
+        key={day}
+        className={`cal-cell ${dayEvents.length ? 'cal-has-events' : ''} ${isToday ? 'cal-today' : ''} ${isSelected ? 'cal-selected' : ''}`}
+        onClick={() => dayEvents.length && onSelectDate(dateStr)}
+      >
+        <span className="cal-day-num">{day}</span>
+        {dayEvents.length > 0 && (
+          <div className="cal-dots">
+            {dayEvents.slice(0, 3).map((ev, i) => (
+              <span key={i} className={`cal-dot ${ev.proposed ? 'cal-dot-proposed' : ''}`} />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="event-calendar">
+      <div className="cal-nav">
+        <button onClick={prevMonth}>&lsaquo;</button>
+        <span className="cal-month-label">{monthName}</span>
+        <button onClick={nextMonth}>&rsaquo;</button>
+      </div>
+      <div className="cal-weekdays">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+          <div key={d} className="cal-weekday">{d}</div>
+        ))}
+      </div>
+      <div className="cal-grid">
+        {cells}
+      </div>
+    </div>
+  )
+}
+
+// Analytics Modal Component
+function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
+  if (!isOpen) return null
+
+  // Region distribution
+  const regionData = useMemo(() => {
+    const counts = {}
+    Object.keys(REGIONS).forEach(r => { counts[r] = 0 })
+    programs.forEach(p => { if (p.region && counts[p.region] !== undefined) counts[p.region]++ })
+    return counts
+  }, [programs])
+
+  const maxRegionCount = Math.max(...Object.values(regionData), 1)
+
+  // Conference distribution (top 8)
+  const conferenceData = useMemo(() => {
+    const counts = {}
+    programs.forEach(p => {
+      if (p.conference) {
+        counts[p.conference] = (counts[p.conference] || 0) + 1
+      }
+    })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  }, [programs])
+
+  const maxConfCount = conferenceData.length ? Math.max(...conferenceData.map(c => c[1]), 1) : 1
+
+  // State distribution (top 10)
+  const stateData = useMemo(() => {
+    const counts = {}
+    programs.forEach(p => {
+      if (p.state) {
+        counts[p.state] = (counts[p.state] || 0) + 1
+      }
+    })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10)
+  }, [programs])
+
+  const maxStateCount = stateData.length ? Math.max(...stateData.map(s => s[1]), 1) : 1
+
+  // Events by month (next 6 months)
+  const eventsByMonth = useMemo(() => {
+    const months = []
+    const now = new Date()
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const label = d.toLocaleString('en-US', { month: 'short', year: '2-digit' })
+      const count = events.filter(e => e.date && e.date.startsWith(key)).length
+      months.push({ label, count })
+    }
+    return months
+  }, [events])
+
+  const maxEventMonth = Math.max(...eventsByMonth.map(m => m.count), 1)
+
+  // Summary stats
+  const totalPrograms = programs.length
+  const totalEvents = events.length
+  const upcomingEvents = events.filter(e => e.date >= new Date().toISOString().split('T')[0]).length
+  const proposedEvents = events.filter(e => e.proposed).length
+  const regionsUsed = Object.values(regionData).filter(c => c > 0).length
+  const uniqueStates = new Set(programs.map(p => p.state).filter(Boolean)).size
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="analytics-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Analytics Dashboard</h2>
+
+        <div className="analytics-summary">
+          <div className="analytics-stat">
+            <span className="analytics-stat-value">{totalPrograms}</span>
+            <span className="analytics-stat-label">Programs</span>
+          </div>
+          <div className="analytics-stat">
+            <span className="analytics-stat-value">{regionsUsed}</span>
+            <span className="analytics-stat-label">Regions</span>
+          </div>
+          <div className="analytics-stat">
+            <span className="analytics-stat-value">{uniqueStates}</span>
+            <span className="analytics-stat-label">States</span>
+          </div>
+          <div className="analytics-stat">
+            <span className="analytics-stat-value">{totalEvents}</span>
+            <span className="analytics-stat-label">Events</span>
+          </div>
+          <div className="analytics-stat">
+            <span className="analytics-stat-value">{upcomingEvents}</span>
+            <span className="analytics-stat-label">Upcoming</span>
+          </div>
+          <div className="analytics-stat">
+            <span className="analytics-stat-value">{proposedEvents}</span>
+            <span className="analytics-stat-label">Proposed</span>
+          </div>
+        </div>
+
+        <div className="analytics-charts">
+          <div className="analytics-chart">
+            <h3>Programs by Region</h3>
+            <div className="bar-chart">
+              {Object.entries(regionData).map(([region, count]) => (
+                <div key={region} className="bar-row">
+                  <span className="bar-label">{region}</span>
+                  <div className="bar-track">
+                    <div
+                      className="bar-fill"
+                      style={{
+                        width: `${(count / maxRegionCount) * 100}%`,
+                        background: REGIONS[region]?.color || '#999'
+                      }}
+                    />
+                  </div>
+                  <span className="bar-value">{count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {conferenceData.length > 0 && (
+            <div className="analytics-chart">
+              <h3>Top Conferences</h3>
+              <div className="bar-chart">
+                {conferenceData.map(([conf, count]) => (
+                  <div key={conf} className="bar-row">
+                    <span className="bar-label">{conf}</span>
+                    <div className="bar-track">
+                      <div
+                        className="bar-fill"
+                        style={{ width: `${(count / maxConfCount) * 100}%`, background: 'var(--accent-color)' }}
+                      />
+                    </div>
+                    <span className="bar-value">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {stateData.length > 0 && (
+            <div className="analytics-chart">
+              <h3>Top States</h3>
+              <div className="bar-chart">
+                {stateData.map(([state, count]) => (
+                  <div key={state} className="bar-row">
+                    <span className="bar-label">{state}</span>
+                    <div className="bar-track">
+                      <div
+                        className="bar-fill"
+                        style={{ width: `${(count / maxStateCount) * 100}%`, background: '#f39c12' }}
+                      />
+                    </div>
+                    <span className="bar-value">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="analytics-chart">
+            <h3>Events by Month</h3>
+            <div className="bar-chart bar-chart-vertical">
+              {eventsByMonth.map((m, i) => (
+                <div key={i} className="vbar-col">
+                  <div className="vbar-track">
+                    <div
+                      className="vbar-fill"
+                      style={{ height: `${(m.count / maxEventMonth) * 100}%`, background: '#2ecc71' }}
+                    />
+                  </div>
+                  <span className="vbar-value">{m.count}</span>
+                  <span className="vbar-label">{m.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('basketball')
   const [programs, setPrograms] = useState([])
@@ -608,6 +884,18 @@ function App() {
   const [isEventFormOpen, setIsEventFormOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
   const [selectedEventId, setSelectedEventId] = useState(null)
+
+  // Calendar view state
+  const [eventsViewMode, setEventsViewMode] = useState('list') // 'list' or 'calendar'
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState(null)
+
+  // Advanced filter state
+  const [sortBy, setSortBy] = useState('name') // 'name', 'region', 'state', 'conference'
+  const [filterConference, setFilterConference] = useState('all')
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Analytics
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
 
   // Check if current user is allowed to edit
   const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
@@ -653,10 +941,16 @@ function App() {
     localStorage.setItem('darkMode', darkMode)
   }, [darkMode])
 
-  // Filter programs based on search and region
+  // Unique conferences for filter dropdown
+  const uniqueConferences = useMemo(() => {
+    const confs = new Set()
+    programs.forEach(p => { if (p.conference) confs.add(p.conference) })
+    return [...confs].sort()
+  }, [programs])
+
+  // Filter programs based on search, region, and conference
   const filteredPrograms = useMemo(() => {
-    return programs.filter(program => {
-      // Search filter
+    let result = programs.filter(program => {
       const searchLower = searchQuery.toLowerCase()
       const matchesSearch = !searchQuery ||
         program.name?.toLowerCase().includes(searchLower) ||
@@ -665,12 +959,25 @@ function App() {
         program.headCoach?.toLowerCase().includes(searchLower) ||
         program.conference?.toLowerCase().includes(searchLower)
 
-      // Region filter
       const matchesRegion = selectedRegion === 'all' || program.region === selectedRegion
+      const matchesConference = filterConference === 'all' || program.conference === filterConference
 
-      return matchesSearch && matchesRegion
+      return matchesSearch && matchesRegion && matchesConference
     })
-  }, [programs, searchQuery, selectedRegion])
+
+    // Sort
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'name': return (a.name || '').localeCompare(b.name || '')
+        case 'region': return (a.region || '').localeCompare(b.region || '')
+        case 'state': return (a.state || '').localeCompare(b.state || '')
+        case 'conference': return (a.conference || '').localeCompare(b.conference || '')
+        default: return 0
+      }
+    })
+
+    return result
+  }, [programs, searchQuery, selectedRegion, filterConference, sortBy])
 
   // Create icons for all programs (memoized to prevent re-renders)
   const programIcons = useMemo(() => {
@@ -724,14 +1031,25 @@ function App() {
   // Sort events by date (upcoming first), past events at end
   const sortedEvents = useMemo(() => {
     const now = new Date().toISOString().split('T')[0]
-    return [...events].sort((a, b) => {
+    let filtered = [...events]
+
+    // If calendar date is selected, filter to events on that date
+    if (calendarSelectedDate) {
+      filtered = filtered.filter(e => {
+        const start = e.date
+        const end = e.endDate || e.date
+        return calendarSelectedDate >= start && calendarSelectedDate <= end
+      })
+    }
+
+    return filtered.sort((a, b) => {
       const aUpcoming = a.date >= now
       const bUpcoming = b.date >= now
       if (aUpcoming && !bUpcoming) return -1
       if (!aUpcoming && bUpcoming) return 1
       return aUpcoming ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
     })
-  }, [events])
+  }, [events, calendarSelectedDate])
 
   // Event icons for map
   const eventIcons = useMemo(() => {
@@ -926,6 +1244,10 @@ function App() {
                 <span className="stat-label">{region}</span>
               </div>
             ))}
+            <div className="stat-item stat-analytics" onClick={() => setIsAnalyticsOpen(true)}>
+              <span className="stat-value">&#9776;</span>
+              <span className="stat-label">Analytics</span>
+            </div>
           </div>
         </div>
       )}
@@ -974,12 +1296,48 @@ function App() {
           </select>
         </div>
 
-        {(searchQuery || selectedRegion !== 'all') && (
+        <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
+          {showFilters ? 'Less Filters' : 'More Filters'}
+        </button>
+
+        {showFilters && (
+          <div className="advanced-filters">
+            <div className="filter-box">
+              <select
+                value={filterConference}
+                onChange={(e) => setFilterConference(e.target.value)}
+                className="region-filter"
+              >
+                <option value="all">All Conferences</option>
+                {uniqueConferences.map(conf => (
+                  <option key={conf} value={conf}>{conf}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-box">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="region-filter"
+              >
+                <option value="name">Sort: Name</option>
+                <option value="region">Sort: Region</option>
+                <option value="state">Sort: State</option>
+                <option value="conference">Sort: Conference</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all') && (
           <div className="filter-info">
             Showing {filteredPrograms.length} of {programs.length} programs
             <button className="clear-filters" onClick={() => {
               setSearchQuery('')
               setSelectedRegion('all')
+              setFilterConference('all')
+              setSortBy('name')
             }}>
               Clear filters
             </button>
@@ -1078,12 +1436,38 @@ function App() {
 
             <div className="events-list-panel">
               <div className="events-list-header">
-                <h2>Upcoming Events</h2>
-                <span className="events-count">{events.length} events</span>
+                <h2>{calendarSelectedDate ? new Date(calendarSelectedDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Events'}</h2>
+                <div className="events-header-actions">
+                  {calendarSelectedDate && (
+                    <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
+                  )}
+                  <span className="events-count">{sortedEvents.length}</span>
+                  <div className="view-toggle">
+                    <button
+                      className={`view-toggle-btn ${eventsViewMode === 'list' ? 'active' : ''}`}
+                      onClick={() => setEventsViewMode('list')}
+                      title="List view"
+                    >&#9776;</button>
+                    <button
+                      className={`view-toggle-btn ${eventsViewMode === 'calendar' ? 'active' : ''}`}
+                      onClick={() => setEventsViewMode('calendar')}
+                      title="Calendar view"
+                    >&#9638;</button>
+                  </div>
+                </div>
               </div>
+
+              {eventsViewMode === 'calendar' && (
+                <EventCalendar
+                  events={events}
+                  selectedDate={calendarSelectedDate}
+                  onSelectDate={(d) => setCalendarSelectedDate(d === calendarSelectedDate ? null : d)}
+                />
+              )}
+
               <div className="events-list">
                 {sortedEvents.length === 0 ? (
-                  <div className="events-empty">No events yet. Add your first event!</div>
+                  <div className="events-empty">{calendarSelectedDate ? 'No events on this date.' : 'No events yet. Add your first event!'}</div>
                 ) : (
                   sortedEvents.map(event => {
                     const now = new Date().toISOString().split('T')[0]
@@ -1229,6 +1613,14 @@ function App() {
         onAdd={handleAddEvent}
         onEdit={handleEditEvent}
         editEvent={editingEvent}
+      />
+
+      <AnalyticsModal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        programs={programs}
+        events={events}
+        sport={activeTab}
       />
     </div>
   )
