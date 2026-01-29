@@ -1285,7 +1285,7 @@ function App() {
               <span className="stat-label">Analytics</span>
             </div>
             <div className="stat-item stat-export" onClick={handleExportMap}>
-              <span className="stat-value">{isExporting ? '...' : '&#8681;'}</span>
+              <span className="stat-value">{isExporting ? '...' : '\u21E9'}</span>
               <span className="stat-label">Export</span>
             </div>
           </div>
