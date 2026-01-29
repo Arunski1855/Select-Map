@@ -1145,18 +1145,22 @@ function App() {
   // Ref for export menu
   const exportRef = useRef(null)
 
-  // Close export menu on outside click/touch
+  // Close export menu on outside touch/click
   useEffect(() => {
     if (!showExportMenu) return
     const handleClose = (e) => {
       if (exportRef.current && exportRef.current.contains(e.target)) return
       setShowExportMenu(false)
     }
-    document.addEventListener('mousedown', handleClose)
-    document.addEventListener('touchstart', handleClose)
+    // Delay adding listener so the opening tap doesn't immediately close it
+    const timer = setTimeout(() => {
+      document.addEventListener('touchend', handleClose, { passive: true })
+      document.addEventListener('click', handleClose)
+    }, 100)
     return () => {
-      document.removeEventListener('mousedown', handleClose)
-      document.removeEventListener('touchstart', handleClose)
+      clearTimeout(timer)
+      document.removeEventListener('touchend', handleClose)
+      document.removeEventListener('click', handleClose)
     }
   }, [showExportMenu])
 
@@ -1357,13 +1361,21 @@ function App() {
               <span className="stat-value">&#9776;</span>
               <span className="stat-label">Analytics</span>
             </div>
-            <div className="stat-item stat-export" ref={exportRef} onClick={() => setShowExportMenu(v => !v)}>
+            <div className="stat-item stat-export" ref={exportRef}
+              onClick={() => setShowExportMenu(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(v => !v) }}>
               <span className="stat-value">{isExporting ? '...' : '\u21E9'}</span>
               <span className="stat-label">Export</span>
               {showExportMenu && (
                 <div className="export-dropdown">
-                  <button onClick={() => { handleExportMap(); setShowExportMenu(false) }}>Export Map (PNG)</button>
-                  <button onClick={handleExportCSV}>Export List (CSV)</button>
+                  <button
+                    onClick={() => { handleExportMap(); setShowExportMenu(false) }}
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportMap(); setShowExportMenu(false) }}
+                  >Export Map (PNG)</button>
+                  <button
+                    onClick={handleExportCSV}
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportCSV() }}
+                  >Export List (CSV)</button>
                 </div>
               )}
             </div>
@@ -1549,13 +1561,22 @@ function App() {
                     <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
                   )}
                   <div className="export-btn-wrap" ref={exportRef}>
-                    <button className="export-btn-small" onClick={() => setShowExportMenu(v => !v)} title="Export">
+                    <button className="export-btn-small"
+                      onClick={() => setShowExportMenu(v => !v)}
+                      onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(v => !v) }}
+                      title="Export">
                       {isExporting ? '...' : '⤓'}
                     </button>
                     {showExportMenu && (
                       <div className="export-dropdown">
-                        <button onClick={() => { handleExportMap(); setShowExportMenu(false) }}>Export Map (PNG)</button>
-                        <button onClick={handleExportCSV}>Export List (CSV)</button>
+                        <button
+                          onClick={() => { handleExportMap(); setShowExportMenu(false) }}
+                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportMap(); setShowExportMenu(false) }}
+                        >Export Map (PNG)</button>
+                        <button
+                          onClick={handleExportCSV}
+                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportCSV() }}
+                        >Export List (CSV)</button>
                       </div>
                     )}
                   </div>
