@@ -1058,6 +1058,32 @@ function App() {
         }
       }
     }
+
+    // Manual position overrides (relative to other programs' adjusted positions)
+    const byName = {}
+    progs.forEach(p => { byName[p.name.toLowerCase()] = p.id })
+
+    // Central Senior High → to the left of Northwestern Senior High
+    const centralId = Object.keys(byName).find(n => n.includes('central senior'))
+    const nwId = Object.keys(byName).find(n => n.includes('northwestern senior'))
+    if (centralId && nwId) {
+      const nwPos = pos[byName[nwId]]
+      pos[byName[centralId]] = [nwPos[0], nwPos[1] - MIN_DIST]
+    }
+
+    // Orange Lutheran → below Centennial, between Centennial and Lincoln
+    const orangeId = Object.keys(byName).find(n => n.includes('orange lutheran'))
+    const centennialId = Object.keys(byName).find(n => n.includes('centennial'))
+    const lincolnId = Object.keys(byName).find(n => n.includes('lincoln'))
+    if (orangeId && centennialId && lincolnId) {
+      const cPos = pos[byName[centennialId]]
+      const lPos = pos[byName[lincolnId]]
+      pos[byName[orangeId]] = [(cPos[0] + lPos[0]) / 2, (cPos[1] + lPos[1]) / 2]
+    } else if (orangeId && centennialId) {
+      const cPos = pos[byName[centennialId]]
+      pos[byName[orangeId]] = [cPos[0] - MIN_DIST, cPos[1]]
+    }
+
     return pos
   }, [filteredPrograms])
 
