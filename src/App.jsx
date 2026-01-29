@@ -1142,12 +1142,22 @@ function App() {
     setShowExportMenu(false)
   }, [activeTab, filteredPrograms, sortedEvents])
 
-  // Close export menu on outside click
+  // Ref for export menu
+  const exportRef = useRef(null)
+
+  // Close export menu on outside click/touch
   useEffect(() => {
     if (!showExportMenu) return
-    const handleClick = () => setShowExportMenu(false)
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
+    const handleClose = (e) => {
+      if (exportRef.current && exportRef.current.contains(e.target)) return
+      setShowExportMenu(false)
+    }
+    document.addEventListener('mousedown', handleClose)
+    document.addEventListener('touchstart', handleClose)
+    return () => {
+      document.removeEventListener('mousedown', handleClose)
+      document.removeEventListener('touchstart', handleClose)
+    }
   }, [showExportMenu])
 
   // Event icons for map
@@ -1347,11 +1357,11 @@ function App() {
               <span className="stat-value">&#9776;</span>
               <span className="stat-label">Analytics</span>
             </div>
-            <div className="stat-item stat-export" onClick={e => { e.stopPropagation(); setShowExportMenu(v => !v) }}>
+            <div className="stat-item stat-export" ref={exportRef} onClick={() => setShowExportMenu(v => !v)}>
               <span className="stat-value">{isExporting ? '...' : '\u21E9'}</span>
               <span className="stat-label">Export</span>
               {showExportMenu && (
-                <div className="export-dropdown" onClick={e => e.stopPropagation()}>
+                <div className="export-dropdown">
                   <button onClick={() => { handleExportMap(); setShowExportMenu(false) }}>Export Map (PNG)</button>
                   <button onClick={handleExportCSV}>Export List (CSV)</button>
                 </div>
@@ -1538,12 +1548,12 @@ function App() {
                   {calendarSelectedDate && (
                     <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
                   )}
-                  <div className="export-btn-wrap">
-                    <button className="export-btn-small" onClick={e => { e.stopPropagation(); setShowExportMenu(v => !v) }} title="Export">
+                  <div className="export-btn-wrap" ref={exportRef}>
+                    <button className="export-btn-small" onClick={() => setShowExportMenu(v => !v)} title="Export">
                       {isExporting ? '...' : '⤓'}
                     </button>
                     {showExportMenu && (
-                      <div className="export-dropdown" onClick={e => e.stopPropagation()}>
+                      <div className="export-dropdown">
                         <button onClick={() => { handleExportMap(); setShowExportMenu(false) }}>Export Map (PNG)</button>
                         <button onClick={handleExportCSV}>Export List (CSV)</button>
                       </div>
