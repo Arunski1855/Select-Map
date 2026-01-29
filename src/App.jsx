@@ -452,58 +452,12 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
 
         {activeDetailTab === 'schedule' && (
           <div className="detail-schedule-tab">
-            {program.maxprepsUrl && (
+            {program.maxprepsUrl ? (
               <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="maxpreps-banner">
                 View full schedule & results on MaxPreps &rarr;
               </a>
-            )}
-
-            {isUserAllowed && (
-              <form className="add-game-form" onSubmit={handleAddGame}>
-                <h4>Add Game</h4>
-                <div className="game-form-row">
-                  <input type="date" value={newGame.date} onChange={e => setNewGame(g => ({ ...g, date: e.target.value }))} required />
-                  <input type="text" placeholder="Opponent" value={newGame.opponent} onChange={e => setNewGame(g => ({ ...g, opponent: e.target.value }))} required />
-                </div>
-                <div className="game-form-row">
-                  <select value={newGame.result} onChange={e => setNewGame(g => ({ ...g, result: e.target.value }))}>
-                    <option value="">Result</option>
-                    <option value="W">Win</option>
-                    <option value="L">Loss</option>
-                    <option value="T">Tie</option>
-                    <option value="upcoming">Upcoming</option>
-                  </select>
-                  <input type="text" placeholder="Score (e.g. 72-65)" value={newGame.score} onChange={e => setNewGame(g => ({ ...g, score: e.target.value }))} />
-                </div>
-                <button type="submit" className="add-game-btn">Add Game</button>
-              </form>
-            )}
-
-            {schedule.length === 0 ? (
-              <p className="detail-empty">No games added yet.</p>
             ) : (
-              <div className="schedule-list">
-                {schedule.map(game => (
-                  <div key={game.id} className={`schedule-item ${game.result === 'W' ? 'win' : game.result === 'L' ? 'loss' : ''}`}>
-                    <div className="schedule-date">
-                      {new Date(game.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </div>
-                    <div className="schedule-details">
-                      <span className="schedule-opponent">{game.opponent}</span>
-                      {game.score && <span className="schedule-score">{game.score}</span>}
-                    </div>
-                    {game.result && game.result !== 'upcoming' && (
-                      <span className={`schedule-result ${game.result}`}>{game.result}</span>
-                    )}
-                    {game.result === 'upcoming' && (
-                      <span className="schedule-result upcoming">TBD</span>
-                    )}
-                    {isUserAllowed && (
-                      <button className="schedule-delete" onClick={() => handleDeleteGame(game.id)}>&times;</button>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <p className="detail-empty">No MaxPreps link added yet.</p>
             )}
           </div>
         )}
