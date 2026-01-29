@@ -433,8 +433,8 @@
 }
 
 .logo-marker {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2710,8 +2710,8 @@
   }
 
   .logo-marker {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
   }
 
   .auth-modal,

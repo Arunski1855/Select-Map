@@ -51,9 +51,9 @@ const createLogoIcon = (logoUrl, name, useContain = false) => {
         <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
       </div>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-    popupAnchor: [0, -14]
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
   })
 }
 
@@ -1102,9 +1102,9 @@ function App() {
         icons[event.id] = L.divIcon({
           className: 'custom-logo-marker',
           html: `<div class="logo-marker event-marker-icon" title="${event.name}"><span>E</span></div>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
-          popupAnchor: [0, -14]
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+          popupAnchor: [0, -10]
         })
       }
     })
