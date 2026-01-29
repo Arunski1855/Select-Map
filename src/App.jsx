@@ -899,6 +899,7 @@ function App() {
   // Analytics
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   // Ref for map screenshot
   const mapRef = useRef(null)
@@ -924,6 +925,45 @@ function App() {
     }
     setIsExporting(false)
   }, [activeTab, isExporting])
+
+  const handleExportCSV = useCallback(() => {
+    const today = new Date().toISOString().split('T')[0]
+    if (activeTab === 'events') {
+      const headers = ['Name', 'Date', 'City', 'State', 'Type', 'Description']
+      const rows = sortedEvents.map(e => [
+        e.name || '', e.date || '', e.city || '', e.state || '', e.type || '', e.description || ''
+      ])
+      const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv' })
+      const link = document.createElement('a')
+      link.download = `adidas-select-events-${today}.csv`
+      link.href = URL.createObjectURL(blob)
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } else {
+      const headers = ['Name', 'City', 'State', 'Region', 'Conference', 'Head Coach', 'Ranking', 'Website', 'MaxPreps', 'TCA Store']
+      const rows = filteredPrograms.map(p => [
+        p.name || '', p.city || '', p.state || '', p.region || '', p.conference || '',
+        p.headCoach || '', p.ranking || '', p.website || '', p.maxprepsUrl || '', p.tcaStoreUrl || ''
+      ])
+      const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv' })
+      const link = document.createElement('a')
+      link.download = `adidas-select-${activeTab}-programs-${today}.csv`
+      link.href = URL.createObjectURL(blob)
+      link.click()
+      URL.revokeObjectURL(link.href)
+    }
+    setShowExportMenu(false)
+  }, [activeTab, filteredPrograms, sortedEvents])
+
+  // Close export menu on outside click
+  useEffect(() => {
+    if (!showExportMenu) return
+    const handleClick = () => setShowExportMenu(false)
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [showExportMenu])
 
   // Check if current user is allowed to edit
   const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
@@ -1307,9 +1347,15 @@ function App() {
               <span className="stat-value">&#9776;</span>
               <span className="stat-label">Analytics</span>
             </div>
-            <div className="stat-item stat-export" onClick={handleExportMap}>
+            <div className="stat-item stat-export" onClick={e => { e.stopPropagation(); setShowExportMenu(v => !v) }}>
               <span className="stat-value">{isExporting ? '...' : '\u21E9'}</span>
               <span className="stat-label">Export</span>
+              {showExportMenu && (
+                <div className="export-dropdown" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => { handleExportMap(); setShowExportMenu(false) }}>Export Map (PNG)</button>
+                  <button onClick={handleExportCSV}>Export List (CSV)</button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1492,9 +1538,17 @@ function App() {
                   {calendarSelectedDate && (
                     <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
                   )}
-                  <button className="export-btn-small" onClick={handleExportMap} title="Export map as PNG">
-                    {isExporting ? '...' : '⤓'}
-                  </button>
+                  <div className="export-btn-wrap">
+                    <button className="export-btn-small" onClick={e => { e.stopPropagation(); setShowExportMenu(v => !v) }} title="Export">
+                      {isExporting ? '...' : '⤓'}
+                    </button>
+                    {showExportMenu && (
+                      <div className="export-dropdown" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => { handleExportMap(); setShowExportMenu(false) }}>Export Map (PNG)</button>
+                        <button onClick={handleExportCSV}>Export List (CSV)</button>
+                      </div>
+                    )}
+                  </div>
                   <span className="events-count">{sortedEvents.length}</span>
                   <div className="view-toggle">
                     <button
