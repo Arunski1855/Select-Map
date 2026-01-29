@@ -1610,6 +1610,16 @@
   background: #333333;
 }
 
+.detail-link-brand {
+  background: #c0392b;
+  color: white;
+  border-color: #c0392b;
+}
+
+.detail-link-brand:hover {
+  background: #a93226;
+}
+
 .detail-gallery {
   margin-bottom: 14px;
 }

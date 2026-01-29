@@ -385,6 +385,11 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                   TCA Store
                 </a>
               )}
+              {program.brandGuide && (
+                <a href={program.brandGuide} download={program.brandGuideName || 'brand-guidelines.pdf'} className="detail-link-btn detail-link-brand">
+                  Brand Guidelines
+                </a>
+              )}
             </div>
 
             {program.gallery && program.gallery.length > 0 && (

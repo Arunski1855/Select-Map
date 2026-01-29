@@ -61,6 +61,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoData, setLogoData] = useState(null)
   const [gallery, setGallery] = useState([])
+  const [brandGuide, setBrandGuide] = useState(null)
+  const [brandGuideName, setBrandGuideName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -86,11 +88,15 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
       setGallery(editProgram.gallery || [])
+      setBrandGuide(editProgram.brandGuide || null)
+      setBrandGuideName(editProgram.brandGuideName || '')
     } else {
       setFormData(initialFormState)
       setLogoPreview(null)
       setLogoData(null)
       setGallery([])
+      setBrandGuide(null)
+      setBrandGuideName('')
     }
   }, [editProgram])
 
@@ -143,6 +149,27 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
 
   const removeGalleryImage = (index) => {
     setGallery(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleBrandGuideUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        setError('Please upload a PDF file')
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setError('PDF must be under 10MB')
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setBrandGuide(e.target.result)
+        setBrandGuideName(file.name)
+      }
+      reader.readAsDataURL(file)
+      setError('')
+    }
   }
 
   const getCoordinates = async (city, state) => {
@@ -216,6 +243,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         tcaStoreUrl: formData.tcaStoreUrl || '',
         logo: logoData,
         gallery: gallery,
+        brandGuide: brandGuide || '',
+        brandGuideName: brandGuideName || '',
         coordinates: coordinates
       }
 
@@ -470,6 +499,22 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="brandGuide">Brand Guidelines (PDF, max 10MB)</label>
+            <input
+              type="file"
+              id="brandGuide"
+              accept="application/pdf"
+              onChange={handleBrandGuideUpload}
+            />
+            {brandGuideName && (
+              <div className="brand-guide-preview">
+                <span className="brand-guide-file">{brandGuideName}</span>
+                <button type="button" className="brand-guide-remove" onClick={() => { setBrandGuide(null); setBrandGuideName('') }}>&times;</button>
               </div>
             )}
           </div>
