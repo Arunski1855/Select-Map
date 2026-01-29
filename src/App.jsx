@@ -316,20 +316,16 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
 
   return (
     <div className={`detail-panel ${isOpen ? 'open' : ''}`}>
-      <div className="detail-panel-header" style={{ background: regionColor }}>
-        <button className="detail-panel-close" onClick={onClose}>&times;</button>
-        <span className="detail-panel-region">{program.region}</span>
-      </div>
-
       <div className="detail-panel-profile">
         <div className="detail-panel-logo">
           <img src={program.logo} alt={program.name} />
         </div>
         <div className="detail-panel-title">
-          <h2>{program.name} <span className="detail-region-badge" style={{ background: regionColor }}>{program.region}</span></h2>
+          <h2>{program.name}</h2>
           <p>{program.city}, {program.state}</p>
+          <span className="detail-region-badge" style={{ background: regionColor }}>{program.region}</span>
         </div>
-        <button className="detail-panel-close detail-close-mobile" onClick={onClose}>&times;</button>
+        <button className="detail-panel-close" onClick={onClose}>&times;</button>
       </div>
 
       <div className="detail-panel-tabs">
@@ -347,7 +343,7 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
       <div className="detail-panel-content">
         {activeDetailTab === 'info' && (
           <div className="detail-info-tab">
-            {(program.conference || program.headCoach || program.ranking || program.topProspects) && (
+            {(program.conference || program.headCoach || program.ranking) && (
               <div className="detail-section">
                 {program.conference && (
                   <div className="detail-row"><span className="detail-label">Conference</span><span>{program.conference}</span></div>
@@ -358,9 +354,13 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                 {program.ranking && (
                   <div className="detail-row"><span className="detail-label">Ranking</span><span>{program.ranking}</span></div>
                 )}
-                {program.topProspects && (
-                  <div className="detail-row"><span className="detail-label">Top Prospects</span><span>{program.topProspects}</span></div>
-                )}
+              </div>
+            )}
+
+            {program.topProspects && (
+              <div className="detail-prospects">
+                <span className="detail-label">Top Prospects</span>
+                <p className="detail-prospects-text">{program.topProspects}</p>
               </div>
             )}
 
