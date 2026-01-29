@@ -901,7 +901,8 @@ function App() {
           )}
 
           <button className="add-btn" onClick={handleAddClick}>
-            + Add {activeTab === 'events' ? 'Event' : 'Program'}
+            <span className="add-btn-full">+ Add {activeTab === 'events' ? 'Event' : 'Program'}</span>
+            <span className="add-btn-short">+</span>
           </button>
         </div>
       </header>
