@@ -1028,49 +1028,39 @@ function App() {
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
-    const positions = {}
-    const THRESHOLD = 0.6 // ~40 miles — groups nearby programs
-    const OFFSET = 0.35   // spread distance in degrees
-
-    // Build groups of programs that are within THRESHOLD of each other
-    const groups = []
-    const assigned = new Set()
     const progs = filteredPrograms.filter(p => p && p.coordinates)
+    // Start each marker at its real position
+    const pos = {}
+    progs.forEach(p => { pos[p.id] = [p.coordinates[0], p.coordinates[1]] })
 
-    progs.forEach(program => {
-      if (assigned.has(program.id)) return
-      const group = [program]
-      assigned.add(program.id)
-      progs.forEach(other => {
-        if (assigned.has(other.id)) return
-        const dLat = Math.abs(program.coordinates[0] - other.coordinates[0])
-        const dLng = Math.abs(program.coordinates[1] - other.coordinates[1])
-        if (dLat < THRESHOLD && dLng < THRESHOLD) {
-          group.push(other)
-          assigned.add(other.id)
+    // Force-directed repulsion: push overlapping markers apart
+    // MIN_DIST is the minimum separation in degrees (~0.3° ≈ 20mi at mid-latitudes)
+    const MIN_DIST = 0.3
+    const ITERATIONS = 8
+
+    for (let iter = 0; iter < ITERATIONS; iter++) {
+      for (let i = 0; i < progs.length; i++) {
+        for (let j = i + 1; j < progs.length; j++) {
+          const a = progs[i], b = progs[j]
+          const dLat = pos[b.id][0] - pos[a.id][0]
+          const dLng = pos[b.id][1] - pos[a.id][1]
+          const dist = Math.sqrt(dLat * dLat + dLng * dLng)
+          if (dist < MIN_DIST && dist > 0) {
+            const push = (MIN_DIST - dist) / 2
+            const nLat = dLat / dist
+            const nLng = dLng / dist
+            pos[a.id] = [pos[a.id][0] - nLat * push, pos[a.id][1] - nLng * push]
+            pos[b.id] = [pos[b.id][0] + nLat * push, pos[b.id][1] + nLng * push]
+          } else if (dist === 0) {
+            // Exact same coords — nudge apart
+            const angle = Math.random() * 2 * Math.PI
+            pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5 * Math.cos(angle), pos[a.id][1] - MIN_DIST * 0.5 * Math.sin(angle)]
+            pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5 * Math.cos(angle), pos[b.id][1] + MIN_DIST * 0.5 * Math.sin(angle)]
+          }
         }
-      })
-      groups.push(group)
-    })
-
-    groups.forEach(group => {
-      if (group.length === 1) {
-        positions[group[0].id] = group[0].coordinates
-      } else {
-        // Center of the group
-        const cLat = group.reduce((s, p) => s + p.coordinates[0], 0) / group.length
-        const cLng = group.reduce((s, p) => s + p.coordinates[1], 0) / group.length
-        const spread = OFFSET * Math.max(1, group.length / 4)
-        group.forEach((program, idx) => {
-          const angle = (2 * Math.PI * idx) / group.length
-          positions[program.id] = [
-            cLat + spread * Math.cos(angle),
-            cLng + spread * Math.sin(angle)
-          ]
-        })
       }
-    })
-    return positions
+    }
+    return pos
   }, [filteredPrograms])
 
   // Count programs by region
