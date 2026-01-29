@@ -2095,8 +2095,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 45vh;
-    max-height: 45vh;
+    height: 35vh;
+    max-height: 35vh;
     transform: translateY(100%);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
     border-radius: 14px 14px 0 0;
@@ -2284,8 +2284,8 @@
   }
 
   .detail-panel {
-    height: 50vh;
-    max-height: 50vh;
+    height: 38vh;
+    max-height: 38vh;
   }
 
   .events-split-layout {
