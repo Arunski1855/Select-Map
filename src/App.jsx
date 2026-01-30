@@ -1533,6 +1533,40 @@ function App() {
                     title="Export">
                     {isExporting ? '...' : '⤓'}
                   </button>
+                  <button className="export-btn-small"
+                    onClick={() => {
+                      const now = new Date().toISOString().split('T')[0]
+                      const upcoming = events.filter(e => e.date >= now)
+                      if (upcoming.length === 0) return alert('No upcoming events to export.')
+                      const icsEvents = upcoming.map(e => {
+                        const start = e.date.replace(/-/g, '')
+                        const end = e.endDate
+                          ? new Date(new Date(e.endDate + 'T00:00:00').getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '')
+                          : new Date(new Date(e.date + 'T00:00:00').getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '')
+                        const details = [e.description, e.registrationLink ? `Register: ${e.registrationLink}` : ''].filter(Boolean).join('\\n')
+                        return [
+                          'BEGIN:VEVENT',
+                          `DTSTART;VALUE=DATE:${start}`,
+                          `DTEND;VALUE=DATE:${end}`,
+                          `SUMMARY:${e.name}`,
+                          `LOCATION:${e.city}, ${e.state}`,
+                          `DESCRIPTION:${details}`,
+                          `UID:${e.id}@adidas-select`,
+                          'END:VEVENT'
+                        ].join('\r\n')
+                      }).join('\r\n')
+                      const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//adidas Select//Events//EN\r\n${icsEvents}\r\nEND:VCALENDAR`
+                      const blob = new Blob([ics], { type: 'text/calendar' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = 'adidas_select_events.ics'
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}
+                    title="Add all events to calendar (.ics)">
+                    &#128197;
+                  </button>
                   <span className="events-count">{sortedEvents.length}</span>
                   <div className="view-toggle">
                     <button
