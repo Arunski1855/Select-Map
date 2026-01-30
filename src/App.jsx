@@ -1142,27 +1142,6 @@ function App() {
     setShowExportMenu(false)
   }, [activeTab, filteredPrograms, sortedEvents])
 
-  // Ref for export menu
-  const exportRef = useRef(null)
-
-  // Close export menu on outside touch/click
-  useEffect(() => {
-    if (!showExportMenu) return
-    const handleClose = (e) => {
-      if (exportRef.current && exportRef.current.contains(e.target)) return
-      setShowExportMenu(false)
-    }
-    // Delay adding listener so the opening tap doesn't immediately close it
-    const timer = setTimeout(() => {
-      document.addEventListener('touchend', handleClose, { passive: true })
-      document.addEventListener('click', handleClose)
-    }, 100)
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener('touchend', handleClose)
-      document.removeEventListener('click', handleClose)
-    }
-  }, [showExportMenu])
 
   // Event icons for map
   const eventIcons = useMemo(() => {
@@ -1361,23 +1340,11 @@ function App() {
               <span className="stat-value">&#9776;</span>
               <span className="stat-label">Analytics</span>
             </div>
-            <div className="stat-item stat-export" ref={exportRef}
-              onClick={() => setShowExportMenu(v => !v)}
-              onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(v => !v) }}>
+            <div className="stat-item stat-export"
+              onClick={() => setShowExportMenu(true)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
               <span className="stat-value">{isExporting ? '...' : '\u21E9'}</span>
               <span className="stat-label">Export</span>
-              {showExportMenu && (
-                <div className="export-dropdown">
-                  <button
-                    onClick={() => { handleExportMap(); setShowExportMenu(false) }}
-                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportMap(); setShowExportMenu(false) }}
-                  >Export Map (PNG)</button>
-                  <button
-                    onClick={handleExportCSV}
-                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportCSV() }}
-                  >Export List (CSV)</button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -1560,26 +1527,12 @@ function App() {
                   {calendarSelectedDate && (
                     <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
                   )}
-                  <div className="export-btn-wrap" ref={exportRef}>
-                    <button className="export-btn-small"
-                      onClick={() => setShowExportMenu(v => !v)}
-                      onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(v => !v) }}
-                      title="Export">
-                      {isExporting ? '...' : '⤓'}
-                    </button>
-                    {showExportMenu && (
-                      <div className="export-dropdown">
-                        <button
-                          onClick={() => { handleExportMap(); setShowExportMenu(false) }}
-                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportMap(); setShowExportMenu(false) }}
-                        >Export Map (PNG)</button>
-                        <button
-                          onClick={handleExportCSV}
-                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleExportCSV() }}
-                        >Export List (CSV)</button>
-                      </div>
-                    )}
-                  </div>
+                  <button className="export-btn-small"
+                    onClick={() => setShowExportMenu(true)}
+                    onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}
+                    title="Export">
+                    {isExporting ? '...' : '⤓'}
+                  </button>
                   <span className="events-count">{sortedEvents.length}</span>
                   <div className="view-toggle">
                     <button
@@ -1754,6 +1707,26 @@ function App() {
         onEdit={handleEditEvent}
         editEvent={editingEvent}
       />
+
+      {showExportMenu && (
+        <div className="modal-overlay" onClick={() => setShowExportMenu(false)}>
+          <div className="export-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowExportMenu(false)}>&times;</button>
+            <h3>Export</h3>
+            <p className="export-modal-sub">Choose an export format</p>
+            <div className="export-modal-options">
+              <button className="export-modal-btn" onClick={() => { handleExportMap(); setShowExportMenu(false) }}>
+                <span className="export-modal-icon">📷</span>
+                <span>Export Map (PNG)</span>
+              </button>
+              <button className="export-modal-btn" onClick={() => { handleExportCSV(); }}>
+                <span className="export-modal-icon">📄</span>
+                <span>Export List (CSV)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AnalyticsModal
         isOpen={isAnalyticsOpen}

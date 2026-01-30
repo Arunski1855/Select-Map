@@ -2055,7 +2055,6 @@
   background: var(--bg-tertiary) !important;
   cursor: pointer;
   border: 2px solid transparent;
-  position: relative;
 }
 
 .stat-export:hover {
@@ -2082,44 +2081,55 @@
   transition: all 0.2s;
 }
 
-.export-btn-wrap {
+.export-modal {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 340px;
   position: relative;
+  text-align: center;
 }
 
-.export-dropdown {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  margin-bottom: 6px;
-  background: var(--bg-primary);
+.export-modal h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.export-modal-sub {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.export-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.export-modal-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1.2rem;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-  min-width: 160px;
-  overflow: hidden;
-}
-
-.export-dropdown button {
-  display: block;
-  width: 100%;
-  padding: 10px 14px;
-  background: none;
-  border: none;
   color: var(--text-primary);
-  font-size: 0.85rem;
-  text-align: left;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: background 0.15s;
-  white-space: nowrap;
 }
 
-.export-dropdown button:hover {
-  background: var(--bg-secondary);
+.export-modal-btn:hover {
+  background: var(--bg-tertiary);
 }
 
-.export-dropdown button:not(:last-child) {
-  border-bottom: 1px solid var(--border-color);
+.export-modal-icon {
+  font-size: 1.3rem;
 }
 
 .export-btn-small:hover {
