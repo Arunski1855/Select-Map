@@ -1599,6 +1599,51 @@ function App() {
                                 Register
                               </a>
                             )}
+                            {!isPast && (
+                              <>
+                                <a
+                                  href={(() => {
+                                    const start = event.date.replace(/-/g, '')
+                                    const end = event.endDate ? new Date(new Date(event.endDate + 'T00:00:00').getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '') : new Date(new Date(event.date + 'T00:00:00').getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '')
+                                    const details = [event.description, event.registrationLink ? `Register: ${event.registrationLink}` : ''].filter(Boolean).join('\n')
+                                    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.name)}&dates=${start}/${end}&location=${encodeURIComponent(`${event.city}, ${event.state}`)}&details=${encodeURIComponent(details)}`
+                                  })()}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="event-cal-btn event-cal-google"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Add to Google Calendar"
+                                >
+                                  Google Cal
+                                </a>
+                                <a
+                                  href={(() => {
+                                    const start = event.date.replace(/-/g, '')
+                                    const end = event.endDate ? new Date(new Date(event.endDate + 'T00:00:00').getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '') : new Date(new Date(event.date + 'T00:00:00').getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '')
+                                    const details = [event.description, event.registrationLink ? `Register: ${event.registrationLink}` : ''].filter(Boolean).join('\n')
+                                    const ics = [
+                                      'BEGIN:VCALENDAR',
+                                      'VERSION:2.0',
+                                      'BEGIN:VEVENT',
+                                      `DTSTART;VALUE=DATE:${start}`,
+                                      `DTEND;VALUE=DATE:${end}`,
+                                      `SUMMARY:${event.name}`,
+                                      `LOCATION:${event.city}, ${event.state}`,
+                                      `DESCRIPTION:${details.replace(/\n/g, '\\n')}`,
+                                      'END:VEVENT',
+                                      'END:VCALENDAR'
+                                    ].join('\r\n')
+                                    return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`
+                                  })()}
+                                  download={`${event.name.replace(/[^a-zA-Z0-9]/g, '_')}.ics`}
+                                  className="event-cal-btn event-cal-apple"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Add to Apple Calendar (.ics)"
+                                >
+                                  Apple Cal
+                                </a>
+                              </>
+                            )}
                             {isUserAllowed && (
                               <>
                                 <button className="event-edit-btn" onClick={(e) => { e.stopPropagation(); openEditEventForm(event) }}>Edit</button>
