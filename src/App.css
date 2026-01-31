@@ -1,3 +1,29 @@
+/* adidas brand fonts */
+@font-face {
+  font-family: 'adidas FG';
+  src: url('/fonts/adidasFG-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'adidas FG';
+  src: url('/fonts/adidasFG-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Denton';
+  src: url('/fonts/Denton-Light.woff2') format('woff2'),
+       url('/fonts/Denton-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* CSS Variables for theming - adidas brand */
 :root {
   --bg-primary: #ffffff;
@@ -12,8 +38,8 @@
   --accent-color: #000000;
   --danger-color: #d4002a;
   --success-color: #00a550;
-  --font-heading: 'Barlow Condensed', 'Arial Narrow', sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'adidas FG', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Denton', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 [data-theme="dark"] {
