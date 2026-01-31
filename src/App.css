@@ -9,9 +9,57 @@
 
 @font-face {
   font-family: 'adidas FG';
+  src: url('/adidas-fg/adidasFG-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'adidas FG';
   src: url('/adidas-fg/adidasFG-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'adidas FG';
+  src: url('/adidas-fg/adidasFG-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'adidas FG Compressed';
+  src: url('/adidas-fg/adidasFG-Compressed.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'adidas FG Compressed';
+  src: url('/adidas-fg/adidasFG-CompressedItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'adidas FG Compressed';
+  src: url('/adidas-fg/adidasFG-CompressedBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'adidas FG Compressed';
+  src: url('/adidas-fg/adidasFG-CompressedBoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
   font-display: swap;
 }
 
@@ -39,6 +87,7 @@
   --danger-color: #d4002a;
   --success-color: #00a550;
   --font-heading: 'adidas FG', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-heading-compressed: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --font-body: 'Denton', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -187,10 +236,10 @@
 }
 
 .subtitle {
-  font-family: var(--font-heading);
+  font-family: var(--font-body);
   font-size: 0.85rem;
   opacity: 0.8;
-  font-weight: 500;
+  font-weight: 300;
   text-transform: uppercase;
   letter-spacing: 2px;
 }
@@ -242,16 +291,16 @@
 }
 
 .stat-value {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
 }
 
 .stat-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 1px;
   opacity: 0.8;
@@ -302,9 +351,9 @@
 }
 
 .tab-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }
@@ -1373,7 +1422,7 @@
   right: 6px;
   background: #00a550;
   color: white;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   font-size: 0.6rem;
   font-weight: 700;
   padding: 0.15rem 0.4rem;
@@ -1574,7 +1623,7 @@
 }
 
 .detail-region-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   display: inline-block;
   font-size: 0.6rem;
   color: white;
@@ -2411,6 +2460,7 @@
 }
 
 .analytics-stat-value {
+  font-family: var(--font-heading-compressed);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -2418,7 +2468,9 @@
 }
 
 .analytics-stat-label {
+  font-family: var(--font-heading-compressed);
   font-size: 0.7rem;
+  font-weight: 400;
   text-transform: uppercase;
   color: var(--text-muted);
   margin-top: 4px;
