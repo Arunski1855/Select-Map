@@ -1281,9 +1281,8 @@ function App() {
         <div className="header-content">
           <div className="title-row">
             <img src="/logos/adidas-logo.png" alt="adidas" className="header-logo" />
-            <h1 className="title">adidas Select Programs</h1>
+            <h1 className="title">Select Map</h1>
           </div>
-          <p className="subtitle">{activeTabInfo?.name} - Interactive Map</p>
         </div>
 
         <div className="header-actions">
@@ -1292,7 +1291,7 @@ function App() {
             onClick={() => setDarkMode(!darkMode)}
             title={darkMode ? 'Light Mode' : 'Dark Mode'}
           >
-            {darkMode ? '☀️' : '🌙'}
+            {darkMode ? '\u2600' : '\u263E'}
           </button>
 
           {user ? (
@@ -1475,7 +1474,7 @@ function App() {
                               </div>
                               <div className="popup-details">
                                 <div className="popup-detail-row">
-                                  <span className="detail-icon">📅</span>
+                                  <span className="detail-icon">&#9702;</span>
                                   <span className="detail-text">
                                     {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     {event.endDate && ` - ${new Date(event.endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
@@ -1483,13 +1482,13 @@ function App() {
                                 </div>
                                 {event.hostPartner && (
                                   <div className="popup-detail-row">
-                                    <span className="detail-icon">🤝</span>
+                                    <span className="detail-icon">&#9702;</span>
                                     <span className="detail-text">{event.hostPartner}</span>
                                   </div>
                                 )}
                                 {event.description && (
                                   <div className="popup-detail-row">
-                                    <span className="detail-icon">📝</span>
+                                    <span className="detail-icon">&#9702;</span>
                                     <span className="detail-text">{event.description}</span>
                                   </div>
                                 )}
@@ -1497,17 +1496,17 @@ function App() {
                               {event.registrationLink && (
                                 <div className="popup-links">
                                   <a href={event.registrationLink} target="_blank" rel="noopener noreferrer" className="popup-link-btn">
-                                    <span>🔗</span> Register
+                                    Register
                                   </a>
                                 </div>
                               )}
                               {isUserAllowed && (
                                 <div className="popup-actions">
                                   <button className="popup-edit-btn" onClick={() => openEditEventForm(event)}>
-                                    ✏️ Edit
+                                    Edit
                                   </button>
                                   <button className="popup-delete-btn" onClick={() => handleDeleteEvent(event.id)}>
-                                    🗑️ Remove
+                                    Remove
                                   </button>
                                 </div>
                               )}
@@ -1808,11 +1807,11 @@ function App() {
             <p className="export-modal-sub">Choose an export format</p>
             <div className="export-modal-options">
               <button className="export-modal-btn" onClick={() => { handleExportMap(); setShowExportMenu(false) }}>
-                <span className="export-modal-icon">📷</span>
+                <span className="export-modal-icon">&#8599;</span>
                 <span>Export Map (PNG)</span>
               </button>
               <button className="export-modal-btn" onClick={() => { handleExportCSV(); }}>
-                <span className="export-modal-icon">📄</span>
+                <span className="export-modal-icon">&#8615;</span>
                 <span>Export List (CSV)</span>
               </button>
             </div>
