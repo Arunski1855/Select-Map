@@ -51,9 +51,9 @@ const createLogoIcon = (logoUrl, name, useContain = false) => {
         <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
       </div>
     `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
+    iconSize: [28, 34],
+    iconAnchor: [14, 34],
+    popupAnchor: [0, -34]
   })
 }
 
