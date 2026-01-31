@@ -1,7 +1,7 @@
 /* adidas brand fonts */
 @font-face {
   font-family: 'adidas FG';
-  src: url('/fonts/adidasFG-Regular.otf') format('opentype');
+  src: url('/adidas-fg/adidasFG-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -9,7 +9,7 @@
 
 @font-face {
   font-family: 'adidas FG';
-  src: url('/fonts/adidasFG-Bold.otf') format('opentype');
+  src: url('/adidas-fg/adidasFG-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -17,8 +17,8 @@
 
 @font-face {
   font-family: 'Denton';
-  src: url('/fonts/Denton-Light.woff2') format('woff2'),
-       url('/fonts/Denton-Light.otf') format('opentype');
+  src: url('/denton/Denton-Light.woff2') format('woff2'),
+       url('/denton/Peregrin_Studio_-_Denton_Light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
