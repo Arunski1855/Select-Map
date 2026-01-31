@@ -17,13 +17,13 @@
 }
 
 [data-theme="dark"] {
-  --bg-primary: #111111;
-  --bg-secondary: #1a1a1a;
-  --bg-tertiary: #252525;
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #161616;
   --text-primary: #ffffff;
   --text-secondary: #e0e0e0;
-  --text-muted: #999999;
-  --border-color: #333;
+  --text-muted: #888888;
+  --border-color: #222222;
   --header-bg: #000000;
   --header-text: #ffffff;
 }
@@ -111,22 +111,23 @@
 .login-btn,
 .logout-btn {
   font-family: var(--font-heading);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #ffffff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .login-btn:hover,
 .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #ffffff;
 }
 
 /* Add Program Button */
@@ -380,15 +381,45 @@
   color: var(--text-primary);
 }
 
-/* Loading State */
+/* Loading State — Three-Stripe Animation */
 .loading {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  gap: 1.25rem;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
   color: var(--text-muted);
   background: var(--bg-secondary);
+}
+
+.loading::before {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 48px;
+  background:
+    repeating-linear-gradient(
+      to right,
+      var(--text-primary) 0px,
+      var(--text-primary) 10px,
+      transparent 10px,
+      transparent 16px
+    );
+  background-size: 48px 100%;
+  mask-image: linear-gradient(to top, transparent 0%, var(--text-primary) 100%);
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, var(--text-primary) 100%);
+  animation: stripe-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes stripe-pulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(0.7); }
+  50% { opacity: 1; transform: scaleY(1); }
 }
 
 /* Error Banner */
@@ -1314,23 +1345,24 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  background: #2ecc71;
+  background: #00a550;
   color: white;
+  font-family: var(--font-heading);
   font-size: 0.6rem;
   font-weight: 700;
   padding: 0.15rem 0.4rem;
-  border-radius: 3px;
+  border-radius: 2px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   z-index: 1;
 }
 
 .event-badge-past {
-  background: #95a5a6;
+  background: #555555;
 }
 
 .event-badge-proposed {
-  background: #e67e22;
+  background: #ff6b00;
 }
 
 .event-card-photo {
@@ -2217,19 +2249,23 @@
 }
 
 .subscribe-btn {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 4px 10px;
-  border-radius: 6px;
+  font-family: var(--font-heading);
+  background: var(--text-primary);
+  border: 2px solid var(--text-primary);
+  color: var(--bg-primary);
+  padding: 4px 12px;
+  border-radius: 0;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .subscribe-btn:hover {
-  background: var(--bg-tertiary);
+  background: transparent;
+  color: var(--text-primary);
 }
 
 .subscribe-dropdown {
