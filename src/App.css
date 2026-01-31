@@ -1356,31 +1356,6 @@
   opacity: 0.85;
 }
 
-.event-cal-btn {
-  padding: 0.2rem 0.5rem;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  transition: opacity 0.2s;
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  background: var(--bg-primary);
-}
-
-.event-cal-btn:hover {
-  opacity: 0.75;
-}
-
-.event-cal-google {
-  border-color: #4285f4;
-  color: #4285f4;
-}
-
-.event-cal-apple {
-  border-color: #555;
-  color: #555;
-}
 
 [data-theme="dark"] .event-cal-apple {
   border-color: #ccc;
@@ -2166,6 +2141,64 @@
 .export-btn-small:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+/* Subscribe dropdown */
+.subscribe-wrapper {
+  position: relative;
+}
+
+.subscribe-btn {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subscribe-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.subscribe-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+  min-width: 200px;
+  overflow: hidden;
+}
+
+.subscribe-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  transition: background 0.15s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+}
+
+.subscribe-option:hover {
+  background: var(--bg-tertiary);
+}
+
+.subscribe-option svg {
+  flex-shrink: 0;
 }
 
 /* Advanced Filters */
