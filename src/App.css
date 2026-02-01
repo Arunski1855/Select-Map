@@ -1711,13 +1711,14 @@ textarea {
 }
 
 .event-edit-btn {
-  color: var(--accent-color);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
 }
 
 .event-edit-btn:hover {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
 }
 
 .event-delete-btn {
