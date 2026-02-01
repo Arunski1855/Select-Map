@@ -103,12 +103,21 @@
   --header-text: #ffffff;
 }
 
+/* Global font inheritance for form elements and buttons */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   color: var(--text-primary);
+  font-family: var(--font-body);
 }
 
 /* Header */
@@ -148,6 +157,7 @@
 }
 
 .theme-toggle {
+  font-family: var(--font-heading);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 0.4rem 0.65rem;
@@ -175,6 +185,7 @@
 }
 
 .user-email {
+  font-family: var(--font-body);
   font-size: 0.85rem;
   opacity: 0.9;
   max-width: 150px;
@@ -758,6 +769,7 @@
 }
 
 .popup-location {
+  font-family: var(--font-body);
   font-size: 0.75rem;
   color: var(--text-muted);
   margin: 0;
@@ -792,6 +804,7 @@
 }
 
 .detail-text {
+  font-family: var(--font-body);
   font-size: 0.75rem;
   color: var(--text-secondary);
 }
@@ -804,6 +817,7 @@
 }
 
 .popup-link-btn {
+  font-family: var(--font-heading-compressed);
   flex: 1;
   display: flex;
   align-items: center;
@@ -871,6 +885,7 @@
 
 .popup-edit-btn,
 .popup-delete-btn {
+  font-family: var(--font-heading-compressed);
   flex: 1;
   display: flex;
   align-items: center;
@@ -910,6 +925,7 @@
 
 /* Legacy buttons (keep for compatibility) */
 .edit-btn {
+  font-family: var(--font-heading);
   display: block;
   width: 100%;
   margin-top: 12px;
@@ -929,6 +945,7 @@
 }
 
 .delete-btn {
+  font-family: var(--font-heading);
   display: block;
   width: 100%;
   margin-top: 8px;
@@ -1196,6 +1213,7 @@
 
 /* Admin Button */
 .admin-btn {
+  font-family: var(--font-heading);
   background: rgba(255, 255, 255, 0.1);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -1690,6 +1708,7 @@
 }
 
 .detail-panel-title p {
+  font-family: var(--font-body);
   margin: 2px 0 0;
   font-size: 0.78rem;
   color: var(--text-muted);
@@ -1763,6 +1782,7 @@
 }
 
 .detail-label {
+  font-family: var(--font-heading-compressed);
   font-weight: 600;
   color: var(--text-muted);
   font-size: 0.75rem;
@@ -1784,6 +1804,7 @@
 }
 
 .detail-prospects-text {
+  font-family: var(--font-body);
   margin: 0;
   font-size: 0.82rem;
   color: var(--text-secondary);
@@ -1798,6 +1819,7 @@
 }
 
 .detail-link-btn {
+  font-family: var(--font-heading-compressed);
   padding: 7px 14px;
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -1848,6 +1870,7 @@
 }
 
 .detail-gallery h4 {
+  font-family: var(--font-heading-compressed);
   margin: 0 0 8px;
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -1883,6 +1906,7 @@
 
 .detail-edit-btn,
 .detail-delete-btn {
+  font-family: var(--font-heading);
   flex: 1;
   padding: 8px;
   border-radius: 6px;
@@ -1917,6 +1941,7 @@
 
 /* Schedule Tab */
 .maxpreps-banner {
+  font-family: var(--font-heading);
   display: block;
   padding: 10px 14px;
   background: #003da5;
@@ -1942,6 +1967,7 @@
 }
 
 .add-game-form h4 {
+  font-family: var(--font-heading);
   margin: 0 0 8px;
   font-size: 0.8rem;
   color: var(--text-primary);
@@ -1965,6 +1991,7 @@
 }
 
 .add-game-btn {
+  font-family: var(--font-heading);
   width: 100%;
   padding: 6px;
   background: var(--text-primary);
@@ -2006,6 +2033,7 @@
 }
 
 .schedule-date {
+  font-family: var(--font-heading-compressed);
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -2020,17 +2048,20 @@
 }
 
 .schedule-opponent {
+  font-family: var(--font-heading);
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .schedule-score {
+  font-family: var(--font-heading-compressed);
   font-size: 0.72rem;
   color: var(--text-muted);
 }
 
 .schedule-result {
+  font-family: var(--font-heading-compressed);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 2px 6px;
