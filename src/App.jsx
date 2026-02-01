@@ -30,6 +30,8 @@ import {
 } from './firebase'
 import AddProgramForm from './components/AddProgramForm'
 import AddEventForm from './components/AddEventForm'
+import SplashScreen from './components/SplashScreen'
+import DetailPanel from './components/DetailPanel'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 
@@ -276,234 +278,7 @@ function FlyToMarker({ position }) {
   return null
 }
 
-// Detail Panel Component (slide-out drawer)
-function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete }) {
-  const [activeDetailTab, setActiveDetailTab] = useState('info')
-  const [notes, setNotes] = useState([])
-  const [schedule, setSchedule] = useState([])
-  const [newNote, setNewNote] = useState('')
-  const [newGame, setNewGame] = useState({ date: '', opponent: '', result: '', score: '' })
-  const [noteLoading, setNoteLoading] = useState(false)
-
-  useEffect(() => {
-    if (!program || !sport) return
-    const unsub1 = subscribeToNotes(sport, program.id, setNotes)
-    const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
-    return () => { unsub1(); unsub2() }
-  }, [program, sport])
-
-  useEffect(() => {
-    setActiveDetailTab('info')
-  }, [program?.id])
-
-  if (!isOpen || !program) return null
-
-  const handleAddNote = async (e) => {
-    e.preventDefault()
-    if (!newNote.trim() || !user) return
-    setNoteLoading(true)
-    try {
-      await addNote(sport, program.id, {
-        text: newNote.trim(),
-        author: user.email,
-        timestamp: Date.now()
-      })
-      setNewNote('')
-    } catch (err) {
-      console.error('Error adding note:', err)
-    } finally {
-      setNoteLoading(false)
-    }
-  }
-
-  const handleDeleteNote = async (noteId) => {
-    try {
-      await deleteNote(sport, program.id, noteId)
-    } catch (err) {
-      console.error('Error deleting note:', err)
-    }
-  }
-
-  const handleAddGame = async (e) => {
-    e.preventDefault()
-    if (!newGame.date || !newGame.opponent) return
-    try {
-      await addScheduleEntry(sport, program.id, {
-        date: newGame.date,
-        opponent: newGame.opponent,
-        result: newGame.result || '',
-        score: newGame.score || '',
-        addedBy: user?.email || '',
-        timestamp: Date.now()
-      })
-      setNewGame({ date: '', opponent: '', result: '', score: '' })
-    } catch (err) {
-      console.error('Error adding game:', err)
-    }
-  }
-
-  const handleDeleteGame = async (entryId) => {
-    try {
-      await deleteScheduleEntry(sport, program.id, entryId)
-    } catch (err) {
-      console.error('Error deleting game:', err)
-    }
-  }
-
-  const regionColor = REGIONS[program.region]?.color || '#333'
-
-  return (
-    <div className={`detail-panel ${isOpen ? 'open' : ''}`}>
-      <div className="detail-panel-profile">
-        <div className="detail-panel-logo">
-          <img src={program.logo} alt={program.name} />
-        </div>
-        <div className="detail-panel-title">
-          <h2>{program.name}</h2>
-          <p>{program.city}, {program.state}</p>
-          <span className="detail-region-badge" style={{ background: regionColor }}>{program.region}</span>
-        </div>
-        <button className="detail-panel-close" onClick={onClose}>&times;</button>
-      </div>
-
-      <div className="detail-panel-tabs">
-        {['info', 'schedule', 'notes'].map(tab => (
-          <button
-            key={tab}
-            className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveDetailTab(tab)}
-          >
-            {tab === 'info' ? 'Details' : tab === 'schedule' ? 'Schedule' : `Notes (${notes.length})`}
-          </button>
-        ))}
-      </div>
-
-      <div className="detail-panel-content">
-        {activeDetailTab === 'info' && (
-          <div className="detail-info-tab">
-            {(program.conference || program.headCoach || program.ranking) && (
-              <div className="detail-section">
-                {program.conference && (
-                  <div className="detail-row"><span className="detail-label">Conference</span><span>{program.conference}</span></div>
-                )}
-                {program.headCoach && (
-                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
-                )}
-                {program.ranking && (
-                  <div className="detail-row"><span className="detail-label">Ranking</span><span>{program.ranking}</span></div>
-                )}
-              </div>
-            )}
-
-            <div className="detail-links-section">
-              {program.website && (
-                <a href={program.website} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
-                  Website
-                </a>
-              )}
-              {program.roster && (
-                <a href={program.roster} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
-                  Roster
-                </a>
-              )}
-              {program.maxprepsUrl && (
-                <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-maxpreps">
-                  MaxPreps
-                </a>
-              )}
-              {program.tcaStoreUrl && (
-                <a href={program.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-tca">
-                  TCA Store
-                </a>
-              )}
-              {program.brandGuide && (
-                <a href={program.brandGuide} download={program.brandGuideName || 'brand-guidelines.pdf'} className="detail-link-btn detail-link-brand">
-                  Brand Guidelines
-                </a>
-              )}
-            </div>
-
-            {program.gallery && program.gallery.length > 0 && (
-              <div className="detail-gallery">
-                <h4>Gallery</h4>
-                <div className="detail-gallery-grid">
-                  {program.gallery.map((img, idx) => (
-                    <img key={idx} src={img} alt={`Gallery ${idx + 1}`} className="detail-gallery-img" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {program.topProspects && (
-              <div className="detail-prospects">
-                <span className="detail-label">Top Prospects</span>
-                <p className="detail-prospects-text">{program.topProspects}</p>
-              </div>
-            )}
-
-            {isUserAllowed && (
-              <div className="detail-actions">
-                <button className="detail-edit-btn" onClick={() => onEdit(program)}>Edit Program</button>
-                <button className="detail-delete-btn" onClick={() => onDelete(program.id)}>Remove</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeDetailTab === 'schedule' && (
-          <div className="detail-schedule-tab">
-            {program.maxprepsUrl ? (
-              <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="maxpreps-banner">
-                View full schedule & results on MaxPreps &rarr;
-              </a>
-            ) : (
-              <p className="detail-empty">No MaxPreps link added yet.</p>
-            )}
-          </div>
-        )}
-
-        {activeDetailTab === 'notes' && (
-          <div className="detail-notes-tab">
-            {!isUserAllowed ? (
-              <p className="detail-empty">Sign in to view internal notes.</p>
-            ) : (
-              <>
-                <form className="add-note-form" onSubmit={handleAddNote}>
-                  <textarea
-                    value={newNote}
-                    onChange={e => setNewNote(e.target.value)}
-                    placeholder="Add an internal note..."
-                    rows={3}
-                  />
-                  <button type="submit" disabled={noteLoading || !newNote.trim()}>
-                    {noteLoading ? 'Adding...' : 'Add Note'}
-                  </button>
-                </form>
-
-                {notes.length === 0 ? (
-                  <p className="detail-empty">No notes yet.</p>
-                ) : (
-                  <div className="notes-list">
-                    {notes.map(note => (
-                      <div key={note.id} className="note-item">
-                        <div className="note-header">
-                          <span className="note-author">{note.author}</span>
-                          <span className="note-time">{new Date(note.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                        </div>
-                        <p className="note-text">{note.text}</p>
-                        <button className="note-delete" onClick={() => handleDeleteNote(note.id)}>&times;</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+// DetailPanel is now imported from ./components/DetailPanel
 
 // Admin Panel Component for managing allowed users
 function AdminPanel({ isOpen, onClose, allowedUsers }) {
@@ -863,6 +638,7 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
   const [programs, setPrograms] = useState([])
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -1274,6 +1050,10 @@ function App() {
   const mapZoom = 4
 
   const activeTabInfo = TABS.find(t => t.id === activeTab)
+
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />
+  }
 
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
