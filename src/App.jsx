@@ -267,6 +267,43 @@ function StateLabels() {
   return null
 }
 
+// Preserve map view (center + zoom) across re-renders / data refreshes
+function MapViewPreserver() {
+  const map = useMap()
+  const savedView = useRef(null)
+
+  useEffect(() => {
+    const onMoveEnd = () => {
+      savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
+    }
+    map.on('moveend', onMoveEnd)
+    map.on('zoomend', onMoveEnd)
+    // Capture initial view
+    savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
+
+    return () => {
+      map.off('moveend', onMoveEnd)
+      map.off('zoomend', onMoveEnd)
+    }
+  }, [map])
+
+  // On every render, if the map was reset (e.g. container resize), restore saved view
+  useEffect(() => {
+    if (savedView.current) {
+      const currentCenter = map.getCenter()
+      const currentZoom = map.getZoom()
+      const saved = savedView.current
+      const dist = Math.abs(currentCenter.lat - saved.center.lat) + Math.abs(currentCenter.lng - saved.center.lng)
+      // If the map jumped significantly, restore
+      if (dist > 5 || Math.abs(currentZoom - saved.zoom) > 1) {
+        map.setView(saved.center, saved.zoom, { animate: false })
+      }
+    }
+  })
+
+  return null
+}
+
 // Map click handler to center on marker
 function FlyToMarker({ position }) {
   const map = useMap()
@@ -1941,6 +1978,7 @@ function App() {
                 scrollWheelZoom={true}
               >
                 <DynamicTileLayer darkMode={darkMode} />
+                <MapViewPreserver />
                 <StateLabels />
                 {selectedProgram && (
                   <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
