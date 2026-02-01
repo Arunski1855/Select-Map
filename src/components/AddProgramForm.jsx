@@ -41,6 +41,8 @@ const BS_ISLANDS = [
 
 const REGIONS = ['Canada', 'Mid Atlantic', 'South', 'Midwest', 'West']
 
+const PROGRAM_LEVELS = ['Elite', 'Premier', 'Development', 'Showcase', 'Academy']
+
 const initialFormState = {
   name: '',
   city: '',
@@ -53,7 +55,12 @@ const initialFormState = {
   topProspects: '',
   conference: '',
   maxprepsUrl: '',
-  tcaStoreUrl: ''
+  tcaStoreUrl: '',
+  level: '',
+  contactEmail: '',
+  contactPhone: '',
+  twitter: '',
+  instagram: ''
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
@@ -83,7 +90,12 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         topProspects: editProgram.topProspects || '',
         conference: editProgram.conference || '',
         maxprepsUrl: editProgram.maxprepsUrl || '',
-        tcaStoreUrl: editProgram.tcaStoreUrl || ''
+        tcaStoreUrl: editProgram.tcaStoreUrl || '',
+        level: editProgram.level || '',
+        contactEmail: editProgram.contactEmail || '',
+        contactPhone: editProgram.contactPhone || '',
+        twitter: editProgram.twitter || '',
+        instagram: editProgram.instagram || ''
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -241,6 +253,11 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         conference: formData.conference || '',
         maxprepsUrl: formData.maxprepsUrl || '',
         tcaStoreUrl: formData.tcaStoreUrl || '',
+        level: formData.level || '',
+        contactEmail: formData.contactEmail || '',
+        contactPhone: formData.contactPhone || '',
+        twitter: formData.twitter || '',
+        instagram: formData.instagram || '',
         logo: logoData,
         gallery: gallery,
         brandGuide: brandGuide || '',
@@ -407,6 +424,73 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                 value={formData.topProspects}
                 onChange={handleInputChange}
                 placeholder="e.g., 3 five-stars"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="level">Program Level</label>
+            <select
+              id="level"
+              name="level"
+              value={formData.level}
+              onChange={handleInputChange}
+            >
+              <option value="">Select Level</option>
+              {PROGRAM_LEVELS.map(lvl => (
+                <option key={lvl} value={lvl}>{lvl}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="contactEmail">Contact Email</label>
+              <input
+                type="email"
+                id="contactEmail"
+                name="contactEmail"
+                value={formData.contactEmail}
+                onChange={handleInputChange}
+                placeholder="coach@program.com"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="contactPhone">Contact Phone</label>
+              <input
+                type="tel"
+                id="contactPhone"
+                name="contactPhone"
+                value={formData.contactPhone}
+                onChange={handleInputChange}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="twitter">Twitter / X Handle</label>
+              <input
+                type="text"
+                id="twitter"
+                name="twitter"
+                value={formData.twitter}
+                onChange={handleInputChange}
+                placeholder="@handle"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="instagram">Instagram Handle</label>
+              <input
+                type="text"
+                id="instagram"
+                name="instagram"
+                value={formData.instagram}
+                onChange={handleInputChange}
+                placeholder="@handle"
               />
             </div>
           </div>

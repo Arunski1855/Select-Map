@@ -637,6 +637,427 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
   )
 }
 
+// Level color mapping
+const LEVEL_COLORS = {
+  'Elite': '#d4002a',
+  'Premier': '#005eb8',
+  'Development': '#00a550',
+  'Showcase': '#ff6b00',
+  'Academy': '#7d2d8e'
+}
+
+// Digest Modal Component
+function DigestModal({ isOpen, onClose, programs, events, sport }) {
+  const [digestRange, setDigestRange] = useState('week')
+
+  if (!isOpen) return null
+
+  const now = new Date()
+  const rangeMs = digestRange === 'week' ? 7 * 86400000 : digestRange === 'month' ? 30 * 86400000 : 90 * 86400000
+  const rangeStart = new Date(now.getTime() - rangeMs)
+  const rangeEnd = new Date(now.getTime() + rangeMs)
+  const rangeStartStr = rangeStart.toISOString().split('T')[0]
+  const nowStr = now.toISOString().split('T')[0]
+  const rangeEndStr = rangeEnd.toISOString().split('T')[0]
+
+  const upcomingEvents = events.filter(e => e.date >= nowStr && e.date <= rangeEndStr)
+    .sort((a, b) => a.date.localeCompare(b.date))
+  const pastEvents = events.filter(e => e.date >= rangeStartStr && e.date < nowStr)
+    .sort((a, b) => b.date.localeCompare(a.date))
+
+  // Programs by level
+  const byLevel = {}
+  programs.forEach(p => {
+    const lvl = p.level || 'Unclassified'
+    if (!byLevel[lvl]) byLevel[lvl] = []
+    byLevel[lvl].push(p)
+  })
+
+  // Programs by region
+  const byRegion = {}
+  programs.forEach(p => {
+    const r = p.region || 'Unknown'
+    if (!byRegion[r]) byRegion[r] = []
+    byRegion[r].push(p)
+  })
+
+  const rangeLabel = digestRange === 'week' ? 'Weekly' : digestRange === 'month' ? 'Monthly' : 'Quarterly'
+
+  const handleCopyDigest = () => {
+    const lines = []
+    lines.push(`ADIDAS SELECT ${rangeLabel.toUpperCase()} DIGEST`)
+    lines.push(`Generated: ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`)
+    lines.push(`Sport: ${sport === 'football' ? 'Football' : 'Basketball'}`)
+    lines.push('')
+    lines.push(`PROGRAMS OVERVIEW (${programs.length} total)`)
+    Object.entries(byLevel).forEach(([level, progs]) => {
+      lines.push(`  ${level}: ${progs.length} programs`)
+    })
+    lines.push('')
+    lines.push('REGIONAL BREAKDOWN')
+    Object.entries(byRegion).forEach(([region, progs]) => {
+      lines.push(`  ${region}: ${progs.length} programs`)
+      progs.forEach(p => lines.push(`    - ${p.name} (${p.city}, ${p.state})`))
+    })
+    lines.push('')
+    if (upcomingEvents.length > 0) {
+      lines.push(`UPCOMING EVENTS (${upcomingEvents.length})`)
+      upcomingEvents.forEach(e => {
+        lines.push(`  - ${e.name} | ${e.date} | ${e.city}, ${e.state}${e.proposed ? ' [PROPOSED]' : ''}`)
+      })
+    }
+    if (pastEvents.length > 0) {
+      lines.push('')
+      lines.push(`RECENT EVENTS (${pastEvents.length})`)
+      pastEvents.forEach(e => {
+        lines.push(`  - ${e.name} | ${e.date} | ${e.city}, ${e.state}`)
+      })
+    }
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      alert('Digest copied to clipboard!')
+    }).catch(() => {
+      // Fallback: select text
+      const ta = document.createElement('textarea')
+      ta.value = lines.join('\n')
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      alert('Digest copied to clipboard!')
+    })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="digest-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Program Digest</h2>
+        <p className="digest-subtitle">{sport === 'football' ? 'Select Football' : 'Select Basketball'} Summary</p>
+
+        <div className="digest-range-picker">
+          {['week', 'month', 'quarter'].map(r => (
+            <button key={r} className={`digest-range-btn ${digestRange === r ? 'active' : ''}`} onClick={() => setDigestRange(r)}>
+              {r === 'week' ? 'Weekly' : r === 'month' ? 'Monthly' : 'Quarterly'}
+            </button>
+          ))}
+        </div>
+
+        <div className="digest-body">
+          <div className="digest-section">
+            <h3>Programs Overview</h3>
+            <div className="digest-stat-row">
+              <span className="digest-stat-big">{programs.length}</span>
+              <span className="digest-stat-label">Total Programs</span>
+            </div>
+            {Object.entries(byLevel).map(([level, progs]) => (
+              <div key={level} className="digest-level-row">
+                <span className="digest-level-badge" style={{ background: LEVEL_COLORS[level] || '#666' }}>{level}</span>
+                <span className="digest-level-count">{progs.length}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="digest-section">
+            <h3>Regional Breakdown</h3>
+            {Object.entries(byRegion).map(([region, progs]) => (
+              <div key={region} className="digest-region-group">
+                <div className="digest-region-header">
+                  <span className="digest-region-dot" style={{ background: REGIONS[region]?.color || '#999' }} />
+                  <span className="digest-region-name">{region}</span>
+                  <span className="digest-region-count">{progs.length}</span>
+                </div>
+                <div className="digest-region-programs">
+                  {progs.map(p => (
+                    <span key={p.id} className="digest-program-chip">{p.name}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {upcomingEvents.length > 0 && (
+            <div className="digest-section">
+              <h3>Upcoming Events ({upcomingEvents.length})</h3>
+              {upcomingEvents.map(e => (
+                <div key={e.id} className="digest-event-item">
+                  <span className="digest-event-date">{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <div className="digest-event-info">
+                    <span className="digest-event-name">{e.name}</span>
+                    <span className="digest-event-loc">{e.city}, {e.state}</span>
+                  </div>
+                  {e.proposed && <span className="digest-event-proposed">Proposed</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {pastEvents.length > 0 && (
+            <div className="digest-section">
+              <h3>Recent Events ({pastEvents.length})</h3>
+              {pastEvents.slice(0, 5).map(e => (
+                <div key={e.id} className="digest-event-item digest-event-past">
+                  <span className="digest-event-date">{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <div className="digest-event-info">
+                    <span className="digest-event-name">{e.name}</span>
+                    <span className="digest-event-loc">{e.city}, {e.state}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="digest-actions">
+          <button className="digest-copy-btn" onClick={handleCopyDigest}>Copy Digest to Clipboard</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Reports Modal Component
+function ReportsModal({ isOpen, onClose, programs, events, sport }) {
+  const [reportType, setReportType] = useState('overview')
+  const [filterLevel, setFilterLevel] = useState('all')
+  const [filterRegion, setFilterRegion] = useState('all')
+
+  if (!isOpen) return null
+
+  const filtered = programs.filter(p => {
+    if (filterLevel !== 'all' && (p.level || '') !== filterLevel) return false
+    if (filterRegion !== 'all' && p.region !== filterRegion) return false
+    return true
+  })
+
+  const uniqueLevels = [...new Set(programs.map(p => p.level).filter(Boolean))]
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const handleExportReport = () => {
+    const today = new Date().toISOString().split('T')[0]
+    let csv = ''
+
+    if (reportType === 'overview' || reportType === 'programs') {
+      const headers = ['Name', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach', 'Ranking', 'Contact Email', 'Contact Phone', 'Twitter', 'Instagram']
+      const rows = filtered.map(p => [
+        p.name || '', p.city || '', p.state || '', p.region || '', p.level || '',
+        p.conference || '', p.headCoach || '', p.ranking || '',
+        p.contactEmail || '', p.contactPhone || '', p.twitter || '', p.instagram || ''
+      ])
+      csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    } else {
+      const headers = ['Name', 'Date', 'End Date', 'City', 'State', 'Host/Partner', 'Proposed', 'Description']
+      const rows = events.map(e => [
+        e.name || '', e.date || '', e.endDate || '', e.city || '', e.state || '',
+        e.hostPartner || '', e.proposed ? 'Yes' : 'No', e.description || ''
+      ])
+      csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const link = document.createElement('a')
+    link.download = `adidas-select-${reportType}-report-${today}.csv`
+    link.href = URL.createObjectURL(blob)
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  const nowStr = new Date().toISOString().split('T')[0]
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="reports-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Reports</h2>
+
+        <div className="reports-tabs">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'programs', label: 'Programs' },
+            { id: 'events', label: 'Events' }
+          ].map(t => (
+            <button key={t.id} className={`reports-tab ${reportType === t.id ? 'active' : ''}`} onClick={() => setReportType(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {(reportType === 'overview' || reportType === 'programs') && (
+          <div className="reports-filters">
+            <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}>
+              <option value="all">All Levels</option>
+              {uniqueLevels.map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+            <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
+              <option value="all">All Regions</option>
+              {Object.keys(REGIONS).map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div className="reports-body printable-report">
+          {reportType === 'overview' && (
+            <div className="report-overview">
+              <div className="report-summary-grid">
+                <div className="report-summary-card">
+                  <span className="report-card-value">{filtered.length}</span>
+                  <span className="report-card-label">Programs</span>
+                </div>
+                <div className="report-summary-card">
+                  <span className="report-card-value">{new Set(filtered.map(p => p.state).filter(Boolean)).size}</span>
+                  <span className="report-card-label">States</span>
+                </div>
+                <div className="report-summary-card">
+                  <span className="report-card-value">{new Set(filtered.map(p => p.region).filter(Boolean)).size}</span>
+                  <span className="report-card-label">Regions</span>
+                </div>
+                <div className="report-summary-card">
+                  <span className="report-card-value">{events.filter(e => e.date >= nowStr).length}</span>
+                  <span className="report-card-label">Upcoming Events</span>
+                </div>
+              </div>
+
+              <h3>Programs by Level</h3>
+              <div className="report-level-breakdown">
+                {['Elite', 'Premier', 'Showcase', 'Academy', 'Development'].map(level => {
+                  const count = filtered.filter(p => p.level === level).length
+                  if (count === 0) return null
+                  return (
+                    <div key={level} className="report-level-row">
+                      <span className="report-level-badge" style={{ background: LEVEL_COLORS[level] }}>{level}</span>
+                      <div className="report-level-bar-track">
+                        <div className="report-level-bar-fill" style={{ width: `${(count / Math.max(filtered.length, 1)) * 100}%`, background: LEVEL_COLORS[level] }} />
+                      </div>
+                      <span className="report-level-count">{count}</span>
+                    </div>
+                  )
+                })}
+                {filtered.filter(p => !p.level).length > 0 && (
+                  <div className="report-level-row">
+                    <span className="report-level-badge" style={{ background: '#666' }}>Unclassified</span>
+                    <div className="report-level-bar-track">
+                      <div className="report-level-bar-fill" style={{ width: `${(filtered.filter(p => !p.level).length / Math.max(filtered.length, 1)) * 100}%`, background: '#666' }} />
+                    </div>
+                    <span className="report-level-count">{filtered.filter(p => !p.level).length}</span>
+                  </div>
+                )}
+              </div>
+
+              <h3>Programs by Region</h3>
+              {Object.keys(REGIONS).map(region => {
+                const regionProgs = filtered.filter(p => p.region === region)
+                if (regionProgs.length === 0) return null
+                return (
+                  <div key={region} className="report-region-group">
+                    <div className="report-region-header">
+                      <span className="report-region-dot" style={{ background: REGIONS[region].color }} />
+                      <span>{region}</span>
+                      <span className="report-region-count">{regionProgs.length}</span>
+                    </div>
+                    <table className="report-table">
+                      <thead>
+                        <tr><th>Program</th><th>City</th><th>Level</th><th>Coach</th></tr>
+                      </thead>
+                      <tbody>
+                        {regionProgs.map(p => (
+                          <tr key={p.id}>
+                            <td>{p.name}</td>
+                            <td>{p.city}, {p.state}</td>
+                            <td>{p.level || '-'}</td>
+                            <td>{p.headCoach || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {reportType === 'programs' && (
+            <div className="report-programs">
+              <p className="report-count">{filtered.length} programs</p>
+              <table className="report-table report-table-full">
+                <thead>
+                  <tr>
+                    <th>Program</th>
+                    <th>Location</th>
+                    <th>Region</th>
+                    <th>Level</th>
+                    <th>Conference</th>
+                    <th>Coach</th>
+                    <th>Contact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => (
+                    <tr key={p.id}>
+                      <td className="report-program-name">{p.name}</td>
+                      <td>{p.city}, {p.state}</td>
+                      <td><span className="report-region-chip" style={{ background: REGIONS[p.region]?.color || '#666' }}>{p.region}</span></td>
+                      <td>{p.level ? <span className="report-level-chip" style={{ background: LEVEL_COLORS[p.level] || '#666' }}>{p.level}</span> : '-'}</td>
+                      <td>{p.conference || '-'}</td>
+                      <td>{p.headCoach || '-'}</td>
+                      <td>{p.contactEmail || p.contactPhone || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {reportType === 'events' && (
+            <div className="report-events">
+              <h3>Upcoming Events ({events.filter(e => e.date >= nowStr).length})</h3>
+              <table className="report-table report-table-full">
+                <thead>
+                  <tr><th>Event</th><th>Date</th><th>Location</th><th>Host</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  {events.filter(e => e.date >= nowStr).sort((a, b) => a.date.localeCompare(b.date)).map(e => (
+                    <tr key={e.id}>
+                      <td className="report-program-name">{e.name}</td>
+                      <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                      <td>{e.city}, {e.state}</td>
+                      <td>{e.hostPartner || '-'}</td>
+                      <td>{e.proposed ? <span className="report-status-proposed">Proposed</span> : <span className="report-status-confirmed">Confirmed</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 style={{ marginTop: 20 }}>Past Events ({events.filter(e => e.date < nowStr).length})</h3>
+              <table className="report-table report-table-full">
+                <thead>
+                  <tr><th>Event</th><th>Date</th><th>Location</th><th>Host</th></tr>
+                </thead>
+                <tbody>
+                  {events.filter(e => e.date < nowStr).sort((a, b) => b.date.localeCompare(a.date)).map(e => (
+                    <tr key={e.id}>
+                      <td>{e.name}</td>
+                      <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                      <td>{e.city}, {e.state}</td>
+                      <td>{e.hostPartner || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="reports-actions">
+          <button className="reports-export-btn" onClick={handleExportReport}>Export CSV</button>
+          <button className="reports-print-btn" onClick={handlePrint}>Print Report</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
@@ -677,6 +1098,10 @@ function App() {
   const [isExporting, setIsExporting] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showSubscribeMenu, setShowSubscribeMenu] = useState(false)
+
+  // Digest & Reports
+  const [isDigestOpen, setIsDigestOpen] = useState(false)
+  const [isReportsOpen, setIsReportsOpen] = useState(false)
 
   // Ref for map screenshot
   const mapRef = useRef(null)
@@ -1119,6 +1544,14 @@ function App() {
             <div className="stat-item stat-analytics" onClick={() => setIsAnalyticsOpen(true)}>
               <span className="stat-value">&#9776;</span>
               <span className="stat-label">Analytics</span>
+            </div>
+            <div className="stat-item stat-digest" onClick={() => setIsDigestOpen(true)}>
+              <span className="stat-value">&#9993;</span>
+              <span className="stat-label">Digest</span>
+            </div>
+            <div className="stat-item stat-reports" onClick={() => setIsReportsOpen(true)}>
+              <span className="stat-value">&#9783;</span>
+              <span className="stat-label">Reports</span>
             </div>
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
@@ -1606,6 +2039,22 @@ function App() {
       <AnalyticsModal
         isOpen={isAnalyticsOpen}
         onClose={() => setIsAnalyticsOpen(false)}
+        programs={programs}
+        events={events}
+        sport={activeTab}
+      />
+
+      <DigestModal
+        isOpen={isDigestOpen}
+        onClose={() => setIsDigestOpen(false)}
+        programs={programs}
+        events={events}
+        sport={activeTab}
+      />
+
+      <ReportsModal
+        isOpen={isReportsOpen}
+        onClose={() => setIsReportsOpen(false)}
         programs={programs}
         events={events}
         sport={activeTab}
