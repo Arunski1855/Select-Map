@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo, Component } from 'react'
 import {
   addNote,
   deleteNote,
@@ -10,6 +10,43 @@ import {
   subscribeToSocialMetrics,
   deleteSocialMetric
 } from '../firebase'
+
+// Error boundary to prevent white-screen crashes
+class DetailPanelErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+  componentDidCatch(error, info) {
+    console.error('DetailPanel crash:', error, info)
+  }
+  componentDidUpdate(prevProps) {
+    if (prevProps.programId !== this.props.programId) {
+      this.setState({ hasError: false, error: null })
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="detail-panel open" style={{ padding: 20 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            Something went wrong loading this program.
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false }); this.props.onClose?.() }}
+            style={{ marginTop: 10, padding: '6px 16px', cursor: 'pointer' }}
+          >
+            Close
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 // Region definitions with colors
 const REGIONS = {
@@ -298,11 +335,11 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
               )}
             </div>
 
-            {program.gallery && program.gallery.length > 0 && (
+            {program.gallery && (Array.isArray(program.gallery) ? program.gallery : Object.values(program.gallery)).length > 0 && (
               <div className="detail-gallery">
                 <h4>Gallery</h4>
                 <div className="detail-gallery-grid">
-                  {program.gallery.map((img, idx) => (
+                  {(Array.isArray(program.gallery) ? program.gallery : Object.values(program.gallery)).map((img, idx) => (
                     <img key={idx} src={img} alt={`Gallery ${idx + 1}`} className="detail-gallery-img" />
                   ))}
                 </div>
@@ -550,4 +587,12 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
   )
 }
 
-export default DetailPanel
+function DetailPanelWithBoundary(props) {
+  return (
+    <DetailPanelErrorBoundary programId={props.program?.id} onClose={props.onClose}>
+      <DetailPanel {...props} />
+    </DetailPanelErrorBoundary>
+  )
+}
+
+export default DetailPanelWithBoundary
