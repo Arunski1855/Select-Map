@@ -25,10 +25,10 @@ function SplashScreen({ onComplete }) {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Three slanted stripes forming the adidas performance mountain */}
-            <polygon className="splash-bar splash-bar-1" points="14,90 26,90 42,58 30,58" />
-            <polygon className="splash-bar splash-bar-2" points="30,90 42,90 66,38 54,38" />
-            <polygon className="splash-bar splash-bar-3" points="46,90 58,90 90,18 78,18" />
+            {/* Three parallel slanted stripes – adidas Performance logo */}
+            <polygon className="splash-bar splash-bar-1" points="0,92 14,92 34,56 20,56" />
+            <polygon className="splash-bar splash-bar-2" points="18,92 32,92 62,32 48,32" />
+            <polygon className="splash-bar splash-bar-3" points="36,92 50,92 90,10 76,10" />
           </svg>
         </div>
         <div className="splash-wordmark">
