@@ -4226,3 +4226,145 @@ textarea {
     border-radius: 12px 12px 0 0;
   }
 }
+
+/* ================= */
+/* Instagram Growth Tracking */
+/* ================= */
+
+.ig-growth-chart {
+  margin-bottom: 10px;
+}
+
+.ig-growth-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ig-growth-current {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.ig-growth-delta {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ig-growth-delta.positive {
+  color: #00a550;
+}
+
+.ig-growth-delta.negative {
+  color: #d4002a;
+}
+
+.ig-growth-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.ig-growth-single {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ig-growth-date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.ig-history {
+  margin-bottom: 8px;
+}
+
+.ig-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.78rem;
+}
+
+.ig-history-row:last-child {
+  border-bottom: none;
+}
+
+.ig-history-date {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  min-width: 80px;
+}
+
+.ig-history-count {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.ig-history-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.ig-history-delete:hover {
+  color: #d4002a;
+}
+
+.ig-snapshot-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.ig-snapshot-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+}
+
+.ig-snapshot-input::placeholder {
+  color: var(--text-muted);
+}
+
+.ig-snapshot-btn {
+  font-family: var(--font-heading);
+  padding: 6px 14px;
+  background: #E1306C;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.ig-snapshot-btn:hover {
+  opacity: 0.85;
+}
+
+.ig-snapshot-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

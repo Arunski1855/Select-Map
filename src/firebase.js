@@ -243,4 +243,26 @@ export const subscribeToSchedule = (sport, programId, callback) => {
   })
 }
 
+// Social metrics tracking (Instagram follower snapshots)
+export const addSocialMetric = async (sport, programId, metricData) => {
+  const metricsRef = ref(database, `socialMetrics/${sport}/${programId}`)
+  const newRef = push(metricsRef)
+  await set(newRef, { ...metricData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToSocialMetrics = (sport, programId, callback) => {
+  const metricsRef = ref(database, `socialMetrics/${sport}/${programId}`)
+  return onValue(metricsRef, (snapshot) => {
+    const data = snapshot.val()
+    const metrics = data ? Object.values(data).sort((a, b) => a.date.localeCompare(b.date)) : []
+    callback(metrics)
+  })
+}
+
+export const deleteSocialMetric = async (sport, programId, metricId) => {
+  const metricRef = ref(database, `socialMetrics/${sport}/${programId}/${metricId}`)
+  await remove(metricRef)
+}
+
 export { database, auth }

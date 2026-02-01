@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   addNote,
   deleteNote,
   subscribeToNotes,
   addScheduleEntry,
   deleteScheduleEntry,
-  subscribeToSchedule
+  subscribeToSchedule,
+  addSocialMetric,
+  subscribeToSocialMetrics,
+  deleteSocialMetric
 } from '../firebase'
 
 // Region definitions with colors
@@ -43,6 +46,11 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
   const [newGame, setNewGame] = useState({ date: '', opponent: '', result: '', score: '' })
   const [noteLoading, setNoteLoading] = useState(false)
 
+  // Social metrics state
+  const [socialMetrics, setSocialMetrics] = useState([])
+  const [newFollowerCount, setNewFollowerCount] = useState('')
+  const [metricLoading, setMetricLoading] = useState(false)
+
   // Bottom sheet drag state
   const [sheetHeight, setSheetHeight] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -54,7 +62,8 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
     if (!program || !sport) return
     const unsub1 = subscribeToNotes(sport, program.id, setNotes)
     const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
-    return () => { unsub1(); unsub2() }
+    const unsub3 = subscribeToSocialMetrics(sport, program.id, setSocialMetrics)
+    return () => { unsub1(); unsub2(); unsub3() }
   }, [program, sport])
 
   useEffect(() => {
@@ -144,6 +153,38 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
       console.error('Error deleting note:', err)
     }
   }
+
+  const handleAddMetric = async (e) => {
+    e.preventDefault()
+    const count = parseInt(newFollowerCount, 10)
+    if (!count || count < 0 || !user) return
+    setMetricLoading(true)
+    try {
+      await addSocialMetric(sport, program.id, {
+        platform: 'instagram',
+        followers: count,
+        date: new Date().toISOString().split('T')[0],
+        addedBy: user.email,
+        timestamp: Date.now()
+      })
+      setNewFollowerCount('')
+    } catch (err) {
+      console.error('Error adding metric:', err)
+    } finally {
+      setMetricLoading(false)
+    }
+  }
+
+  const handleDeleteMetric = async (metricId) => {
+    try {
+      await deleteSocialMetric(sport, program.id, metricId)
+    } catch (err) {
+      console.error('Error deleting metric:', err)
+    }
+  }
+
+  // Compute chart data for Instagram follower growth
+  const igMetrics = useMemo(() => socialMetrics.filter(m => m.platform === 'instagram'), [socialMetrics])
 
   const regionColor = REGIONS[program.region]?.color || '#333'
   const levelColor = LEVEL_COLORS[program.level] || null
@@ -340,6 +381,109 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                 <a href={program.website} target="_blank" rel="noopener noreferrer" className="detail-link-btn" style={{ display: 'inline-block' }}>
                   Visit Website
                 </a>
+              </div>
+            )}
+
+            {/* Instagram Follower Growth Tracking */}
+            {program.instagram && (
+              <div className="detail-social-section">
+                <h4 className="detail-section-heading">Instagram Growth</h4>
+
+                {igMetrics.length >= 2 && (() => {
+                  const minF = Math.min(...igMetrics.map(m => m.followers))
+                  const maxF = Math.max(...igMetrics.map(m => m.followers))
+                  const range = maxF - minF || 1
+                  const chartW = 280
+                  const chartH = 100
+                  const padL = 0
+                  const padR = 0
+                  const padT = 8
+                  const padB = 20
+                  const plotW = chartW - padL - padR
+                  const plotH = chartH - padT - padB
+                  const points = igMetrics.map((m, i) => {
+                    const x = padL + (i / (igMetrics.length - 1)) * plotW
+                    const y = padT + plotH - ((m.followers - minF) / range) * plotH
+                    return { x, y, ...m }
+                  })
+                  const polyline = points.map(p => `${p.x},${p.y}`).join(' ')
+                  const areaPath = `M${points[0].x},${padT + plotH} ${points.map(p => `L${p.x},${p.y}`).join(' ')} L${points[points.length - 1].x},${padT + plotH} Z`
+                  const first = igMetrics[0].followers
+                  const last = igMetrics[igMetrics.length - 1].followers
+                  const growth = last - first
+                  const growthPct = first > 0 ? ((growth / first) * 100).toFixed(1) : 0
+
+                  return (
+                    <div className="ig-growth-chart">
+                      <div className="ig-growth-summary">
+                        <span className="ig-growth-current">{last.toLocaleString()}</span>
+                        <span className={`ig-growth-delta ${growth >= 0 ? 'positive' : 'negative'}`}>
+                          {growth >= 0 ? '+' : ''}{growth.toLocaleString()} ({growthPct}%)
+                        </span>
+                      </div>
+                      <svg viewBox={`0 0 ${chartW} ${chartH}`} className="ig-growth-svg">
+                        <defs>
+                          <linearGradient id="igGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#E1306C" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#E1306C" stopOpacity="0.02" />
+                          </linearGradient>
+                        </defs>
+                        <path d={areaPath} fill="url(#igGrad)" />
+                        <polyline points={polyline} fill="none" stroke="#E1306C" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                        {points.map((p, i) => (
+                          <circle key={i} cx={p.x} cy={p.y} r="3" fill="#E1306C" stroke="#fff" strokeWidth="1.5" />
+                        ))}
+                        {/* X-axis labels */}
+                        {points.filter((_, i) => i === 0 || i === points.length - 1 || igMetrics.length <= 6).map((p, i) => (
+                          <text key={i} x={p.x} y={chartH - 2} textAnchor="middle" fontSize="7" fill="var(--text-muted)">{new Date(p.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>
+                        ))}
+                      </svg>
+                    </div>
+                  )
+                })()}
+
+                {igMetrics.length === 1 && (
+                  <div className="ig-growth-single">
+                    <span className="ig-growth-current">{igMetrics[0].followers.toLocaleString()}</span>
+                    <span className="ig-growth-date">as of {new Date(igMetrics[0].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                )}
+
+                {igMetrics.length === 0 && (
+                  <p className="detail-empty" style={{ marginBottom: 8 }}>No follower data recorded yet.</p>
+                )}
+
+                {/* Snapshot history */}
+                {igMetrics.length > 0 && (
+                  <div className="ig-history">
+                    {igMetrics.slice().reverse().slice(0, 5).map(m => (
+                      <div key={m.id} className="ig-history-row">
+                        <span className="ig-history-date">{new Date(m.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span className="ig-history-count">{m.followers.toLocaleString()}</span>
+                        {isUserAllowed && (
+                          <button className="ig-history-delete" onClick={() => handleDeleteMetric(m.id)}>&times;</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add snapshot form */}
+                {isUserAllowed && (
+                  <form className="ig-snapshot-form" onSubmit={handleAddMetric}>
+                    <input
+                      type="number"
+                      value={newFollowerCount}
+                      onChange={e => setNewFollowerCount(e.target.value)}
+                      placeholder="Current follower count"
+                      min="0"
+                      className="ig-snapshot-input"
+                    />
+                    <button type="submit" disabled={metricLoading || !newFollowerCount} className="ig-snapshot-btn">
+                      {metricLoading ? '...' : 'Log'}
+                    </button>
+                  </form>
+                )}
               </div>
             )}
           </div>
