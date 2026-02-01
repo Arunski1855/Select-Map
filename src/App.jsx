@@ -1224,12 +1224,22 @@ function App() {
   const adjustedPositions = useMemo(() => {
     const progs = filteredPrograms.filter(p => p && p.coordinates)
     const pos = {}
-    progs.forEach(p => { pos[p.id] = [p.coordinates[0], p.coordinates[1]] })
+    const orig = {}
+    progs.forEach(p => {
+      pos[p.id] = [p.coordinates[0], p.coordinates[1]]
+      orig[p.id] = [p.coordinates[0], p.coordinates[1]]
+    })
 
-    // Gentle repulsion: only nudge markers that are nearly on top of each other
     if (progs.length <= 1) return pos
-    const MIN_DIST = 0.4
-    const ITERATIONS = 3
+
+    // Repulsion to prevent overlap, but capped so markers stay near their real location
+    const MIN_DIST = 1.2
+    const MAX_DRIFT = 1.5 // never move more than 1.5 degrees from original
+    const ITERATIONS = 8
+
+    // East-coast states: prefer pushing toward ocean (east/southeast)
+    const coastalEastStates = new Set(['FL', 'GA', 'SC', 'NC', 'VA', 'MD', 'DE', 'NJ', 'CT', 'RI', 'MA', 'NH', 'ME', 'NY'])
+
     for (let iter = 0; iter < ITERATIONS; iter++) {
       for (let i = 0; i < progs.length; i++) {
         for (let j = i + 1; j < progs.length; j++) {
@@ -1239,17 +1249,37 @@ function App() {
           const dist = Math.sqrt(dLat * dLat + dLng * dLng)
           if (dist < MIN_DIST && dist > 0) {
             const push = (MIN_DIST - dist) / 2
-            const nLat = dLat / dist
-            const nLng = dLng / dist
+            let nLat = dLat / dist
+            let nLng = dLng / dist
+
+            // For east-coast programs, bias push eastward (positive lng direction is... wait, US lng is negative, so "east" = less negative = +lng)
+            const aCoastal = coastalEastStates.has(a.state)
+            const bCoastal = coastalEastStates.has(b.state)
+            if (aCoastal || bCoastal) {
+              // Add eastward bias to longitude push
+              nLng = nLng > 0 ? nLng : nLng * 0.3
+            }
+
             pos[a.id] = [pos[a.id][0] - nLat * push, pos[a.id][1] - nLng * push]
             pos[b.id] = [pos[b.id][0] + nLat * push, pos[b.id][1] + nLng * push]
           } else if (dist === 0) {
-            const angle = (2 * Math.PI * i) / progs.length
-            pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5 * Math.cos(angle), pos[a.id][1] - MIN_DIST * 0.5 * Math.sin(angle)]
-            pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5 * Math.cos(angle), pos[b.id][1] + MIN_DIST * 0.5 * Math.sin(angle)]
+            // Spread exactly overlapping markers vertically
+            pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5, pos[a.id][1]]
+            pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5, pos[b.id][1]]
           }
         }
       }
+
+      // Clamp: don't let any marker drift more than MAX_DRIFT from its original position
+      progs.forEach(p => {
+        const dLat = pos[p.id][0] - orig[p.id][0]
+        const dLng = pos[p.id][1] - orig[p.id][1]
+        const drift = Math.sqrt(dLat * dLat + dLng * dLng)
+        if (drift > MAX_DRIFT) {
+          const scale = MAX_DRIFT / drift
+          pos[p.id] = [orig[p.id][0] + dLat * scale, orig[p.id][1] + dLng * scale]
+        }
+      })
     }
 
     return pos
