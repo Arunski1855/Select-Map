@@ -210,17 +210,17 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
           <div className="detail-info-tab">
             {(program.conference || program.headCoach || program.ranking || program.level) && (
               <div className="detail-section">
-                {program.level && (
-                  <div className="detail-row"><span className="detail-label">Level</span><span className="detail-level-value" style={{ color: levelColor || 'inherit' }}>{program.level}</span></div>
+                {program.headCoach && (
+                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
                 )}
                 {program.conference && (
                   <div className="detail-row"><span className="detail-label">Conference</span><span>{program.conference}</span></div>
                 )}
-                {program.headCoach && (
-                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
-                )}
                 {program.ranking && (
                   <div className="detail-row"><span className="detail-label">Ranking</span><span>{program.ranking}</span></div>
+                )}
+                {program.level && (
+                  <div className="detail-row"><span className="detail-label">Level</span><span className="detail-level-value" style={{ color: levelColor || 'inherit' }}>{program.level}</span></div>
                 )}
               </div>
             )}
