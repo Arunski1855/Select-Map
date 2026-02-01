@@ -24,6 +24,17 @@ const LEVEL_COLORS = {
   'Regional': '#005eb8'
 }
 
+function formatPhone(phone) {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+  }
+  if (digits.length === 11 && digits[0] === '1') {
+    return `${digits.slice(1, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`
+  }
+  return phone
+}
+
 function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete }) {
   const [activeDetailTab, setActiveDetailTab] = useState('info')
   const [notes, setNotes] = useState([])
@@ -285,7 +296,7 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                 {program.contactPhone && (
                   <div className="detail-row">
                     <span className="detail-label">Phone</span>
-                    <a href={`tel:${program.contactPhone}`} className="detail-contact-link">{program.contactPhone}</a>
+                    <a href={`tel:${program.contactPhone}`} className="detail-contact-link">{formatPhone(program.contactPhone)}</a>
                   </div>
                 )}
               </div>

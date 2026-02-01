@@ -3513,9 +3513,14 @@ textarea {
 
 .detail-badges-row {
   display: flex;
+  align-items: center;
   gap: 4px;
   flex-wrap: wrap;
   margin-top: 4px;
+}
+
+.detail-badges-row .detail-region-badge {
+  margin-top: 0;
 }
 
 .detail-level-badge {
