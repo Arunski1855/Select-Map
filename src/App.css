@@ -2112,7 +2112,7 @@ textarea {
 .detail-link-tca {
   background: #000000;
   color: white;
-  border-color: #000000;
+  border-color: #555555;
 }
 
 .detail-link-tca:hover {
