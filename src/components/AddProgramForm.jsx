@@ -41,7 +41,7 @@ const BS_ISLANDS = [
 
 const REGIONS = ['Canada', 'Mid Atlantic', 'South', 'Midwest', 'West']
 
-const PROGRAM_LEVELS = ['Elite', 'Premier', 'Development', 'Showcase', 'Academy']
+const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
 
 const initialFormState = {
   name: '',

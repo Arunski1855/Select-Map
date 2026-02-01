@@ -639,11 +639,10 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
 
 // Level color mapping
 const LEVEL_COLORS = {
-  'Elite': '#d4002a',
-  'Premier': '#005eb8',
-  'Development': '#00a550',
-  'Showcase': '#ff6b00',
-  'Academy': '#7d2d8e'
+  'Gold': '#c9a84c',
+  'Silver': '#8a8d8f',
+  'Bronze': '#a0714f',
+  'Regional': '#005eb8'
 }
 
 // Digest Modal Component
@@ -921,7 +920,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
 
               <h3>Programs by Level</h3>
               <div className="report-level-breakdown">
-                {['Elite', 'Premier', 'Showcase', 'Academy', 'Development'].map(level => {
+                {['Gold', 'Silver', 'Bronze', 'Regional'].map(level => {
                   const count = filtered.filter(p => p.level === level).length
                   if (count === 0) return null
                   return (
