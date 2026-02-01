@@ -216,8 +216,11 @@ export const subscribeToNotes = (sport, programId, callback) => {
   const notesRef = ref(database, `notes/${sport}/${programId}`)
   return onValue(notesRef, (snapshot) => {
     const data = snapshot.val()
-    const notes = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : []
+    const notes = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
     callback(notes)
+  }, (error) => {
+    console.error('Firebase notes error:', error)
+    callback([])
   })
 }
 
@@ -238,8 +241,11 @@ export const subscribeToSchedule = (sport, programId, callback) => {
   const schedRef = ref(database, `schedule/${sport}/${programId}`)
   return onValue(schedRef, (snapshot) => {
     const data = snapshot.val()
-    const entries = data ? Object.values(data).sort((a, b) => a.date.localeCompare(b.date)) : []
+    const entries = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
     callback(entries)
+  }, (error) => {
+    console.error('Firebase schedule error:', error)
+    callback([])
   })
 }
 
@@ -255,8 +261,11 @@ export const subscribeToSocialMetrics = (sport, programId, callback) => {
   const metricsRef = ref(database, `socialMetrics/${sport}/${programId}`)
   return onValue(metricsRef, (snapshot) => {
     const data = snapshot.val()
-    const metrics = data ? Object.values(data).sort((a, b) => a.date.localeCompare(b.date)) : []
+    const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
     callback(metrics)
+  }, (error) => {
+    console.error('Firebase social metrics error:', error)
+    callback([])
   })
 }
 

@@ -59,16 +59,20 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
   const panelRef = useRef(null)
 
   useEffect(() => {
-    if (!program || !sport) return
+    if (!program?.id || !sport || sport === 'events') return
     const unsub1 = subscribeToNotes(sport, program.id, setNotes)
     const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
     const unsub3 = subscribeToSocialMetrics(sport, program.id, setSocialMetrics)
     return () => { unsub1(); unsub2(); unsub3() }
-  }, [program, sport])
+  }, [program?.id, sport])
 
   useEffect(() => {
     setActiveDetailTab('info')
     setSheetHeight(null)
+    setNotes([])
+    setSchedule([])
+    setSocialMetrics([])
+    setNewFollowerCount('')
   }, [program?.id])
 
   useEffect(() => {
@@ -390,8 +394,9 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                 <h4 className="detail-section-heading">Instagram Growth</h4>
 
                 {igMetrics.length >= 2 && (() => {
-                  const minF = Math.min(...igMetrics.map(m => m.followers))
-                  const maxF = Math.max(...igMetrics.map(m => m.followers))
+                  try {
+                  const minF = Math.min(...igMetrics.map(m => m.followers || 0))
+                  const maxF = Math.max(...igMetrics.map(m => m.followers || 0))
                   const range = maxF - minF || 1
                   const chartW = 280
                   const chartH = 100
@@ -440,6 +445,7 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                       </svg>
                     </div>
                   )
+                  } catch (e) { console.error('Chart render error:', e); return null }
                 })()}
 
                 {igMetrics.length === 1 && (
