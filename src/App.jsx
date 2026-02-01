@@ -1216,7 +1216,9 @@ function App() {
           <div className="events-split-layout" ref={mapRef}>
             <div className="events-map-panel">
               {isEventsLoading ? (
-                <div className="loading">Loading events...</div>
+                <div className="skeleton-map">
+                  <span className="skeleton-map-label">Loading map...</span>
+                </div>
               ) : (
                 <MapContainer
                   key="events"
@@ -1489,7 +1491,9 @@ function App() {
           /* Programs Map + Detail Panel */
           <div className="programs-layout" ref={mapRef}>
             {isLoading ? (
-              <div className="loading">Loading programs...</div>
+              <div className="skeleton-map">
+                  <span className="skeleton-map-label">Loading map...</span>
+                </div>
             ) : (
               <MapContainer
                 key={activeTab}
