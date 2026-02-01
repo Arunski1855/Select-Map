@@ -17,18 +17,18 @@ function SplashScreen({ onComplete }) {
   return (
     <div className={`splash-screen splash-${phase}`}>
       <div className="splash-content">
-        {/* adidas Performance Logo (Three Stripes / Mountain) */}
+        {/* adidas Performance Logo (Three Slanted Stripes) */}
         <div className="splash-logo">
           <svg
-            viewBox="0 0 120 80"
+            viewBox="0 0 100 100"
             className="splash-logo-svg"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Three ascending bars forming the adidas performance mountain */}
-            <rect className="splash-bar splash-bar-1" x="10" y="50" width="24" height="30" rx="1" />
-            <rect className="splash-bar splash-bar-2" x="40" y="30" width="24" height="50" rx="1" />
-            <rect className="splash-bar splash-bar-3" x="70" y="10" width="24" height="70" rx="1" />
+            {/* Three slanted stripes forming the adidas performance mountain */}
+            <polygon className="splash-bar splash-bar-1" points="14,90 26,90 42,58 30,58" />
+            <polygon className="splash-bar splash-bar-2" points="30,90 42,90 66,38 54,38" />
+            <polygon className="splash-bar splash-bar-3" points="46,90 58,90 90,18 78,18" />
           </svg>
         </div>
         <div className="splash-wordmark">

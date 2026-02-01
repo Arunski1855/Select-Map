@@ -521,7 +521,7 @@ textarea {
 
 .splash-logo {
   width: 100px;
-  height: 70px;
+  height: 100px;
 }
 
 .splash-logo-svg {
@@ -553,11 +553,11 @@ textarea {
 @keyframes splash-bar-enter {
   0% {
     opacity: 0;
-    transform: scaleY(0) translateY(20px);
+    transform: translateY(15px);
   }
   100% {
     opacity: 1;
-    transform: scaleY(1) translateY(0);
+    transform: translateY(0);
   }
 }
 
