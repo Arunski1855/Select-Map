@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="4" fill="#000"/>
   <g fill="#fff">
-    <polygon points="4,24 4,18 10,8 10,24"/>
-    <polygon points="12,24 12,14 18,4 18,24"/>
-    <polygon points="20,24 20,10 26,0 26,24"/>
+    <!-- 3 diagonal bars leaning right, ascending height = adidas Performance mark -->
+    <polygon points="3,26 7,26 13,16 9,16"/>
+    <polygon points="10,26 14,26 20,10 16,10"/>
+    <polygon points="17,26 21,26 27,4 23,4"/>
   </g>
 </svg>
