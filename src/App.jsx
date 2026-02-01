@@ -41,6 +41,7 @@ const REGIONS = {
   'Mid Atlantic': { color: '#005eb8', states: ['NY', 'NJ', 'PA', 'DE', 'MD', 'DC', 'VA', 'WV'] },
   'South': { color: '#ff6b00', states: ['FL', 'GA', 'SC', 'NC', 'TN', 'AL', 'MS', 'LA', 'AR', 'KY', 'TX', 'OK'] },
   'Midwest': { color: '#7d2d8e', states: ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'] },
+  'North': { color: '#1a9fc9', states: ['ME', 'NH', 'VT', 'MA', 'CT', 'RI'] },
   'West': { color: '#00a550', states: ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI'] }
 }
 

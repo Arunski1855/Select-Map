@@ -39,7 +39,7 @@ const BS_ISLANDS = [
   { abbr: 'BS-BI', name: 'Bimini' }, { abbr: 'BS-LI', name: 'Long Island' }
 ]
 
-const REGIONS = ['Canada', 'Mid Atlantic', 'South', 'Midwest', 'West']
+const REGIONS = ['Canada', 'Mid Atlantic', 'North', 'South', 'Midwest', 'West']
 
 const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
 

@@ -144,5 +144,6 @@ export const regionColors = {
   West: '#e74c3c',
   Midwest: '#3498db',
   East: '#2ecc71',
-  South: '#f39c12'
+  South: '#f39c12',
+  North: '#1a9fc9'
 }
