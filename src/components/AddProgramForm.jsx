@@ -324,6 +324,21 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         <button className="modal-close" onClick={handleClose}>&times;</button>
         <h2>{isEditMode ? 'Edit Program' : 'Add New Program'}</h2>
 
+        {sport !== 'football' && (
+          <div className="gender-selector">
+            {GENDER_OPTIONS.map(g => (
+              <button
+                key={g}
+                type="button"
+                className={`gender-selector-btn ${formData.gender === g ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, gender: g }))}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="name">Program Name *</label>
@@ -465,22 +480,6 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
               ))}
             </select>
           </div>
-
-          {sport !== 'football' && (
-            <div className="form-group">
-              <label htmlFor="gender">Gender</label>
-              <select
-                id="gender"
-                name="gender"
-                value={formData.gender}
-                onChange={handleInputChange}
-              >
-                {GENDER_OPTIONS.map(g => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-            </div>
-          )}
 
           {sport !== 'football' && formData.gender === 'Both' && (
             <div className="girls-fields">
