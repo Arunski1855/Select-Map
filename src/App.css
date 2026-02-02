@@ -4357,28 +4357,65 @@ textarea {
 
 /* Print styles */
 @media print {
-  .header, .tabs, .toolbar, .dashboard, .footer,
-  .modal-overlay, .modal-close, .reports-actions,
-  .reports-tabs, .reports-filters {
+  body.printing-report .header,
+  body.printing-report .tabs,
+  body.printing-report .toolbar,
+  body.printing-report .dashboard,
+  body.printing-report .footer,
+  body.printing-report .leaflet-container,
+  body.printing-report .sidebar,
+  body.printing-report .splash-screen {
     display: none !important;
   }
 
-  .reports-modal {
-    position: static;
-    max-width: 100%;
-    max-height: none;
-    width: 100%;
-    box-shadow: none;
-    border-radius: 0;
-    padding: 0;
+  body.printing-report .modal-overlay {
+    position: static !important;
+    background: none !important;
+    overflow: visible !important;
+    display: block !important;
+    height: auto !important;
   }
 
-  .printable-report {
+  body.printing-report .reports-modal {
+    position: static !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 10px !important;
+    margin: 0 !important;
+  }
+
+  body.printing-report .modal-close,
+  body.printing-report .reports-actions,
+  body.printing-report .reports-tabs,
+  body.printing-report .reports-filters {
+    display: none !important;
+  }
+
+  body.printing-report .reports-body {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  body.printing-report .printable-report {
     display: block !important;
   }
 
-  .report-table {
+  body.printing-report .report-table {
     font-size: 9pt;
+  }
+
+  body.printing-report .report-summary-grid {
+    break-inside: avoid;
+  }
+
+  body.printing-report .report-region-group {
+    break-inside: avoid;
   }
 }
 

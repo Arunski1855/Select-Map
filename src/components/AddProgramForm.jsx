@@ -267,7 +267,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         twitter: formData.twitter || '',
         instagram: formData.instagram || '',
         gender: sport === 'football' ? 'Boys' : (formData.gender || 'Boys'),
-        teamType: formData.name?.toLowerCase().includes('mt. zion prep') ? (formData.teamType || '') : '',
+        teamType: formData.name?.toLowerCase().match(/mt\.?\s*zion/) ? (formData.teamType || '') : '',
         logo: logoData,
         gallery: gallery,
         brandGuide: brandGuide || '',
@@ -326,7 +326,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
           </div>
         )}
 
-        {formData.name?.toLowerCase().includes('mt. zion prep') && (
+        {formData.name?.toLowerCase().match(/mt\.?\s*zion/) && (
           <div className="gender-selector" style={{ marginTop: '8px' }}>
             <label style={{ width: '100%', marginBottom: '4px', fontSize: '13px', fontWeight: 600 }}>Team Type</label>
             {TEAM_TYPE_OPTIONS.map(t => (

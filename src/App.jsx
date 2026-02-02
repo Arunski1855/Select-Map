@@ -869,7 +869,9 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   const uniqueLevels = [...new Set(programs.map(p => p.level).filter(Boolean))]
 
   const handlePrint = () => {
+    document.body.classList.add('printing-report')
     window.print()
+    document.body.classList.remove('printing-report')
   }
 
   const handleExportReport = () => {
