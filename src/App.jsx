@@ -1136,6 +1136,9 @@ function App() {
   // Gender filter
   const [filterGender, setFilterGender] = useState('Boys') // 'Boys', 'Girls', 'all'
 
+  // Mt Zion team type filter
+  const [filterTeamType, setFilterTeamType] = useState('all') // 'Prep', 'National', 'all'
+
   // Mobile region popup
   const [showRegionPopup, setShowRegionPopup] = useState(false)
 
@@ -1218,6 +1221,11 @@ function App() {
     localStorage.setItem('darkMode', darkMode)
   }, [darkMode])
 
+  // Check if any Mt Zion programs exist (to show team type filter)
+  const hasMtZionPrograms = useMemo(() => {
+    return programs.some(p => p.name?.toLowerCase().includes('mt zion'))
+  }, [programs])
+
   // Unique conferences for filter dropdown
   const uniqueConferences = useMemo(() => {
     const confs = new Set()
@@ -1242,7 +1250,11 @@ function App() {
         program.gender === filterGender ||
         (!program.gender && filterGender === 'Boys') // default unset programs to Boys
 
-      return matchesSearch && matchesRegion && matchesConference && matchesGender
+      const matchesTeamType = filterTeamType === 'all' ||
+        program.teamType === filterTeamType ||
+        (!program.name?.toLowerCase().includes('mt zion')) // non-Mt Zion programs always match
+
+      return matchesSearch && matchesRegion && matchesConference && matchesGender && matchesTeamType
     })
 
     // Sort
@@ -1257,7 +1269,7 @@ function App() {
     })
 
     return result
-  }, [programs, searchQuery, selectedRegion, filterConference, filterGender, sortBy])
+  }, [programs, searchQuery, selectedRegion, filterConference, filterGender, filterTeamType, sortBy])
 
   // Create icons for all programs (memoized to prevent re-renders)
   const programIcons = useMemo(() => {
@@ -1688,6 +1700,20 @@ function App() {
           </div>
         )}
 
+        {hasMtZionPrograms && (
+          <div className="gender-filter-pills">
+            {['all', 'Prep', 'National'].map(t => (
+              <button
+                key={t}
+                className={`gender-pill ${filterTeamType === t ? 'active' : ''}`}
+                onClick={() => setFilterTeamType(t)}
+              >
+                {t === 'all' ? 'All Teams' : t}
+              </button>
+            ))}
+          </div>
+        )}
+
         <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
           {showFilters ? 'Less Filters' : 'More Filters'}
         </button>
@@ -1722,15 +1748,17 @@ function App() {
           </div>
         )}
 
-        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys') && (
+        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys' || filterTeamType !== 'all') && (
           <div className="filter-info">
             Showing {filteredPrograms.length} of {programs.length} programs
             {filterGender !== 'Boys' && <span className="filter-tag">{filterGender === 'all' ? 'All' : filterGender}</span>}
+            {filterTeamType !== 'all' && <span className="filter-tag">{filterTeamType}</span>}
             <button className="clear-filters" onClick={() => {
               setSearchQuery('')
               setSelectedRegion('all')
               setFilterConference('all')
               setFilterGender('Boys')
+              setFilterTeamType('all')
               setSortBy('name')
             }}>
               Clear filters

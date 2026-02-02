@@ -273,6 +273,9 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
             {program.gender && program.gender !== 'Boys' && (
               <span className="detail-gender-badge">{program.gender}</span>
             )}
+            {program.teamType && (
+              <span className="detail-gender-badge" style={{ background: '#1a5c2e' }}>{program.teamType}</span>
+            )}
           </div>
         </div>
         <button className="detail-panel-close" onClick={onClose}>&times;</button>

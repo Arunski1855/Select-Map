@@ -45,6 +45,8 @@ const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
 
 const GENDER_OPTIONS = ['Boys', 'Girls']
 
+const TEAM_TYPE_OPTIONS = ['Prep', 'National']
+
 const initialFormState = {
   name: '',
   city: '',
@@ -63,7 +65,8 @@ const initialFormState = {
   contactPhone: '',
   twitter: '',
   instagram: '',
-  gender: 'Boys'
+  gender: 'Boys',
+  teamType: ''
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
@@ -99,7 +102,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         contactPhone: editProgram.contactPhone || '',
         twitter: editProgram.twitter || '',
         instagram: editProgram.instagram || '',
-        gender: editProgram.gender || 'Boys'
+        gender: editProgram.gender || 'Boys',
+        teamType: editProgram.teamType || ''
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -263,6 +267,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         twitter: formData.twitter || '',
         instagram: formData.instagram || '',
         gender: sport === 'football' ? 'Boys' : (formData.gender || 'Boys'),
+        teamType: formData.name?.toLowerCase().includes('mt zion') ? (formData.teamType || '') : '',
         logo: logoData,
         gallery: gallery,
         brandGuide: brandGuide || '',
@@ -316,6 +321,22 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                 onClick={() => setFormData(prev => ({ ...prev, gender: g }))}
               >
                 {g}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {formData.name?.toLowerCase().includes('mt zion') && (
+          <div className="gender-selector" style={{ marginTop: '8px' }}>
+            <label style={{ width: '100%', marginBottom: '4px', fontSize: '13px', fontWeight: 600 }}>Team Type</label>
+            {TEAM_TYPE_OPTIONS.map(t => (
+              <button
+                key={t}
+                type="button"
+                className={`gender-selector-btn ${formData.teamType === t ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, teamType: t }))}
+              >
+                {t}
               </button>
             ))}
           </div>
