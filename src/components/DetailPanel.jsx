@@ -75,13 +75,23 @@ function formatPhone(phone) {
   return phone
 }
 
-function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete }) {
+function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete }) {
   const [activeDetailTab, setActiveDetailTab] = useState('info')
   const [notes, setNotes] = useState([])
   const [schedule, setSchedule] = useState([])
   const [newNote, setNewNote] = useState('')
   const [newGame, setNewGame] = useState({ date: '', opponent: '', result: '', score: '' })
   const [noteLoading, setNoteLoading] = useState(false)
+
+  // Mt. Zion Prep/National toggle
+  const [mtZionActiveIdx, setMtZionActiveIdx] = useState(0)
+  const hasMtZionToggle = mtZionPrograms && mtZionPrograms.length > 1
+  const program = hasMtZionToggle ? mtZionPrograms[mtZionActiveIdx] : initialProgram
+
+  // Reset toggle when a different program is selected
+  useEffect(() => {
+    setMtZionActiveIdx(0)
+  }, [initialProgram?.id])
 
   // Social metrics state
   const [socialMetrics, setSocialMetrics] = useState([])
@@ -280,6 +290,20 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
         </div>
         <button className="detail-panel-close" onClick={onClose}>&times;</button>
       </div>
+
+      {hasMtZionToggle && (
+        <div className="mtzion-toggle">
+          {mtZionPrograms.map((p, idx) => (
+            <button
+              key={p.id}
+              className={`mtzion-toggle-btn ${mtZionActiveIdx === idx ? 'active' : ''}`}
+              onClick={() => setMtZionActiveIdx(idx)}
+            >
+              {p.teamType || (idx === 0 ? 'Prep' : 'National')}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="detail-panel-tabs">
         {tabs.map(tab => (

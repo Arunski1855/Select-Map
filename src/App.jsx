@@ -1132,6 +1132,7 @@ function App() {
   const [allowedUsers, setAllowedUsers] = useState([])
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false)
   const [selectedProgram, setSelectedProgram] = useState(null)
+  const [selectedMtZionGroup, setSelectedMtZionGroup] = useState(null)
 
   // Events state
   const [events, setEvents] = useState([])
@@ -1364,6 +1365,33 @@ function App() {
     }
 
     return pos
+  }, [filteredPrograms])
+
+  // Group Mt. Zion programs by coordinates so they share a single marker
+  const { displayPrograms, mtZionGroupMap } = useMemo(() => {
+    const isMtZion = (p) => p.name?.toLowerCase().includes('mt. zion prep')
+    const mtZion = filteredPrograms.filter(isMtZion)
+    const others = filteredPrograms.filter(p => !isMtZion(p))
+
+    // Group Mt. Zion programs by their coordinates (rounded to avoid float mismatch)
+    const groups = {}
+    mtZion.forEach(p => {
+      if (!p.coordinates) return
+      const key = `${p.coordinates[0].toFixed(3)},${p.coordinates[1].toFixed(3)}`
+      if (!groups[key]) groups[key] = []
+      groups[key].push(p)
+    })
+
+    // Use the first program in each group as the display marker, store mapping
+    const groupMap = {} // displayProgramId -> [all programs in group]
+    const reps = []
+    Object.values(groups).forEach(group => {
+      const rep = group[0]
+      reps.push(rep)
+      groupMap[rep.id] = group
+    })
+
+    return { displayPrograms: [...others, ...reps], mtZionGroupMap: groupMap }
   }, [filteredPrograms])
 
   // Count programs by region
@@ -2087,14 +2115,17 @@ function App() {
                   <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
                 )}
 
-                {filteredPrograms.map(program => (
+                {displayPrograms.map(program => (
                   program && program.coordinates && (
                     <Marker
                       key={program.id}
                       position={adjustedPositions[program.id] || program.coordinates}
                       icon={programIcons[program.id]}
                       eventHandlers={{
-                        click: () => setSelectedProgram(program)
+                        click: () => {
+                          setSelectedProgram(program)
+                          setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
+                        }
                       }}
                     />
                   )
@@ -2104,13 +2135,14 @@ function App() {
 
             <DetailPanel
               program={selectedProgram}
+              mtZionPrograms={selectedMtZionGroup}
               sport={activeTab}
               isOpen={!!selectedProgram}
-              onClose={() => setSelectedProgram(null)}
+              onClose={() => { setSelectedProgram(null); setSelectedMtZionGroup(null) }}
               isUserAllowed={isUserAllowed}
               user={user}
-              onEdit={(p) => { setSelectedProgram(null); openEditForm(p) }}
-              onDelete={(id) => { setSelectedProgram(null); handleDeleteProgram(id) }}
+              onEdit={(p) => { setSelectedProgram(null); setSelectedMtZionGroup(null); openEditForm(p) }}
+              onDelete={(id) => { setSelectedProgram(null); setSelectedMtZionGroup(null); handleDeleteProgram(id) }}
             />
           </div>
         )}
