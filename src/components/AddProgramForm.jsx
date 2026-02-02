@@ -43,6 +43,8 @@ const REGIONS = ['Canada', 'Mid Atlantic', 'North', 'South', 'Midwest', 'West']
 
 const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
 
+const GENDER_OPTIONS = ['Boys', 'Girls', 'Both']
+
 const initialFormState = {
   name: '',
   city: '',
@@ -60,7 +62,14 @@ const initialFormState = {
   contactEmail: '',
   contactPhone: '',
   twitter: '',
-  instagram: ''
+  instagram: '',
+  gender: 'Boys',
+  girlsHeadCoach: '',
+  girlsRoster: '',
+  girlsRanking: '',
+  girlsTopProspects: '',
+  girlsMaxprepsUrl: '',
+  girlsConference: ''
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
@@ -95,7 +104,14 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         contactEmail: editProgram.contactEmail || '',
         contactPhone: editProgram.contactPhone || '',
         twitter: editProgram.twitter || '',
-        instagram: editProgram.instagram || ''
+        instagram: editProgram.instagram || '',
+        gender: editProgram.gender || 'Boys',
+        girlsHeadCoach: editProgram.girlsHeadCoach || '',
+        girlsRoster: editProgram.girlsRoster || '',
+        girlsRanking: editProgram.girlsRanking || '',
+        girlsTopProspects: editProgram.girlsTopProspects || '',
+        girlsMaxprepsUrl: editProgram.girlsMaxprepsUrl || '',
+        girlsConference: editProgram.girlsConference || ''
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -258,6 +274,13 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         contactPhone: formData.contactPhone || '',
         twitter: formData.twitter || '',
         instagram: formData.instagram || '',
+        gender: formData.gender || 'Boys',
+        girlsHeadCoach: formData.gender === 'Both' ? (formData.girlsHeadCoach || '') : '',
+        girlsRoster: formData.gender === 'Both' ? (formData.girlsRoster || '') : '',
+        girlsRanking: formData.gender === 'Both' ? (formData.girlsRanking || '') : '',
+        girlsTopProspects: formData.gender === 'Both' ? (formData.girlsTopProspects || '') : '',
+        girlsMaxprepsUrl: formData.gender === 'Both' ? (formData.girlsMaxprepsUrl || '') : '',
+        girlsConference: formData.gender === 'Both' ? (formData.girlsConference || '') : '',
         logo: logoData,
         gallery: gallery,
         brandGuide: brandGuide || '',
@@ -442,6 +465,97 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
               ))}
             </select>
           </div>
+
+          <div className="form-group">
+            <label htmlFor="gender">Gender</label>
+            <select
+              id="gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleInputChange}
+            >
+              {GENDER_OPTIONS.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
+
+          {formData.gender === 'Both' && (
+            <div className="girls-fields">
+              <h3 className="girls-fields-heading">Girls Team Info</h3>
+              <p className="girls-fields-hint">Fields above apply to the boys team. Fill in any girls-specific overrides below.</p>
+              <div className="form-group">
+                <label htmlFor="girlsHeadCoach">Girls Head Coach</label>
+                <input
+                  type="text"
+                  id="girlsHeadCoach"
+                  name="girlsHeadCoach"
+                  value={formData.girlsHeadCoach}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Jane Smith"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="girlsRanking">Girls Ranking</label>
+                  <input
+                    type="text"
+                    id="girlsRanking"
+                    name="girlsRanking"
+                    value={formData.girlsRanking}
+                    onChange={handleInputChange}
+                    placeholder="e.g., #10 National"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="girlsConference">Girls Conference</label>
+                  <input
+                    type="text"
+                    id="girlsConference"
+                    name="girlsConference"
+                    value={formData.girlsConference}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Big South"
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="girlsTopProspects">Girls Top Prospects</label>
+                <input
+                  type="text"
+                  id="girlsTopProspects"
+                  name="girlsTopProspects"
+                  value={formData.girlsTopProspects}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 2 five-stars"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="girlsRoster">Girls Roster Link</label>
+                  <input
+                    type="url"
+                    id="girlsRoster"
+                    name="girlsRoster"
+                    value={formData.girlsRoster}
+                    onChange={handleInputChange}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="girlsMaxprepsUrl">Girls MaxPreps URL</label>
+                  <input
+                    type="url"
+                    id="girlsMaxprepsUrl"
+                    name="girlsMaxprepsUrl"
+                    value={formData.girlsMaxprepsUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://www.maxpreps.com/..."
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="form-row">
             <div className="form-group">

@@ -75,7 +75,7 @@ function formatPhone(phone) {
   return phone
 }
 
-function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete }) {
+function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete, activeGender = 'Boys', onGenderChange }) {
   const [activeDetailTab, setActiveDetailTab] = useState('info')
   const [notes, setNotes] = useState([])
   const [schedule, setSchedule] = useState([])
@@ -227,6 +227,17 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
   // Compute chart data for Instagram follower growth
   const igMetrics = useMemo(() => socialMetrics.filter(m => m.platform === 'instagram'), [socialMetrics])
 
+  // Gender-aware field resolution: for "Both" programs showing girls, use girls-specific overrides
+  const showingGirls = activeGender === 'Girls' && program.gender === 'Both'
+  const genderFields = {
+    headCoach: showingGirls ? (program.girlsHeadCoach || program.headCoach) : program.headCoach,
+    ranking: showingGirls ? (program.girlsRanking || program.ranking) : program.ranking,
+    topProspects: showingGirls ? (program.girlsTopProspects || program.topProspects) : program.topProspects,
+    roster: showingGirls ? (program.girlsRoster || program.roster) : program.roster,
+    maxprepsUrl: showingGirls ? (program.girlsMaxprepsUrl || program.maxprepsUrl) : program.maxprepsUrl,
+    conference: showingGirls ? (program.girlsConference || program.conference) : program.conference
+  }
+
   const regionColor = REGIONS[program.region]?.color || '#333'
   const levelColor = LEVEL_COLORS[program.level] || null
 
@@ -270,7 +281,22 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
             {program.level && (
               <span className="detail-level-badge" style={{ background: levelColor || '#333' }}>{program.level}</span>
             )}
+            {program.gender && program.gender !== 'Boys' && (
+              <span className="detail-gender-badge">{program.gender === 'Both' ? (activeGender === 'Girls' ? 'Girls' : 'Boys') : program.gender}</span>
+            )}
           </div>
+          {program.gender === 'Both' && onGenderChange && (
+            <div className="detail-gender-toggle">
+              <button
+                className={`detail-gender-btn ${activeGender !== 'Girls' ? 'active' : ''}`}
+                onClick={() => onGenderChange('Boys')}
+              >Boys</button>
+              <button
+                className={`detail-gender-btn ${activeGender === 'Girls' ? 'active' : ''}`}
+                onClick={() => onGenderChange('Girls')}
+              >Girls</button>
+            </div>
+          )}
         </div>
         <button className="detail-panel-close" onClick={onClose}>&times;</button>
       </div>
@@ -290,16 +316,16 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
       <div className="detail-panel-content">
         {activeDetailTab === 'info' && (
           <div className="detail-info-tab">
-            {(program.conference || program.headCoach || program.ranking || program.level) && (
+            {(genderFields.conference || genderFields.headCoach || genderFields.ranking || program.level) && (
               <div className="detail-section">
-                {program.headCoach && (
-                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
+                {genderFields.headCoach && (
+                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{genderFields.headCoach}</span></div>
                 )}
-                {program.conference && (
-                  <div className="detail-row"><span className="detail-label">Conference</span><span>{program.conference}</span></div>
+                {genderFields.conference && (
+                  <div className="detail-row"><span className="detail-label">Conference</span><span>{genderFields.conference}</span></div>
                 )}
-                {program.ranking && (
-                  <div className="detail-row"><span className="detail-label">Ranking</span><span>{program.ranking}</span></div>
+                {genderFields.ranking && (
+                  <div className="detail-row"><span className="detail-label">Ranking</span><span>{genderFields.ranking}</span></div>
                 )}
                 {program.level && (
                   <div className="detail-row"><span className="detail-label">Level</span><span className="detail-level-value" style={{ color: levelColor || 'inherit' }}>{program.level}</span></div>
@@ -313,13 +339,13 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
                   Website
                 </a>
               )}
-              {program.roster && (
-                <a href={program.roster} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
+              {genderFields.roster && (
+                <a href={genderFields.roster} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
                   Roster
                 </a>
               )}
-              {program.maxprepsUrl && (
-                <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-maxpreps">
+              {genderFields.maxprepsUrl && (
+                <a href={genderFields.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-maxpreps">
                   MaxPreps
                 </a>
               )}
@@ -346,10 +372,10 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
               </div>
             )}
 
-            {program.topProspects && (
+            {genderFields.topProspects && (
               <div className="detail-prospects">
                 <span className="detail-label">Top Prospects</span>
-                <p className="detail-prospects-text">{program.topProspects}</p>
+                <p className="detail-prospects-text">{genderFields.topProspects}</p>
               </div>
             )}
 
@@ -364,10 +390,10 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
 
         {activeDetailTab === 'contact' && (
           <div className="detail-contact-tab">
-            {(program.contactEmail || program.contactPhone || program.headCoach) ? (
+            {(program.contactEmail || program.contactPhone || genderFields.headCoach) ? (
               <div className="detail-section">
-                {program.headCoach && (
-                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
+                {genderFields.headCoach && (
+                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{genderFields.headCoach}</span></div>
                 )}
                 {program.contactEmail && (
                   <div className="detail-row">
@@ -534,8 +560,8 @@ function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onE
 
         {activeDetailTab === 'schedule' && (
           <div className="detail-schedule-tab">
-            {program.maxprepsUrl ? (
-              <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="maxpreps-banner">
+            {genderFields.maxprepsUrl ? (
+              <a href={genderFields.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="maxpreps-banner">
                 View full schedule & results on MaxPreps &rarr;
               </a>
             ) : (

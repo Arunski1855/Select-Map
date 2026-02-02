@@ -883,6 +883,138 @@ textarea {
   background: white;
 }
 
+/* Gender toggle pill on map markers */
+.marker-gender-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  margin-top: 2px;
+  background: #222;
+  border-radius: 6px;
+  overflow: hidden;
+  width: 32px;
+  margin-left: -2px;
+  cursor: pointer;
+}
+
+.marker-gender-opt {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  color: #999;
+  line-height: 1.2;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.marker-gender-opt.active {
+  background: #fff;
+  color: #000;
+}
+
+.marker-gender-opt:hover {
+  color: #fff;
+}
+
+/* Gender filter pills in toolbar */
+.gender-filter-pills {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.gender-pill {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gender-pill.active {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+[data-theme="dark"] .gender-pill.active {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.gender-pill:hover:not(.active) {
+  border-color: #666;
+}
+
+/* Gender toggle in detail panel */
+.detail-gender-toggle {
+  display: flex;
+  gap: 0;
+  margin-top: 6px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.detail-gender-btn {
+  padding: 3px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.detail-gender-btn.active {
+  background: #000;
+  color: #fff;
+}
+
+[data-theme="dark"] .detail-gender-btn.active {
+  background: #fff;
+  color: #000;
+}
+
+.detail-gender-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #e8e8e8;
+  color: #333;
+}
+
+[data-theme="dark"] .detail-gender-badge {
+  background: #333;
+  color: #ccc;
+}
+
+.filter-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  margin-left: 4px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e8e8e8;
+  color: #333;
+}
+
+[data-theme="dark"] .filter-tag {
+  background: #333;
+  color: #ccc;
+}
+
 /* Popup Styling */
 .leaflet-popup-content-wrapper {
   background: var(--bg-primary);
