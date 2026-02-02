@@ -45,9 +45,12 @@ const REGIONS = {
   'West': { color: '#00a550', states: ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI'] }
 }
 
-// Create custom icon for each program logo
+// Create custom icon for each program logo (cached to prevent unnecessary re-renders)
+const iconCache = new Map()
 const createLogoIcon = (logoUrl, name, useContain = false) => {
-  return L.divIcon({
+  const cacheKey = `${logoUrl}|${name}|${useContain}`
+  if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
+  const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
       <div class="logo-marker${useContain ? ' logo-contain' : ''}" title="${name}">
@@ -58,6 +61,8 @@ const createLogoIcon = (logoUrl, name, useContain = false) => {
     iconAnchor: [14, 34],
     popupAnchor: [0, -34]
   })
+  iconCache.set(cacheKey, icon)
+  return icon
 }
 
 // Tab configuration
@@ -273,19 +278,27 @@ function MapViewPreserver() {
   const map = useMap()
   const savedView = useRef(null)
   const resizing = useRef(false)
+  const restoring = useRef(false)
 
   useEffect(() => {
+    let saveTimeout = null
     const onMoveEnd = () => {
       // Ignore view changes triggered by container resize (e.g. form open/close)
-      if (resizing.current) return
-      savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
+      if (resizing.current || restoring.current) return
+      // Debounce saving to avoid capturing intermediate states during data updates
+      clearTimeout(saveTimeout)
+      saveTimeout = setTimeout(() => {
+        savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
+      }, 100)
     }
     const onResize = () => {
       resizing.current = true
       // After Leaflet finishes adjusting for the resize, restore our saved view
       setTimeout(() => {
         if (savedView.current) {
+          restoring.current = true
           map.setView(savedView.current.center, savedView.current.zoom, { animate: false })
+          setTimeout(() => { restoring.current = false }, 100)
         }
         resizing.current = false
       }, 50)
@@ -297,6 +310,7 @@ function MapViewPreserver() {
     savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
 
     return () => {
+      clearTimeout(saveTimeout)
       map.off('moveend', onMoveEnd)
       map.off('zoomend', onMoveEnd)
       map.off('resize', onResize)
@@ -311,7 +325,9 @@ function MapViewPreserver() {
       const saved = savedView.current
       const dist = Math.abs(currentCenter.lat - saved.center.lat) + Math.abs(currentCenter.lng - saved.center.lng)
       if (dist > 0.5 || Math.abs(currentZoom - saved.zoom) > 0.5) {
+        restoring.current = true
         map.setView(saved.center, saved.zoom, { animate: false })
+        setTimeout(() => { restoring.current = false }, 100)
       }
     }
   })
@@ -871,16 +887,19 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   const [reportType, setReportType] = useState('overview')
   const [filterLevel, setFilterLevel] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
+  const [filterConf, setFilterConf] = useState('all')
 
   if (!isOpen) return null
 
   const filtered = programs.filter(p => {
     if (filterLevel !== 'all' && (p.level || '') !== filterLevel) return false
     if (filterRegion !== 'all' && p.region !== filterRegion) return false
+    if (filterConf !== 'all' && (p.conference || '') !== filterConf) return false
     return true
   })
 
   const uniqueLevels = [...new Set(programs.map(p => p.level).filter(Boolean))]
+  const uniqueConfs = [...new Set(programs.map(p => p.conference).filter(Boolean))].sort()
 
   const handlePrint = () => {
     document.body.classList.add('printing-report')
@@ -946,6 +965,10 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
             <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
               <option value="all">All Regions</option>
               {Object.keys(REGIONS).map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <select value={filterConf} onChange={e => setFilterConf(e.target.value)}>
+              <option value="all">All Conferences</option>
+              {uniqueConfs.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         )}
@@ -1050,7 +1073,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                 <tbody>
                   {filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => (
                     <tr key={p.id}>
-                      <td className="report-program-name">{p.name}</td>
+                      <td className="report-program-name">{p.logo && <img src={p.logo} alt="" className="report-program-logo" />}{p.name}</td>
                       <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
                       <td>{p.city}, {p.state}</td>
                       <td><span className="report-region-chip" style={{ background: REGIONS[p.region]?.color || '#666' }}>{p.region}</span></td>
@@ -1747,19 +1770,6 @@ function App() {
           </div>
         )}
 
-        {hasMtZionPrograms && (
-          <div className="gender-filter-pills">
-            {['all', 'Prep', 'National'].map(t => (
-              <button
-                key={t}
-                className={`gender-pill ${filterTeamType === t ? 'active' : ''}`}
-                onClick={() => setFilterTeamType(t)}
-              >
-                {t === 'all' ? 'All Teams' : t}
-              </button>
-            ))}
-          </div>
-        )}
 
         <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
           {showFilters ? 'Less Filters' : 'More Filters'}
