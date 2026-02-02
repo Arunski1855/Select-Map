@@ -877,9 +877,9 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
     let csv = ''
 
     if (reportType === 'overview' || reportType === 'programs') {
-      const headers = ['Name', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach', 'Ranking', 'Contact Email', 'Contact Phone', 'Twitter', 'Instagram']
+      const headers = ['Name', 'Gender', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach', 'Ranking', 'Contact Email', 'Contact Phone', 'Twitter', 'Instagram']
       const rows = filtered.map(p => [
-        p.name || '', p.city || '', p.state || '', p.region || '', p.level || '',
+        p.name || '', p.gender || 'Boys', p.city || '', p.state || '', p.region || '', p.level || '',
         p.conference || '', p.headCoach || '', p.ranking || '',
         p.contactEmail || '', p.contactPhone || '', p.twitter || '', p.instagram || ''
       ])
@@ -995,12 +995,13 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                     </div>
                     <table className="report-table">
                       <thead>
-                        <tr><th>Program</th><th>City</th><th>Level</th><th>Coach</th></tr>
+                        <tr><th>Program</th><th>Gender</th><th>City</th><th>Level</th><th>Coach</th></tr>
                       </thead>
                       <tbody>
                         {regionProgs.map(p => (
                           <tr key={p.id}>
                             <td>{p.name}</td>
+                            <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
                             <td>{p.city}, {p.state}</td>
                             <td>{p.level || '-'}</td>
                             <td>{p.headCoach || '-'}</td>
@@ -1021,6 +1022,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                 <thead>
                   <tr>
                     <th>Program</th>
+                    <th>Gender</th>
                     <th>Location</th>
                     <th>Region</th>
                     <th>Level</th>
@@ -1033,6 +1035,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                   {filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => (
                     <tr key={p.id}>
                       <td className="report-program-name">{p.name}</td>
+                      <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
                       <td>{p.city}, {p.state}</td>
                       <td><span className="report-region-chip" style={{ background: REGIONS[p.region]?.color || '#666' }}>{p.region}</span></td>
                       <td>{p.level ? <span className="report-level-chip" style={{ background: LEVEL_COLORS[p.level] || '#666' }}>{p.level}</span> : '-'}</td>
@@ -1131,7 +1134,7 @@ function App() {
   const [showFilters, setShowFilters] = useState(false)
 
   // Gender filter
-  const [filterGender, setFilterGender] = useState('all') // 'all', 'Boys', 'Girls'
+  const [filterGender, setFilterGender] = useState('Boys') // 'Boys', 'Girls', 'all'
 
   // Mobile region popup
   const [showRegionPopup, setShowRegionPopup] = useState(false)
@@ -1673,7 +1676,7 @@ function App() {
 
         {activeTab !== 'football' && (
           <div className="gender-filter-pills">
-            {['all', 'Boys', 'Girls'].map(g => (
+            {['Boys', 'Girls', 'all'].map(g => (
               <button
                 key={g}
                 className={`gender-pill ${filterGender === g ? 'active' : ''}`}
@@ -1719,15 +1722,15 @@ function App() {
           </div>
         )}
 
-        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'all') && (
+        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys') && (
           <div className="filter-info">
             Showing {filteredPrograms.length} of {programs.length} programs
-            {filterGender !== 'all' && <span className="filter-tag">{filterGender}</span>}
+            {filterGender !== 'Boys' && <span className="filter-tag">{filterGender === 'all' ? 'All' : filterGender}</span>}
             <button className="clear-filters" onClick={() => {
               setSearchQuery('')
               setSelectedRegion('all')
               setFilterConference('all')
-              setFilterGender('all')
+              setFilterGender('Boys')
               setSortBy('name')
             }}>
               Clear filters

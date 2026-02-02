@@ -4209,6 +4209,25 @@ textarea {
   letter-spacing: 0.5px;
 }
 
+.report-gender-chip {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-gender-chip.boys {
+  background: #005eb8;
+  color: #fff;
+}
+
+.report-gender-chip.girls {
+  background: #d4002a;
+  color: #fff;
+}
+
 .report-table {
   width: 100%;
   border-collapse: collapse;
