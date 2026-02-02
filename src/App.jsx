@@ -919,13 +919,16 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
       case 'gender': aVal = a.gender || 'Boys'; bVal = b.gender || 'Boys'; break
       case 'location': aVal = `${a.state || ''},${a.city || ''}`; bVal = `${b.state || ''},${b.city || ''}`; break
       case 'region': aVal = a.region || ''; bVal = b.region || ''; break
-      case 'level': aVal = a.level || ''; bVal = b.level || ''; break
+      case 'level': {
+        const levelOrder = { 'Gold': 0, 'Silver': 1, 'Bronze': 2, 'Regional': 3 }
+        aVal = levelOrder[a.level] ?? 4; bVal = levelOrder[b.level] ?? 4; break
+      }
       case 'conference': aVal = a.conference || ''; bVal = b.conference || ''; break
       case 'coach': aVal = a.headCoach || ''; bVal = b.headCoach || ''; break
       case 'contact': aVal = a.contactEmail || a.contactPhone || ''; bVal = b.contactEmail || b.contactPhone || ''; break
       default: aVal = a.name || ''; bVal = b.name || ''
     }
-    const cmp = String(aVal).localeCompare(String(bVal))
+    const cmp = sortCol === 'level' ? aVal - bVal : String(aVal).localeCompare(String(bVal))
     return sortDir === 'asc' ? cmp : -cmp
   })
 
