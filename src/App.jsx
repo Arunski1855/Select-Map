@@ -46,23 +46,15 @@ const REGIONS = {
 }
 
 // Create custom icon for each program logo
-const createLogoIcon = (logoUrl, name, useContain = false, gender = null, activeGender = null) => {
-  const genderToggle = gender === 'Both' ? `
-    <div class="marker-gender-toggle" data-gender-toggle="true">
-      <span class="marker-gender-opt ${activeGender !== 'Girls' ? 'active' : ''}" data-gender="Boys">B</span>
-      <span class="marker-gender-opt ${activeGender === 'Girls' ? 'active' : ''}" data-gender="Girls">G</span>
-    </div>
-  ` : ''
-  const heightWithToggle = gender === 'Both' ? 48 : 34
+const createLogoIcon = (logoUrl, name, useContain = false) => {
   return L.divIcon({
     className: 'custom-logo-marker',
     html: `
       <div class="logo-marker${useContain ? ' logo-contain' : ''}" title="${name}">
         <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
       </div>
-      ${genderToggle}
     `,
-    iconSize: [28, heightWithToggle],
+    iconSize: [28, 34],
     iconAnchor: [14, 34],
     popupAnchor: [0, -34]
   })
@@ -1138,9 +1130,8 @@ function App() {
   const [filterConference, setFilterConference] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
 
-  // Gender filter & per-marker gender toggle
+  // Gender filter
   const [filterGender, setFilterGender] = useState('all') // 'all', 'Boys', 'Girls'
-  const [markerGenderOverrides, setMarkerGenderOverrides] = useState({}) // { programId: 'Boys'|'Girls' }
 
   // Mobile region popup
   const [showRegionPopup, setShowRegionPopup] = useState(false)
@@ -1246,7 +1237,6 @@ function App() {
       const matchesConference = filterConference === 'all' || program.conference === filterConference
       const matchesGender = filterGender === 'all' ||
         program.gender === filterGender ||
-        program.gender === 'Both' ||
         (!program.gender && filterGender === 'Boys') // default unset programs to Boys
 
       return matchesSearch && matchesRegion && matchesConference && matchesGender
@@ -1266,29 +1256,16 @@ function App() {
     return result
   }, [programs, searchQuery, selectedRegion, filterConference, filterGender, sortBy])
 
-  // Helper: get active gender for a program
-  const getActiveGender = useCallback((program) => {
-    if (!program) return 'Boys'
-    if (program.gender === 'Girls') return 'Girls'
-    if (program.gender === 'Both') {
-      if (filterGender === 'Girls') return 'Girls'
-      if (filterGender === 'Boys') return 'Boys'
-      return markerGenderOverrides[program.id] || 'Boys'
-    }
-    return 'Boys'
-  }, [filterGender, markerGenderOverrides])
-
   // Create icons for all programs (memoized to prevent re-renders)
   const programIcons = useMemo(() => {
     const icons = {}
     filteredPrograms.forEach(program => {
       if (program && program.id) {
-        const activeG = getActiveGender(program)
-        icons[program.id] = createLogoIcon(program.logo, program.name, false, program.gender, activeG)
+        icons[program.id] = createLogoIcon(program.logo, program.name)
       }
     })
     return icons
-  }, [filteredPrograms, getActiveGender])
+  }, [filteredPrograms])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
@@ -2066,18 +2043,7 @@ function App() {
                       position={adjustedPositions[program.id] || program.coordinates}
                       icon={programIcons[program.id]}
                       eventHandlers={{
-                        click: (e) => {
-                          const target = e.originalEvent?.target
-                          if (target?.closest?.('[data-gender-toggle]') || target?.dataset?.gender) {
-                            const gender = target.dataset?.gender || target.closest('[data-gender]')?.dataset?.gender
-                            if (gender) {
-                              e.originalEvent.stopPropagation()
-                              setMarkerGenderOverrides(prev => ({ ...prev, [program.id]: gender }))
-                              return
-                            }
-                          }
-                          setSelectedProgram(program)
-                        }
+                        click: () => setSelectedProgram(program)
                       }}
                     />
                   )
@@ -2094,8 +2060,6 @@ function App() {
               user={user}
               onEdit={(p) => { setSelectedProgram(null); openEditForm(p) }}
               onDelete={(id) => { setSelectedProgram(null); handleDeleteProgram(id) }}
-              activeGender={selectedProgram ? getActiveGender(selectedProgram) : 'Boys'}
-              onGenderChange={(g) => selectedProgram && setMarkerGenderOverrides(prev => ({ ...prev, [selectedProgram.id]: g }))}
             />
           </div>
         )}

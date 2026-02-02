@@ -158,34 +158,6 @@
   background: #222;
 }
 
-.girls-fields {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: #fafafa;
-}
-
-.girls-fields-heading {
-  margin: 0 0 0.25rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.girls-fields-hint {
-  margin: 0 0 0.75rem;
-  font-size: 0.8rem;
-  color: #888;
-}
-
-[data-theme="dark"] .girls-fields {
-  background: #1a1a1a;
-  border-color: #333;
-}
-
-[data-theme="dark"] .girls-fields-hint {
-  color: #888;
-}
 
 .error-message {
   color: #e74c3c;
