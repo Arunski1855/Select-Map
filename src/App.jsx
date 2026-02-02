@@ -272,31 +272,45 @@ function StateLabels() {
 function MapViewPreserver() {
   const map = useMap()
   const savedView = useRef(null)
+  const resizing = useRef(false)
 
   useEffect(() => {
     const onMoveEnd = () => {
+      // Ignore view changes triggered by container resize (e.g. form open/close)
+      if (resizing.current) return
       savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
+    }
+    const onResize = () => {
+      resizing.current = true
+      // After Leaflet finishes adjusting for the resize, restore our saved view
+      setTimeout(() => {
+        if (savedView.current) {
+          map.setView(savedView.current.center, savedView.current.zoom, { animate: false })
+        }
+        resizing.current = false
+      }, 50)
     }
     map.on('moveend', onMoveEnd)
     map.on('zoomend', onMoveEnd)
+    map.on('resize', onResize)
     // Capture initial view
     savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
 
     return () => {
       map.off('moveend', onMoveEnd)
       map.off('zoomend', onMoveEnd)
+      map.off('resize', onResize)
     }
   }, [map])
 
-  // On every render, if the map was reset (e.g. container resize), restore saved view
+  // On every render, if the map was reset, restore saved view
   useEffect(() => {
     if (savedView.current) {
       const currentCenter = map.getCenter()
       const currentZoom = map.getZoom()
       const saved = savedView.current
       const dist = Math.abs(currentCenter.lat - saved.center.lat) + Math.abs(currentCenter.lng - saved.center.lng)
-      // If the map jumped significantly, restore
-      if (dist > 5 || Math.abs(currentZoom - saved.zoom) > 1) {
+      if (dist > 0.5 || Math.abs(currentZoom - saved.zoom) > 0.5) {
         map.setView(saved.center, saved.zoom, { animate: false })
       }
     }
@@ -1791,6 +1805,7 @@ function App() {
                   scrollWheelZoom={true}
                 >
                   <DynamicTileLayer darkMode={darkMode} />
+                  <MapViewPreserver />
                   <StateLabels />
                   {events.map(event => (
                     event && event.coordinates && (
