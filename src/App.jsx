@@ -1198,7 +1198,10 @@ function App() {
     setIsLoading(true)
 
     const unsubscribe = subscribeToPrograms(activeTab, (data) => {
-      setPrograms(data)
+      setPrograms(data.map(p => ({
+        ...p,
+        name: p.name?.replace(/\bMt\.?\s*Zion(?:\s+Prep)?\b/gi, 'Mt. Zion Prep')
+      })))
       setIsLoading(false)
     })
 
@@ -1223,7 +1226,7 @@ function App() {
 
   // Check if any Mt Zion programs exist (to show team type filter)
   const hasMtZionPrograms = useMemo(() => {
-    return programs.some(p => p.name?.toLowerCase().includes('mt zion'))
+    return programs.some(p => p.name?.toLowerCase().includes('mt. zion prep'))
   }, [programs])
 
   // Unique conferences for filter dropdown
@@ -1252,7 +1255,7 @@ function App() {
 
       const matchesTeamType = filterTeamType === 'all' ||
         program.teamType === filterTeamType ||
-        (!program.name?.toLowerCase().includes('mt zion')) // non-Mt Zion programs always match
+        (!program.name?.toLowerCase().includes('mt. zion prep')) // non-Mt. Zion Prep programs always match
 
       return matchesSearch && matchesRegion && matchesConference && matchesGender && matchesTeamType
     })
