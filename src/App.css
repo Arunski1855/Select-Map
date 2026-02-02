@@ -4281,6 +4281,31 @@ textarea {
   font-weight: 600;
 }
 
+.report-sortable-th {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.report-sortable-th:hover {
+  color: var(--text-primary);
+}
+
+.report-sortable-th.active {
+  color: var(--text-primary);
+}
+
+.report-sort-arrow {
+  font-size: 0.55rem;
+  opacity: 0.35;
+  margin-left: 2px;
+}
+
+.report-sortable-th.active .report-sort-arrow {
+  opacity: 1;
+}
+
 .report-table td {
   padding: 6px 8px;
   border-bottom: 1px solid var(--border-color);

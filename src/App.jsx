@@ -888,6 +888,8 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   const [filterLevel, setFilterLevel] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterConf, setFilterConf] = useState('all')
+  const [sortCol, setSortCol] = useState('name')
+  const [sortDir, setSortDir] = useState('asc')
 
   if (!isOpen) return null
 
@@ -900,6 +902,38 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
 
   const uniqueLevels = [...new Set(programs.map(p => p.level).filter(Boolean))]
   const uniqueConfs = [...new Set(programs.map(p => p.conference).filter(Boolean))].sort()
+
+  const handleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
+  }
+
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    let aVal, bVal
+    switch (sortCol) {
+      case 'name': aVal = a.name || ''; bVal = b.name || ''; break
+      case 'gender': aVal = a.gender || 'Boys'; bVal = b.gender || 'Boys'; break
+      case 'location': aVal = `${a.state || ''},${a.city || ''}`; bVal = `${b.state || ''},${b.city || ''}`; break
+      case 'region': aVal = a.region || ''; bVal = b.region || ''; break
+      case 'level': aVal = a.level || ''; bVal = b.level || ''; break
+      case 'conference': aVal = a.conference || ''; bVal = b.conference || ''; break
+      case 'coach': aVal = a.headCoach || ''; bVal = b.headCoach || ''; break
+      case 'contact': aVal = a.contactEmail || a.contactPhone || ''; bVal = b.contactEmail || b.contactPhone || ''; break
+      default: aVal = a.name || ''; bVal = b.name || ''
+    }
+    const cmp = String(aVal).localeCompare(String(bVal))
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  const SortTh = ({ col, children }) => (
+    <th className={`report-sortable-th ${sortCol === col ? 'active' : ''}`} onClick={() => handleSort(col)}>
+      {children} <span className="report-sort-arrow">{sortCol === col ? (sortDir === 'asc' ? '\u25B2' : '\u25BC') : '\u25B4'}</span>
+    </th>
+  )
 
   const handlePrint = () => {
     document.body.classList.add('printing-report')
@@ -1060,18 +1094,18 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
               <table className="report-table report-table-full">
                 <thead>
                   <tr>
-                    <th>Program</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Region</th>
-                    <th>Level</th>
-                    <th>Conference</th>
-                    <th>Coach</th>
-                    <th>Contact</th>
+                    <SortTh col="name">Program</SortTh>
+                    <SortTh col="gender">Gender</SortTh>
+                    <SortTh col="location">Location</SortTh>
+                    <SortTh col="region">Region</SortTh>
+                    <SortTh col="level">Level</SortTh>
+                    <SortTh col="conference">Conference</SortTh>
+                    <SortTh col="coach">Coach</SortTh>
+                    <SortTh col="contact">Contact</SortTh>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => (
+                  {sortedFiltered.map(p => (
                     <tr key={p.id}>
                       <td className="report-program-name">{p.logo && <img src={p.logo} alt="" className="report-program-logo" />}{p.name}</td>
                       <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
