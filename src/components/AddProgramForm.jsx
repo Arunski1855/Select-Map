@@ -274,8 +274,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         contactPhone: formData.contactPhone || '',
         twitter: formData.twitter || '',
         instagram: formData.instagram || '',
-        gender: formData.gender || 'Boys',
-        girlsHeadCoach: formData.gender === 'Both' ? (formData.girlsHeadCoach || '') : '',
+        gender: sport === 'football' ? 'Boys' : (formData.gender || 'Boys'),
+        girlsHeadCoach: sport !== 'football' && formData.gender === 'Both' ? (formData.girlsHeadCoach || '') : '',
         girlsRoster: formData.gender === 'Both' ? (formData.girlsRoster || '') : '',
         girlsRanking: formData.gender === 'Both' ? (formData.girlsRanking || '') : '',
         girlsTopProspects: formData.gender === 'Both' ? (formData.girlsTopProspects || '') : '',
@@ -466,21 +466,23 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
             </select>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="gender">Gender</label>
-            <select
-              id="gender"
-              name="gender"
-              value={formData.gender}
-              onChange={handleInputChange}
-            >
-              {GENDER_OPTIONS.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
+          {sport !== 'football' && (
+            <div className="form-group">
+              <label htmlFor="gender">Gender</label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleInputChange}
+              >
+                {GENDER_OPTIONS.map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          {formData.gender === 'Both' && (
+          {sport !== 'football' && formData.gender === 'Both' && (
             <div className="girls-fields">
               <h3 className="girls-fields-heading">Girls Team Info</h3>
               <p className="girls-fields-hint">Fields above apply to the boys team. Fill in any girls-specific overrides below.</p>

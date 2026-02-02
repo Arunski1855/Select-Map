@@ -1142,6 +1142,9 @@ function App() {
   const [filterGender, setFilterGender] = useState('all') // 'all', 'Boys', 'Girls'
   const [markerGenderOverrides, setMarkerGenderOverrides] = useState({}) // { programId: 'Boys'|'Girls' }
 
+  // Mobile region popup
+  const [showRegionPopup, setShowRegionPopup] = useState(false)
+
   // Analytics
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -1597,21 +1600,47 @@ function App() {
       {activeTab !== 'events' && (
         <div className="dashboard">
           <div className="dashboard-stats">
-            <div className="stat-item stat-total">
+            <div className="stat-item stat-total" onClick={() => setShowRegionPopup(!showRegionPopup)}>
               <span className="stat-value">{regionCounts.total}</span>
-              <span className="stat-label">Total Programs</span>
+              <span className="stat-label">Total Programs {selectedRegion !== 'all' ? `(${selectedRegion})` : ''}</span>
             </div>
-            {Object.keys(REGIONS).map(region => (
-              <div
-                key={region}
-                className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
-                style={{ '--region-color': REGIONS[region].color }}
-                onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
-              >
-                <span className="stat-value">{regionCounts[region] || 0}</span>
-                <span className="stat-label">{region}</span>
-              </div>
-            ))}
+            <div className="region-stats-desktop">
+              {Object.keys(REGIONS).map(region => (
+                <div
+                  key={region}
+                  className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
+                  style={{ '--region-color': REGIONS[region].color }}
+                  onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
+                >
+                  <span className="stat-value">{regionCounts[region] || 0}</span>
+                  <span className="stat-label">{region}</span>
+                </div>
+              ))}
+            </div>
+            {showRegionPopup && (
+              <>
+                <div className="region-popup-overlay" onClick={() => setShowRegionPopup(false)} />
+                <div className="region-popup">
+                  {Object.keys(REGIONS).map(region => (
+                    <div
+                      key={region}
+                      className={`region-popup-item ${selectedRegion === region ? 'active' : ''}`}
+                      style={{ '--region-color': REGIONS[region].color }}
+                      onClick={() => { setSelectedRegion(selectedRegion === region ? 'all' : region); setShowRegionPopup(false) }}
+                    >
+                      <span className="region-popup-color" style={{ background: REGIONS[region].color }} />
+                      <span className="region-popup-name">{region}</span>
+                      <span className="region-popup-count">{regionCounts[region] || 0}</span>
+                    </div>
+                  ))}
+                  {selectedRegion !== 'all' && (
+                    <div className="region-popup-item region-popup-clear" onClick={() => { setSelectedRegion('all'); setShowRegionPopup(false) }}>
+                      <span className="region-popup-name">Clear filter</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
             <div className="stat-item stat-analytics" onClick={() => setIsAnalyticsOpen(true)}>
               <span className="stat-value">&#9776;</span>
               <span className="stat-label">Analytics</span>
@@ -1665,17 +1694,19 @@ function App() {
           )}
         </div>
 
-        <div className="gender-filter-pills">
-          {['all', 'Boys', 'Girls'].map(g => (
-            <button
-              key={g}
-              className={`gender-pill ${filterGender === g ? 'active' : ''}`}
-              onClick={() => setFilterGender(g)}
-            >
-              {g === 'all' ? 'All' : g}
-            </button>
-          ))}
-        </div>
+        {activeTab !== 'football' && (
+          <div className="gender-filter-pills">
+            {['all', 'Boys', 'Girls'].map(g => (
+              <button
+                key={g}
+                className={`gender-pill ${filterGender === g ? 'active' : ''}`}
+                onClick={() => setFilterGender(g)}
+              >
+                {g === 'all' ? 'All' : g}
+              </button>
+            ))}
+          </div>
+        )}
 
         <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
           {showFilters ? 'Less Filters' : 'More Filters'}

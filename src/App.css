@@ -295,10 +295,24 @@ textarea {
   background: var(--text-primary);
   color: var(--bg-primary);
   cursor: default;
+  position: relative;
 }
 
 .stat-item.stat-total:hover {
   border-color: transparent;
+}
+
+/* Region stats: desktop inline, mobile popup */
+.region-stats-desktop {
+  display: contents;
+}
+
+.region-popup-overlay {
+  display: none;
+}
+
+.region-popup {
+  display: none;
 }
 
 .stat-value {
@@ -3255,6 +3269,82 @@ textarea {
 
   .dashboard {
     padding: 0.4rem;
+    position: relative;
+  }
+
+  .region-stats-desktop {
+    display: none;
+  }
+
+  .stat-item.stat-total {
+    cursor: pointer;
+  }
+
+  .region-popup-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .region-popup {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0.4rem;
+    right: 0.4rem;
+    z-index: 100;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    padding: 0.25rem 0;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
+  .region-popup-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .region-popup-item:hover,
+  .region-popup-item.active {
+    background: color-mix(in srgb, var(--region-color, var(--accent-color)) 12%, var(--bg-primary));
+  }
+
+  .region-popup-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .region-popup-name {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .region-popup-count {
+    font-family: var(--font-heading-compressed);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .region-popup-clear {
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.8rem;
   }
 
   .stat-item {
