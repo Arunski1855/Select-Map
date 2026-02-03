@@ -885,6 +885,7 @@ function DigestModal({ isOpen, onClose, programs, events, sport }) {
 // Reports Modal Component
 function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   const [reportType, setReportType] = useState('overview')
+  const [filterGender, setFilterGender] = useState('all')
   const [filterLevel, setFilterLevel] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterConf, setFilterConf] = useState('all')
@@ -893,6 +894,10 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   if (!isOpen) return null
 
   const filtered = programs.filter(p => {
+    if (filterGender !== 'all') {
+      const programGender = p.gender || 'Boys'
+      if (programGender !== filterGender) return false
+    }
     if (filterLevel !== 'all' && (p.level || '') !== filterLevel) return false
     if (filterRegion !== 'all' && p.region !== filterRegion) return false
     if (filterConf !== 'all' && (p.conference || '') !== filterConf) return false
@@ -1029,6 +1034,11 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
 
         {(reportType === 'overview' || reportType === 'programs') && (
           <div className="reports-filters">
+            <select value={filterGender} onChange={e => setFilterGender(e.target.value)}>
+              <option value="all">All Genders</option>
+              <option value="Boys">Boys</option>
+              <option value="Girls">Girls</option>
+            </select>
             <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}>
               <option value="all">All Levels</option>
               {uniqueLevels.map(l => <option key={l} value={l}>{l}</option>)}
