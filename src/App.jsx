@@ -888,8 +888,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   const [filterLevel, setFilterLevel] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterConf, setFilterConf] = useState('all')
-  const [sortCol, setSortCol] = useState('name')
-  const [sortDir, setSortDir] = useState('asc')
+  const [sortCols, setSortCols] = useState([{ col: 'name', dir: 'asc' }])
 
   if (!isOpen) return null
 
@@ -903,40 +902,75 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   const uniqueLevels = [...new Set(programs.map(p => p.level).filter(Boolean))]
   const uniqueConfs = [...new Set(programs.map(p => p.conference).filter(Boolean))].sort()
 
-  const handleSort = (col) => {
-    if (sortCol === col) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+  const handleSort = (col, e) => {
+    const existingIndex = sortCols.findIndex(s => s.col === col)
+
+    if (e && e.shiftKey) {
+      // Shift+click: add to multi-sort or toggle direction if already exists
+      if (existingIndex >= 0) {
+        setSortCols(prev => prev.map((s, i) =>
+          i === existingIndex ? { ...s, dir: s.dir === 'asc' ? 'desc' : 'asc' } : s
+        ))
+      } else {
+        setSortCols(prev => [...prev, { col, dir: 'asc' }])
+      }
     } else {
-      setSortCol(col)
-      setSortDir('asc')
+      // Regular click: single column sort (toggle direction if same column)
+      if (existingIndex === 0 && sortCols.length === 1) {
+        setSortCols([{ col, dir: sortCols[0].dir === 'asc' ? 'desc' : 'asc' }])
+      } else {
+        setSortCols([{ col, dir: 'asc' }])
+      }
+    }
+  }
+
+  const getColValue = (item, col) => {
+    switch (col) {
+      case 'name': return item.name || ''
+      case 'gender': return item.gender || 'Boys'
+      case 'location': return `${item.state || ''},${item.city || ''}`
+      case 'region': return item.region || ''
+      case 'level': {
+        const levelOrder = { 'Gold': 0, 'Silver': 1, 'Bronze': 2, 'Regional': 3 }
+        return levelOrder[item.level] ?? 4
+      }
+      case 'conference': return item.conference || ''
+      case 'coach': return item.headCoach || ''
+      case 'contact': return item.contactEmail || item.contactPhone || ''
+      default: return item.name || ''
     }
   }
 
   const sortedFiltered = [...filtered].sort((a, b) => {
-    let aVal, bVal
-    switch (sortCol) {
-      case 'name': aVal = a.name || ''; bVal = b.name || ''; break
-      case 'gender': aVal = a.gender || 'Boys'; bVal = b.gender || 'Boys'; break
-      case 'location': aVal = `${a.state || ''},${a.city || ''}`; bVal = `${b.state || ''},${b.city || ''}`; break
-      case 'region': aVal = a.region || ''; bVal = b.region || ''; break
-      case 'level': {
-        const levelOrder = { 'Gold': 0, 'Silver': 1, 'Bronze': 2, 'Regional': 3 }
-        aVal = levelOrder[a.level] ?? 4; bVal = levelOrder[b.level] ?? 4; break
-      }
-      case 'conference': aVal = a.conference || ''; bVal = b.conference || ''; break
-      case 'coach': aVal = a.headCoach || ''; bVal = b.headCoach || ''; break
-      case 'contact': aVal = a.contactEmail || a.contactPhone || ''; bVal = b.contactEmail || b.contactPhone || ''; break
-      default: aVal = a.name || ''; bVal = b.name || ''
+    for (const { col, dir } of sortCols) {
+      const aVal = getColValue(a, col)
+      const bVal = getColValue(b, col)
+      const cmp = col === 'level' ? aVal - bVal : String(aVal).localeCompare(String(bVal))
+      if (cmp !== 0) return dir === 'asc' ? cmp : -cmp
     }
-    const cmp = sortCol === 'level' ? aVal - bVal : String(aVal).localeCompare(String(bVal))
-    return sortDir === 'asc' ? cmp : -cmp
+    return 0
   })
 
-  const SortTh = ({ col, children }) => (
-    <th className={`report-sortable-th ${sortCol === col ? 'active' : ''}`} onClick={() => handleSort(col)}>
-      {children} <span className="report-sort-arrow">{sortCol === col ? (sortDir === 'asc' ? '\u25B2' : '\u25BC') : '\u25B4'}</span>
-    </th>
-  )
+  const SortTh = ({ col, children }) => {
+    const sortIndex = sortCols.findIndex(s => s.col === col)
+    const isActive = sortIndex >= 0
+    const sortInfo = isActive ? sortCols[sortIndex] : null
+    const showPriority = sortCols.length > 1 && isActive
+
+    return (
+      <th
+        className={`report-sortable-th ${isActive ? 'active' : ''}`}
+        onClick={(e) => handleSort(col, e)}
+        title="Click to sort, Shift+click to add secondary sort"
+      >
+        {children}
+        {showPriority && <span className="report-sort-priority">{sortIndex + 1}</span>}
+        <span className="report-sort-arrow">
+          {isActive ? (sortInfo.dir === 'asc' ? '\u25B2' : '\u25BC') : '\u25B4'}
+        </span>
+      </th>
+    )
+  }
 
   const handlePrint = () => {
     document.body.classList.add('printing-report')
