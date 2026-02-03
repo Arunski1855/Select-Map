@@ -947,6 +947,16 @@ textarea {
   color: #ccc;
 }
 
+.detail-onboarding-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #e67e22;
+  color: #fff;
+}
+
 .filter-tag {
   display: inline-block;
   padding: 1px 6px;

@@ -286,6 +286,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             {program.teamType && (
               <span className="detail-gender-badge" style={{ background: '#1a5c2e' }}>{program.teamType}</span>
             )}
+            {program.onboarding2026 && (
+              <span className="detail-onboarding-badge">2026</span>
+            )}
           </div>
         </div>
         <button className="detail-panel-close" onClick={onClose}>&times;</button>
