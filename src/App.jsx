@@ -2031,42 +2031,66 @@ function App() {
 
   // PDF Export function
   const handleExportPDF = useCallback(() => {
-    const doc = new jsPDF()
-    const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
+    try {
+      const doc = new jsPDF()
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
 
-    // Header
-    doc.setFontSize(20)
-    doc.setFont('helvetica', 'bold')
-    doc.text(`adidas ${tabName} Programs`, 14, 20)
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.text(`Generated: ${today}`, 14, 28)
-    doc.text(`Total Programs: ${filteredPrograms.length}`, 14, 34)
+      // Header
+      doc.setFontSize(20)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`adidas ${tabName} Programs`, 14, 20)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Generated: ${today}`, 14, 28)
+      doc.text(`Total Programs: ${filteredPrograms.length}`, 14, 34)
 
-    // Programs table
-    const tableData = filteredPrograms.map(p => [
-      p.name || '',
-      p.city || '',
-      p.state || '',
-      p.region || '',
-      p.level || '',
-      p.conference || '',
-      p.headCoach || ''
-    ])
+      // Programs table
+      const tableData = filteredPrograms.map(p => [
+        p.name || '',
+        p.city || '',
+        p.state || '',
+        p.region || '',
+        p.level || '',
+        p.conference || '',
+        p.headCoach || ''
+      ])
 
-    doc.autoTable({
-      startY: 42,
-      head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
-      body: tableData,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
-      margin: { left: 14, right: 14 }
-    })
+      doc.autoTable({
+        startY: 42,
+        head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
+        body: tableData,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 14, right: 14 }
+      })
 
-    doc.save(`adidas-select-${activeTab}-programs-${new Date().toISOString().split('T')[0]}.pdf`)
-    setShowExportMenu(false)
+      const filename = `adidas-select-${activeTab}-programs-${new Date().toISOString().split('T')[0]}.pdf`
+
+      // Mobile-friendly download approach
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile) {
+        // Use blob URL for better mobile support
+        const pdfBlob = doc.output('blob')
+        const blobUrl = URL.createObjectURL(pdfBlob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
+        alert('PDF downloaded! Check your Downloads folder or browser downloads.')
+      } else {
+        doc.save(filename)
+      }
+
+      setShowExportMenu(false)
+    } catch (err) {
+      console.error('PDF export error:', err)
+      alert('Could not generate PDF. Please try again.')
+    }
   }, [activeTab, filteredPrograms])
 
   // Edit a program
@@ -2205,37 +2229,87 @@ function App() {
               </>
             )}
             <div className="stat-item stat-analytics" onClick={() => setIsAnalyticsOpen(true)}>
-              <span className="stat-value">&#9776;</span>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="10" width="4" height="8" rx="1"/>
+                  <rect x="8" y="6" width="4" height="12" rx="1"/>
+                  <rect x="14" y="2" width="4" height="16" rx="1"/>
+                </svg>
+              </span>
               <span className="stat-label">Analytics</span>
             </div>
             <div className="stat-item stat-digest" onClick={() => setIsDigestOpen(true)}>
-              <span className="stat-value">&#9993;</span>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="3" y="2" width="14" height="16" rx="2"/>
+                  <line x1="6" y1="6" x2="14" y2="6"/>
+                  <line x1="6" y1="10" x2="14" y2="10"/>
+                  <line x1="6" y1="14" x2="10" y2="14"/>
+                </svg>
+              </span>
               <span className="stat-label">Digest</span>
             </div>
             <div className="stat-item stat-reports" onClick={() => setIsReportsOpen(true)}>
-              <span className="stat-value">&#9783;</span>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="2" width="6" height="6" rx="1"/>
+                  <rect x="12" y="2" width="6" height="6" rx="1"/>
+                  <rect x="2" y="12" width="6" height="6" rx="1"/>
+                  <rect x="12" y="12" width="6" height="6" rx="1"/>
+                </svg>
+              </span>
               <span className="stat-label">Reports</span>
             </div>
             <div className="stat-item stat-compare" onClick={() => setIsComparisonOpen(true)}>
-              <span className="stat-value">&#8646;</span>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="4" width="6" height="12" rx="1"/>
+                  <rect x="12" y="4" width="6" height="12" rx="1"/>
+                  <line x1="10" y1="8" x2="10" y2="12"/>
+                  <polyline points="8,10 10,8 12,10"/>
+                  <polyline points="8,10 10,12 12,10"/>
+                </svg>
+              </span>
               <span className="stat-label">Compare</span>
             </div>
             {isUserAllowed && (
               <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
-                <span className="stat-value">&#128451;</span>
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="16" height="4" rx="1"/>
+                    <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
+                    <line x1="8" y1="11" x2="12" y2="11"/>
+                  </svg>
+                </span>
                 <span className="stat-label">Archive ({archivedPrograms.length})</span>
               </div>
             )}
             {isUserAllowed && (
               <div className="stat-item stat-bulk-edit" onClick={() => setIsBulkEditOpen(true)} title="Bulk edit programs">
-                <span className="stat-value">&#9998;</span>
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <rect x="2" y="2" width="16" height="16" rx="2"/>
+                    <line x1="2" y1="7" x2="18" y2="7"/>
+                    <line x1="2" y1="12" x2="18" y2="12"/>
+                    <line x1="7" y1="2" x2="7" y2="18"/>
+                    <line x1="13" y1="2" x2="13" y2="18"/>
+                  </svg>
+                </span>
                 <span className="stat-label">Bulk Edit</span>
               </div>
             )}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
-              <span className="stat-value">{isExporting ? '...' : '\u21E9'}</span>
+              <span className="stat-icon">
+                {isExporting ? '...' : (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 3v10"/>
+                    <polyline points="6,9 10,13 14,9"/>
+                    <path d="M3 14v3a1 1 0 001 1h12a1 1 0 001-1v-3"/>
+                  </svg>
+                )}
+              </span>
               <span className="stat-label">Export</span>
             </div>
           </div>
@@ -2729,16 +2803,36 @@ function App() {
             <p className="export-modal-sub">Choose an export format</p>
             <div className="export-modal-options">
               <button className="export-modal-btn" onClick={() => { handleExportMap(); setShowExportMenu(false) }}>
-                <span className="export-modal-icon">&#8599;</span>
+                <span className="export-modal-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="16" height="14" rx="2"/>
+                    <circle cx="6" cy="14" r="1" fill="currentColor"/>
+                    <path d="M10 6l4 4-4 4"/>
+                  </svg>
+                </span>
                 <span>Export Map (PNG)</span>
               </button>
               <button className="export-modal-btn" onClick={() => { handleExportCSV(); }}>
-                <span className="export-modal-icon">&#8615;</span>
+                <span className="export-modal-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <rect x="2" y="2" width="16" height="16" rx="2"/>
+                    <line x1="2" y1="7" x2="18" y2="7"/>
+                    <line x1="2" y1="12" x2="18" y2="12"/>
+                    <line x1="7" y1="2" x2="7" y2="18"/>
+                  </svg>
+                </span>
                 <span>Export List (CSV)</span>
               </button>
               {activeTab !== 'events' && (
                 <button className="export-modal-btn" onClick={handleExportPDF}>
-                  <span className="export-modal-icon">&#128196;</span>
+                  <span className="export-modal-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+                      <polyline points="12,2 12,6 16,6"/>
+                      <line x1="6" y1="11" x2="14" y2="11"/>
+                      <line x1="6" y1="15" x2="14" y2="15"/>
+                    </svg>
+                  </span>
                   <span>Export Report (PDF)</span>
                 </button>
               )}

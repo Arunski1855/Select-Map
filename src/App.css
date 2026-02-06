@@ -322,6 +322,25 @@ textarea {
   line-height: 1;
 }
 
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  transition: transform 0.15s ease;
+}
+
+.stat-item:hover .stat-icon svg {
+  transform: scale(1.1);
+}
+
 .stat-label {
   font-family: var(--font-heading-compressed);
   font-size: 0.7rem;
@@ -2731,7 +2750,17 @@ textarea {
 }
 
 .export-modal-icon {
-  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.export-modal-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
 }
 
 .export-btn-small:hover {
@@ -3335,6 +3364,16 @@ textarea {
     font-size: 1.1rem;
   }
 
+  .stat-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .stat-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
   .stat-label {
     font-size: 0.55rem;
   }
@@ -3667,6 +3706,16 @@ textarea {
 
   .stat-value {
     font-size: 0.95rem;
+  }
+
+  .stat-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .stat-icon svg {
+    width: 14px;
+    height: 14px;
   }
 
   .stat-label {
