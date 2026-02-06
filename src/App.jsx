@@ -1362,6 +1362,183 @@ function ArchiveModal({ isOpen, onClose, archivedPrograms, onRestore, onDelete, 
   )
 }
 
+// Bulk Edit Modal Component - for editing multiple programs at once
+function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
+  const [editedPrograms, setEditedPrograms] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [filter, setFilter] = useState('all') // 'all', 'missing-coach', 'missing-contact'
+
+  useEffect(() => {
+    if (isOpen) {
+      setEditedPrograms({})
+      setFilter('all')
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  const filteredPrograms = programs.filter(p => {
+    if (filter === 'missing-coach') return !p.headCoach
+    if (filter === 'missing-contact') return !p.contactEmail && !p.contactPhone
+    if (filter === 'missing-instagram') return !p.instagram
+    return true
+  })
+
+  const handleFieldChange = (programId, field, value) => {
+    setEditedPrograms(prev => ({
+      ...prev,
+      [programId]: {
+        ...(prev[programId] || {}),
+        [field]: value
+      }
+    }))
+  }
+
+  const getFieldValue = (program, field) => {
+    if (editedPrograms[program.id] && editedPrograms[program.id][field] !== undefined) {
+      return editedPrograms[program.id][field]
+    }
+    return program[field] || ''
+  }
+
+  const hasChanges = Object.keys(editedPrograms).length > 0
+
+  const handleSaveAll = async () => {
+    setSaving(true)
+    try {
+      for (const [programId, changes] of Object.entries(editedPrograms)) {
+        const program = programs.find(p => p.id === programId)
+        if (program) {
+          await onSave({ ...program, ...changes })
+        }
+      }
+      setEditedPrograms({})
+      onClose()
+    } catch (err) {
+      console.error('Error saving:', err)
+      alert('Error saving changes. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const changedCount = Object.keys(editedPrograms).length
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="bulk-edit-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <div className="bulk-edit-header">
+          <h2>Bulk Edit Programs</h2>
+          <p className="bulk-edit-subtitle">Edit multiple programs at once. Changes save when you click "Save All".</p>
+        </div>
+
+        <div className="bulk-edit-toolbar">
+          <select value={filter} onChange={e => setFilter(e.target.value)} className="bulk-edit-filter">
+            <option value="all">All Programs ({programs.length})</option>
+            <option value="missing-coach">Missing Coach ({programs.filter(p => !p.headCoach).length})</option>
+            <option value="missing-contact">Missing Contact ({programs.filter(p => !p.contactEmail && !p.contactPhone).length})</option>
+            <option value="missing-instagram">Missing Instagram ({programs.filter(p => !p.instagram).length})</option>
+          </select>
+          <span className="bulk-edit-count">
+            Showing {filteredPrograms.length} programs
+            {changedCount > 0 && <span className="bulk-edit-changed"> • {changedCount} modified</span>}
+          </span>
+        </div>
+
+        <div className="bulk-edit-table-wrapper">
+          <table className="bulk-edit-table">
+            <thead>
+              <tr>
+                <th className="bulk-edit-th-name">Program</th>
+                <th>Head Coach</th>
+                <th>Contact Email</th>
+                <th>Contact Phone</th>
+                <th>Instagram</th>
+                <th>Twitter</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPrograms.map(program => {
+                const isModified = !!editedPrograms[program.id]
+                return (
+                  <tr key={program.id} className={isModified ? 'bulk-edit-row-modified' : ''}>
+                    <td className="bulk-edit-td-name">
+                      <div className="bulk-edit-program-info">
+                        {program.logo && <img src={program.logo} alt="" className="bulk-edit-logo" />}
+                        <div>
+                          <div className="bulk-edit-program-name">{program.name}</div>
+                          <div className="bulk-edit-program-location">{program.city}, {program.state}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={getFieldValue(program, 'headCoach')}
+                        onChange={e => handleFieldChange(program.id, 'headCoach', e.target.value)}
+                        placeholder="Coach name"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="email"
+                        value={getFieldValue(program, 'contactEmail')}
+                        onChange={e => handleFieldChange(program.id, 'contactEmail', e.target.value)}
+                        placeholder="email@example.com"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="tel"
+                        value={getFieldValue(program, 'contactPhone')}
+                        onChange={e => handleFieldChange(program.id, 'contactPhone', e.target.value)}
+                        placeholder="555-123-4567"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={getFieldValue(program, 'instagram')}
+                        onChange={e => handleFieldChange(program.id, 'instagram', e.target.value)}
+                        placeholder="@handle"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={getFieldValue(program, 'twitter')}
+                        onChange={e => handleFieldChange(program.id, 'twitter', e.target.value)}
+                        placeholder="@handle"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="bulk-edit-footer">
+          <button className="bulk-edit-cancel" onClick={onClose}>Cancel</button>
+          <button
+            className="bulk-edit-save"
+            onClick={handleSaveAll}
+            disabled={!hasChanges || saving}
+          >
+            {saving ? 'Saving...' : `Save All${changedCount > 0 ? ` (${changedCount})` : ''}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
@@ -1423,6 +1600,9 @@ function App() {
   // Archive modal and state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
   const [archivedPrograms, setArchivedPrograms] = useState([])
+
+  // Bulk edit modal
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false)
 
   // Ref for map screenshot
   const mapRef = useRef(null)
@@ -2046,6 +2226,12 @@ function App() {
                 <span className="stat-label">Archive ({archivedPrograms.length})</span>
               </div>
             )}
+            {isUserAllowed && (
+              <div className="stat-item stat-bulk-edit" onClick={() => setIsBulkEditOpen(true)} title="Bulk edit programs">
+                <span className="stat-value">&#9998;</span>
+                <span className="stat-label">Bulk Edit</span>
+              </div>
+            )}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
@@ -2597,6 +2783,14 @@ function App() {
         archivedPrograms={archivedPrograms}
         onRestore={handleRestoreProgram}
         onDelete={handlePermanentDelete}
+        sport={activeTab}
+      />
+
+      <BulkEditModal
+        isOpen={isBulkEditOpen}
+        onClose={() => setIsBulkEditOpen(false)}
+        programs={programs}
+        onSave={handleEditProgram}
         sport={activeTab}
       />
     </div>

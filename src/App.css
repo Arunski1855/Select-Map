@@ -5047,3 +5047,231 @@ textarea {
   border-radius: 4px;
   margin-left: 8px;
 }
+
+/* Bulk Edit Modal Styles */
+.bulk-edit-modal {
+  background: var(--bg-primary);
+  padding: 0;
+  border-radius: 12px;
+  max-width: 1100px;
+  width: 95%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bulk-edit-header {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.bulk-edit-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  margin: 0 0 4px;
+}
+
+.bulk-edit-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.bulk-edit-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.bulk-edit-filter {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.bulk-edit-count {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.bulk-edit-changed {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.bulk-edit-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.bulk-edit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.bulk-edit-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.bulk-edit-table th {
+  background: var(--bg-secondary);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.bulk-edit-th-name {
+  min-width: 200px;
+}
+
+.bulk-edit-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.bulk-edit-td-name {
+  background: var(--bg-secondary);
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.bulk-edit-program-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bulk-edit-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: white;
+  padding: 2px;
+}
+
+.bulk-edit-program-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+}
+
+.bulk-edit-program-location {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.bulk-edit-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: inherit;
+  min-width: 120px;
+}
+
+.bulk-edit-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+.bulk-edit-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.bulk-edit-row-modified {
+  background: rgba(0, 165, 80, 0.05);
+}
+
+.bulk-edit-row-modified td {
+  border-bottom-color: rgba(0, 165, 80, 0.2);
+}
+
+.bulk-edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.bulk-edit-cancel {
+  padding: 8px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.bulk-edit-cancel:hover {
+  background: var(--bg-primary);
+}
+
+.bulk-edit-save {
+  padding: 8px 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent-color);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bulk-edit-save:hover {
+  opacity: 0.9;
+}
+
+.bulk-edit-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .bulk-edit-modal {
+    max-height: 90vh;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .bulk-edit-table {
+    font-size: 0.75rem;
+  }
+
+  .bulk-edit-input {
+    min-width: 100px;
+    padding: 5px 6px;
+  }
+
+  .bulk-edit-th-name {
+    min-width: 150px;
+  }
+}
