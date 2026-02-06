@@ -464,7 +464,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       console.error('PDF export error:', err)
       alert(`Could not generate PDF: ${err.message || 'Unknown error'}`)
     }
-  }, [program, sport, mentions, linkedEvents])
+  }, [program, sport, linkedEvents])
 
   return (
     <div
