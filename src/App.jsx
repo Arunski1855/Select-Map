@@ -1504,6 +1504,18 @@ function App() {
     localStorage.setItem('darkMode', darkMode)
   }, [darkMode])
 
+  // Reset filters when switching tabs
+  useEffect(() => {
+    setSearchQuery('')
+    setSelectedRegion('all')
+    setFilterConference('all')
+    setFilterGender('Boys')
+    setFilterTeamType('all')
+    setSortBy('name')
+    setSelectedProgram(null)
+    setSelectedMtZionGroup(null)
+  }, [activeTab])
+
   // Check if any Mt Zion programs exist (to show team type filter)
   const hasMtZionPrograms = useMemo(() => {
     return programs.some(p => p.name?.toLowerCase().includes('mt. zion prep'))
