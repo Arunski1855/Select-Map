@@ -2330,18 +2330,26 @@ textarea {
 }
 
 .detail-export-btn {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
+  background: transparent;
+  color: var(--text-primary);
+  border: 2px solid var(--text-primary);
 }
 
 .detail-export-btn:hover {
-  background: color-mix(in srgb, var(--accent-color) 85%, black);
-  border-color: color-mix(in srgb, var(--accent-color) 85%, black);
+  background: var(--text-primary);
+  color: var(--bg-primary);
 }
 
 .detail-export-btn svg {
   flex-shrink: 0;
+}
+
+/* Mobile: Make export button outline even clearer */
+@media (max-width: 768px) {
+  .detail-export-btn {
+    border-width: 2px;
+    font-weight: 700;
+  }
 }
 
 .detail-edit-btn {

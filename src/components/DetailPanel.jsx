@@ -643,19 +643,19 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             )}
 
             <div className="detail-actions">
-              <button className="detail-export-btn" onClick={handleExportProgramPDF}>
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}>
-                  <path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/>
-                  <polyline points="12,2 12,6 16,6"/>
-                </svg>
-                Export PDF
-              </button>
               {isUserAllowed && (
                 <>
                   <button className="detail-edit-btn" onClick={() => onEdit(program)}>Edit Program</button>
                   <button className="detail-delete-btn" onClick={() => onDelete(program.id)}>Remove</button>
                 </>
               )}
+              <button className="detail-export-btn" onClick={handleExportProgramPDF}>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}>
+                  <path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+                  <polyline points="12,2 12,6 16,6"/>
+                </svg>
+                Team Report
+              </button>
             </div>
           </div>
         )}
