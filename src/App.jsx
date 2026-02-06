@@ -26,8 +26,14 @@ import {
   subscribeToNotes,
   addScheduleEntry,
   deleteScheduleEntry,
-  subscribeToSchedule
+  subscribeToSchedule,
+  archiveProgram,
+  restoreProgram,
+  subscribeToArchivedPrograms,
+  linkEventToPrograms
 } from './firebase'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import AddProgramForm from './components/AddProgramForm'
 import AddEventForm from './components/AddEventForm'
 import SplashScreen from './components/SplashScreen'
@@ -1218,6 +1224,144 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
   )
 }
 
+// Program Comparison Modal Component
+function ComparisonModal({ isOpen, onClose, programs }) {
+  const [program1Id, setProgram1Id] = useState('')
+  const [program2Id, setProgram2Id] = useState('')
+
+  if (!isOpen) return null
+
+  const program1 = programs.find(p => p.id === program1Id)
+  const program2 = programs.find(p => p.id === program2Id)
+
+  const ComparisonField = ({ label, value1, value2 }) => (
+    <div className="comparison-row">
+      <span className="comparison-label">{label}</span>
+      <span className="comparison-value">{value1 || '-'}</span>
+      <span className="comparison-value">{value2 || '-'}</span>
+    </div>
+  )
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="comparison-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Compare Programs</h2>
+
+        <div className="comparison-selector">
+          <select value={program1Id} onChange={e => setProgram1Id(e.target.value)}>
+            <option value="">Select first program</option>
+            {programs.filter(p => !p.isArchived).map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <select value={program2Id} onChange={e => setProgram2Id(e.target.value)}>
+            <option value="">Select second program</option>
+            {programs.filter(p => !p.isArchived).map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {program1 && program2 && (
+          <div className="comparison-grid">
+            <div className="comparison-card">
+              <div className="comparison-card-header">
+                {program1.logo && <img src={program1.logo} alt="" className="comparison-card-logo" />}
+                <div className="comparison-card-title">
+                  <h3>{program1.name}</h3>
+                  <p>{program1.city}, {program1.state}</p>
+                </div>
+              </div>
+            </div>
+            <div className="comparison-card">
+              <div className="comparison-card-header">
+                {program2.logo && <img src={program2.logo} alt="" className="comparison-card-logo" />}
+                <div className="comparison-card-title">
+                  <h3>{program2.name}</h3>
+                  <p>{program2.city}, {program2.state}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {program1 && program2 && (
+          <table className="report-table report-table-full" style={{ marginTop: 20 }}>
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>{program1.name}</th>
+                <th>{program2.name}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Region</td><td>{program1.region || '-'}</td><td>{program2.region || '-'}</td></tr>
+              <tr><td>Level</td><td>{program1.level || '-'}</td><td>{program2.level || '-'}</td></tr>
+              <tr><td>Conference</td><td>{program1.conference || '-'}</td><td>{program2.conference || '-'}</td></tr>
+              <tr><td>Head Coach</td><td>{program1.headCoach || '-'}</td><td>{program2.headCoach || '-'}</td></tr>
+              <tr><td>Gender</td><td>{program1.gender || 'Boys'}</td><td>{program2.gender || 'Boys'}</td></tr>
+              <tr><td>Ranking</td><td>{program1.ranking || '-'}</td><td>{program2.ranking || '-'}</td></tr>
+              <tr><td>Instagram</td><td>{program1.instagram || '-'}</td><td>{program2.instagram || '-'}</td></tr>
+              <tr><td>Twitter</td><td>{program1.twitter || '-'}</td><td>{program2.twitter || '-'}</td></tr>
+            </tbody>
+          </table>
+        )}
+
+        {(!program1 || !program2) && (
+          <p className="detail-empty" style={{ textAlign: 'center', marginTop: 40 }}>
+            Select two programs to compare their details side by side.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Archive Modal Component
+function ArchiveModal({ isOpen, onClose, archivedPrograms, onRestore, onDelete, sport }) {
+  if (!isOpen) return null
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="archive-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Archived Programs</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 16 }}>
+          Archived programs are hidden from the map but can be restored at any time.
+        </p>
+
+        {archivedPrograms.length === 0 ? (
+          <p className="detail-empty">No archived programs.</p>
+        ) : (
+          <div className="archive-list">
+            {archivedPrograms.map(program => (
+              <div key={program.id} className="archive-item">
+                {program.logo && <img src={program.logo} alt="" className="archive-item-logo" />}
+                <div className="archive-item-info">
+                  <div className="archive-item-name">{program.name}</div>
+                  <div className="archive-item-location">{program.city}, {program.state}</div>
+                  {program.archivedAt && (
+                    <div className="archive-item-date">
+                      Archived {new Date(program.archivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  )}
+                </div>
+                <button className="archive-restore-btn" onClick={() => onRestore(sport, program.id)}>
+                  Restore
+                </button>
+                <button className="archive-delete-btn" onClick={() => onDelete(sport, program.id)}>
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
@@ -1273,6 +1417,13 @@ function App() {
   const [isDigestOpen, setIsDigestOpen] = useState(false)
   const [isReportsOpen, setIsReportsOpen] = useState(false)
 
+  // Program comparison modal
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false)
+
+  // Archive modal and state
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
+  const [archivedPrograms, setArchivedPrograms] = useState([])
+
   // Ref for map screenshot
   const mapRef = useRef(null)
 
@@ -1319,7 +1470,8 @@ function App() {
     setIsLoading(true)
 
     const unsubscribe = subscribeToPrograms(activeTab, (data) => {
-      setPrograms(data.map(p => ({
+      // Filter out archived programs for the main view
+      setPrograms(data.filter(p => !p.isArchived).map(p => ({
         ...p,
         name: p.name?.replace(/\bMt\.?\s*Zion(?:\s+Prep)?\b/gi, 'Mt. Zion Prep')
       })))
@@ -1338,6 +1490,13 @@ function App() {
     })
     return () => unsubscribe()
   }, [])
+
+  // Subscribe to archived programs
+  useEffect(() => {
+    if (activeTab === 'events') return
+    const unsubscribe = subscribeToArchivedPrograms(activeTab, setArchivedPrograms)
+    return () => unsubscribe()
+  }, [activeTab])
 
   // Apply dark mode to document
   useEffect(() => {
@@ -1634,20 +1793,89 @@ function App() {
     }
   }
 
-  // Delete a program
+  // Delete a program (soft delete - archive instead)
   const handleDeleteProgram = async (programId) => {
-    if (window.confirm('Are you sure you want to remove this program?')) {
+    if (window.confirm('Archive this program? It will be hidden but can be restored later.')) {
       try {
         if (user) {
-          await addProgramHistory(activeTab, programId, 'deleted', user.email)
+          await addProgramHistory(activeTab, programId, 'archived', user.email)
         }
-        await deleteProgram(activeTab, programId)
+        await archiveProgram(activeTab, programId)
+        setSelectedProgram(null)
       } catch (err) {
-        console.error('Error deleting program:', err)
-        alert('Could not remove program. Please try again.')
+        console.error('Error archiving program:', err)
+        alert('Could not archive program. Please try again.')
       }
     }
   }
+
+  // Restore an archived program
+  const handleRestoreProgram = async (sport, programId) => {
+    try {
+      await restoreProgram(sport, programId)
+      if (user) {
+        await addProgramHistory(sport, programId, 'restored', user.email)
+      }
+    } catch (err) {
+      console.error('Error restoring program:', err)
+      alert('Could not restore program. Please try again.')
+    }
+  }
+
+  // Permanently delete a program
+  const handlePermanentDelete = async (sport, programId) => {
+    if (window.confirm('Permanently delete this program? This cannot be undone.')) {
+      try {
+        if (user) {
+          await addProgramHistory(sport, programId, 'deleted', user.email)
+        }
+        await deleteProgram(sport, programId)
+      } catch (err) {
+        console.error('Error deleting program:', err)
+        alert('Could not delete program. Please try again.')
+      }
+    }
+  }
+
+  // PDF Export function
+  const handleExportPDF = useCallback(() => {
+    const doc = new jsPDF()
+    const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
+
+    // Header
+    doc.setFontSize(20)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`adidas ${tabName} Programs`, 14, 20)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Generated: ${today}`, 14, 28)
+    doc.text(`Total Programs: ${filteredPrograms.length}`, 14, 34)
+
+    // Programs table
+    const tableData = filteredPrograms.map(p => [
+      p.name || '',
+      p.city || '',
+      p.state || '',
+      p.region || '',
+      p.level || '',
+      p.conference || '',
+      p.headCoach || ''
+    ])
+
+    doc.autoTable({
+      startY: 42,
+      head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
+      body: tableData,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: 14, right: 14 }
+    })
+
+    doc.save(`adidas-select-${activeTab}-programs-${new Date().toISOString().split('T')[0]}.pdf`)
+    setShowExportMenu(false)
+  }, [activeTab, filteredPrograms])
 
   // Edit a program
   const handleEditProgram = async (updatedProgram) => {
@@ -1796,6 +2024,16 @@ function App() {
               <span className="stat-value">&#9783;</span>
               <span className="stat-label">Reports</span>
             </div>
+            <div className="stat-item stat-compare" onClick={() => setIsComparisonOpen(true)}>
+              <span className="stat-value">&#8646;</span>
+              <span className="stat-label">Compare</span>
+            </div>
+            {isUserAllowed && (
+              <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
+                <span className="stat-value">&#128451;</span>
+                <span className="stat-label">Archive ({archivedPrograms.length})</span>
+              </div>
+            )}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
@@ -2282,6 +2520,7 @@ function App() {
         onAdd={handleAddEvent}
         onEdit={handleEditEvent}
         editEvent={editingEvent}
+        allPrograms={programs}
       />
 
       {showExportMenu && (
@@ -2299,6 +2538,12 @@ function App() {
                 <span className="export-modal-icon">&#8615;</span>
                 <span>Export List (CSV)</span>
               </button>
+              {activeTab !== 'events' && (
+                <button className="export-modal-btn" onClick={handleExportPDF}>
+                  <span className="export-modal-icon">&#128196;</span>
+                  <span>Export Report (PDF)</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -2325,6 +2570,21 @@ function App() {
         onClose={() => setIsReportsOpen(false)}
         programs={programs}
         events={events}
+        sport={activeTab}
+      />
+
+      <ComparisonModal
+        isOpen={isComparisonOpen}
+        onClose={() => setIsComparisonOpen(false)}
+        programs={programs}
+      />
+
+      <ArchiveModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        archivedPrograms={archivedPrograms}
+        onRestore={handleRestoreProgram}
+        onDelete={handlePermanentDelete}
         sport={activeTab}
       />
     </div>

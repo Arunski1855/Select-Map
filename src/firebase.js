@@ -274,4 +274,107 @@ export const deleteSocialMetric = async (sport, programId, metricId) => {
   await remove(metricRef)
 }
 
+// Soft delete (archive) a program instead of permanent deletion
+export const archiveProgram = async (sport, programId) => {
+  const programRef = ref(database, `programs/${sport}/${programId}`)
+  return new Promise((resolve, reject) => {
+    onValue(programRef, async (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        await set(programRef, { ...data, isArchived: true, archivedAt: Date.now() })
+        resolve()
+      } else {
+        reject(new Error('Program not found'))
+      }
+    }, { onlyOnce: true })
+  })
+}
+
+// Restore an archived program
+export const restoreProgram = async (sport, programId) => {
+  const programRef = ref(database, `programs/${sport}/${programId}`)
+  return new Promise((resolve, reject) => {
+    onValue(programRef, async (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        const { isArchived, archivedAt, ...rest } = data
+        await set(programRef, rest)
+        resolve()
+      } else {
+        reject(new Error('Program not found'))
+      }
+    }, { onlyOnce: true })
+  })
+}
+
+// Subscribe to archived programs
+export const subscribeToArchivedPrograms = (sport, callback) => {
+  const sportRef = ref(database, `programs/${sport}`)
+  const unsubscribe = onValue(sportRef, (snapshot) => {
+    const data = snapshot.val()
+    const programs = data ? Object.values(data).filter(p => p.isArchived) : []
+    callback(programs)
+  }, (error) => {
+    console.error('Firebase archived programs error:', error)
+    callback([])
+  })
+  return unsubscribe
+}
+
+// Mentions tracking for programs
+export const addMention = async (sport, programId, mentionData) => {
+  const mentionsRef = ref(database, `mentions/${sport}/${programId}`)
+  const newRef = push(mentionsRef)
+  await set(newRef, { ...mentionData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToMentions = (sport, programId, callback) => {
+  const mentionsRef = ref(database, `mentions/${sport}/${programId}`)
+  return onValue(mentionsRef, (snapshot) => {
+    const data = snapshot.val()
+    const mentions = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
+    callback(mentions)
+  }, (error) => {
+    console.error('Firebase mentions error:', error)
+    callback([])
+  })
+}
+
+export const deleteMention = async (sport, programId, mentionId) => {
+  const mentionRef = ref(database, `mentions/${sport}/${programId}/${mentionId}`)
+  await remove(mentionRef)
+}
+
+// Event to program linking
+export const linkEventToPrograms = async (eventId, programIds) => {
+  const eventRef = ref(database, `events/${eventId}`)
+  return new Promise((resolve, reject) => {
+    onValue(eventRef, async (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        await set(eventRef, { ...data, linkedPrograms: programIds })
+        resolve()
+      } else {
+        reject(new Error('Event not found'))
+      }
+    }, { onlyOnce: true })
+  })
+}
+
+// Get events linked to a specific program
+export const subscribeToLinkedEvents = (programId, callback) => {
+  const eventsRef = ref(database, 'events')
+  return onValue(eventsRef, (snapshot) => {
+    const data = snapshot.val()
+    const events = data ? Object.values(data).filter(e =>
+      e.linkedPrograms && e.linkedPrograms.includes(programId)
+    ) : []
+    callback(events)
+  }, (error) => {
+    console.error('Firebase linked events error:', error)
+    callback([])
+  })
+}
+
 export { database, auth }

@@ -8,7 +8,11 @@ import {
   subscribeToSchedule,
   addSocialMetric,
   subscribeToSocialMetrics,
-  deleteSocialMetric
+  deleteSocialMetric,
+  addMention,
+  subscribeToMentions,
+  deleteMention,
+  subscribeToLinkedEvents
 } from '../firebase'
 
 // Error boundary to prevent white-screen crashes
@@ -98,6 +102,14 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   const [newFollowerCount, setNewFollowerCount] = useState('')
   const [metricLoading, setMetricLoading] = useState(false)
 
+  // Mentions state
+  const [mentions, setMentions] = useState([])
+  const [newMention, setNewMention] = useState({ source: '', url: '', description: '' })
+  const [mentionLoading, setMentionLoading] = useState(false)
+
+  // Linked events state
+  const [linkedEvents, setLinkedEvents] = useState([])
+
   // Bottom sheet drag state
   const [sheetHeight, setSheetHeight] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -110,7 +122,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     const unsub1 = subscribeToNotes(sport, program.id, setNotes)
     const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
     const unsub3 = subscribeToSocialMetrics(sport, program.id, setSocialMetrics)
-    return () => { unsub1(); unsub2(); unsub3() }
+    const unsub4 = subscribeToMentions(sport, program.id, setMentions)
+    const unsub5 = subscribeToLinkedEvents(program.id, setLinkedEvents)
+    return () => { unsub1(); unsub2(); unsub3(); unsub4(); unsub5() }
   }, [program?.id, sport])
 
   useEffect(() => {
@@ -120,6 +134,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     setSchedule([])
     setSocialMetrics([])
     setNewFollowerCount('')
+    setMentions([])
+    setNewMention({ source: '', url: '', description: '' })
+    setLinkedEvents([])
   }, [program?.id])
 
   useEffect(() => {
@@ -234,6 +251,34 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     }
   }
 
+  const handleAddMention = async (e) => {
+    e.preventDefault()
+    if (!newMention.source.trim() || !user) return
+    setMentionLoading(true)
+    try {
+      await addMention(sport, program.id, {
+        source: newMention.source.trim(),
+        url: newMention.url.trim(),
+        description: newMention.description.trim(),
+        addedBy: user.email,
+        timestamp: Date.now()
+      })
+      setNewMention({ source: '', url: '', description: '' })
+    } catch (err) {
+      console.error('Error adding mention:', err)
+    } finally {
+      setMentionLoading(false)
+    }
+  }
+
+  const handleDeleteMention = async (mentionId) => {
+    try {
+      await deleteMention(sport, program.id, mentionId)
+    } catch (err) {
+      console.error('Error deleting mention:', err)
+    }
+  }
+
   // Compute chart data for Instagram follower growth
   const igMetrics = useMemo(() => socialMetrics.filter(m => m.platform === 'instagram'), [socialMetrics])
 
@@ -246,7 +291,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     transition: isDragging ? 'none' : undefined
   } : {}
 
-  const tabs = ['info', 'contact', 'schedule', 'notes']
+  const tabs = ['info', 'contact', 'schedule', 'mentions', 'notes']
 
   return (
     <div
@@ -315,7 +360,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
             onClick={() => setActiveDetailTab(tab)}
           >
-            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'schedule' ? 'Schedule' : `Notes (${notes.length})`}
+            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'schedule' ? 'Schedule' : tab === 'mentions' ? `Mentions (${mentions.length})` : `Notes (${notes.length})`}
           </button>
         ))}
       </div>
@@ -573,6 +618,98 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
               </a>
             ) : (
               <p className="detail-empty">No MaxPreps link added yet.</p>
+            )}
+
+            {/* Linked Events Section */}
+            {linkedEvents.length > 0 && (
+              <div className="linked-events-section">
+                <h4 className="detail-section-heading">Linked Events</h4>
+                <div className="linked-events-list">
+                  {linkedEvents.map(event => (
+                    <div key={event.id} className="linked-event-item">
+                      <span className="linked-event-date">
+                        {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className="linked-event-name">{event.name}</span>
+                      <span className="linked-event-location">{event.city}, {event.state}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeDetailTab === 'mentions' && (
+          <div className="detail-mentions-tab">
+            {!isUserAllowed && mentions.length === 0 ? (
+              <p className="detail-empty">No mentions recorded yet.</p>
+            ) : (
+              <>
+                {isUserAllowed && (
+                  <form className="add-mention-form" onSubmit={handleAddMention}>
+                    <input
+                      type="text"
+                      value={newMention.source}
+                      onChange={e => setNewMention(prev => ({ ...prev, source: e.target.value }))}
+                      placeholder="Source (e.g., ESPN, Bleacher Report)"
+                      className="mention-input"
+                    />
+                    <input
+                      type="url"
+                      value={newMention.url}
+                      onChange={e => setNewMention(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="URL (optional)"
+                      className="mention-input"
+                    />
+                    <input
+                      type="text"
+                      value={newMention.description}
+                      onChange={e => setNewMention(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Description (optional)"
+                      className="mention-input"
+                    />
+                    <button type="submit" disabled={mentionLoading || !newMention.source.trim()} className="mention-submit-btn">
+                      {mentionLoading ? 'Adding...' : 'Add Mention'}
+                    </button>
+                  </form>
+                )}
+
+                {mentions.length === 0 ? (
+                  <p className="detail-empty">No mentions recorded yet.</p>
+                ) : (
+                  <div className="mentions-list">
+                    {mentions.map(mention => (
+                      <div key={mention.id} className="mention-item">
+                        <div className="mention-header">
+                          <span className="mention-source">{mention.source}</span>
+                          <span className="mention-time">
+                            {new Date(mention.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                        {mention.description && (
+                          <p className="mention-description">{mention.description}</p>
+                        )}
+                        {mention.url && (
+                          <a href={mention.url} target="_blank" rel="noopener noreferrer" className="mention-link">
+                            View Source
+                          </a>
+                        )}
+                        {isUserAllowed && (
+                          <button className="mention-delete" onClick={() => handleDeleteMention(mention.id)}>&times;</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Mentions Summary */}
+                {mentions.length > 0 && (
+                  <div className="mentions-summary">
+                    <span className="mentions-count">{mentions.length} total mentions</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

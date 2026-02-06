@@ -45,10 +45,11 @@ const initialFormState = {
   endDate: '',
   description: '',
   registrationLink: '',
-  proposed: false
+  proposed: false,
+  linkedPrograms: []
 }
 
-function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
+function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent, allPrograms = [] }) {
   const [formData, setFormData] = useState(initialFormState)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [photoData, setPhotoData] = useState(null)
@@ -68,7 +69,8 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
         endDate: editEvent.endDate || '',
         description: editEvent.description || '',
         registrationLink: editEvent.registrationLink || '',
-        proposed: editEvent.proposed || false
+        proposed: editEvent.proposed || false,
+        linkedPrograms: editEvent.linkedPrograms || []
       })
       setPhotoPreview(editEvent.photo)
       setPhotoData(editEvent.photo)
@@ -160,7 +162,8 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
         registrationLink: formData.registrationLink || '',
         proposed: formData.proposed || false,
         photo: photoData || '',
-        coordinates: coordinates
+        coordinates: coordinates,
+        linkedPrograms: formData.linkedPrograms || []
       }
 
       if (isEditMode) {
@@ -337,6 +340,31 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent }) {
               </div>
             )}
           </div>
+
+          {allPrograms.length > 0 && (
+            <div className="form-group">
+              <label>Link to Programs</label>
+              <div className="linked-programs-selector" style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '8px' }}>
+                {allPrograms.filter(p => !p.isArchived).map(program => (
+                  <label key={program.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.linkedPrograms.includes(program.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({ ...prev, linkedPrograms: [...prev.linkedPrograms, program.id] }))
+                        } else {
+                          setFormData(prev => ({ ...prev, linkedPrograms: prev.linkedPrograms.filter(id => id !== program.id) }))
+                        }
+                      }}
+                    />
+                    <span style={{ fontSize: '0.85rem' }}>{program.name}</span>
+                  </label>
+                ))}
+              </div>
+              <span className="checkbox-hint">{formData.linkedPrograms.length} program(s) selected</span>
+            </div>
+          )}
 
           {error && <p className="error-message">{error}</p>}
 
