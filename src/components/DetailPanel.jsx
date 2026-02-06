@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Component } from 'react'
+import jsPDF from 'jspdf'
 import {
   addNote,
   deleteNote,
@@ -293,6 +294,216 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
 
   const tabs = ['info', 'contact', 'schedule', 'mentions', 'notes']
 
+  // Generate individual program PDF report
+  const handleExportProgramPDF = useCallback(() => {
+    try {
+      const doc = new jsPDF()
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      const sportName = sport === 'football' ? 'Select Football' : 'Select Basketball'
+      let yPos = 20
+
+      // Helper to add new page if needed
+      const checkPage = (height = 10) => {
+        if (yPos + height > 270) {
+          doc.addPage()
+          yPos = 20
+        }
+      }
+
+      // Header with program name
+      doc.setFontSize(22)
+      doc.setFont('helvetica', 'bold')
+      doc.text(program.name, 14, yPos)
+      yPos += 8
+
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`${program.city}, ${program.state}`, 14, yPos)
+      yPos += 6
+
+      doc.setFontSize(9)
+      doc.setTextColor(100)
+      doc.text(`adidas ${sportName} | ${program.region} Region`, 14, yPos)
+      yPos += 4
+      doc.text(`Report Generated: ${today}`, 14, yPos)
+      doc.setTextColor(0)
+      yPos += 12
+
+      // Program Details Section
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Program Details', 14, yPos)
+      yPos += 8
+
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+
+      const details = [
+        ['Level', program.level],
+        ['Gender', program.gender],
+        ['Conference', program.conference],
+        ['Head Coach', program.headCoach],
+        ['Ranking', program.ranking],
+        ['Team Type', program.teamType]
+      ].filter(([, val]) => val)
+
+      details.forEach(([label, value]) => {
+        checkPage()
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${label}:`, 14, yPos)
+        doc.setFont('helvetica', 'normal')
+        doc.text(String(value), 50, yPos)
+        yPos += 6
+      })
+      yPos += 6
+
+      // Contact Information
+      if (program.contactEmail || program.contactPhone || program.headCoach) {
+        checkPage(20)
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Contact Information', 14, yPos)
+        yPos += 8
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+
+        if (program.contactEmail) {
+          doc.text(`Email: ${program.contactEmail}`, 14, yPos)
+          yPos += 6
+        }
+        if (program.contactPhone) {
+          doc.text(`Phone: ${program.contactPhone}`, 14, yPos)
+          yPos += 6
+        }
+        yPos += 6
+      }
+
+      // Social Media
+      if (program.twitter || program.instagram) {
+        checkPage(20)
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Social Media', 14, yPos)
+        yPos += 8
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+
+        if (program.twitter) {
+          doc.text(`Twitter: @${program.twitter}`, 14, yPos)
+          yPos += 6
+        }
+        if (program.instagram) {
+          doc.text(`Instagram: @${program.instagram}`, 14, yPos)
+          yPos += 6
+        }
+        yPos += 6
+      }
+
+      // Mentions
+      if (mentions.length > 0) {
+        checkPage(20)
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`Media Mentions (${mentions.length})`, 14, yPos)
+        yPos += 8
+
+        doc.setFontSize(10)
+        mentions.slice(0, 10).forEach((mention) => {
+          checkPage(12)
+          doc.setFont('helvetica', 'bold')
+          doc.text(`• ${mention.source}`, 14, yPos)
+          doc.setFont('helvetica', 'normal')
+          const date = new Date(mention.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          doc.text(` - ${date}`, 14 + doc.getTextWidth(`• ${mention.source}`), yPos)
+          yPos += 5
+          if (mention.description) {
+            const desc = mention.description.substring(0, 80) + (mention.description.length > 80 ? '...' : '')
+            doc.text(`  ${desc}`, 14, yPos)
+            yPos += 5
+          }
+          yPos += 2
+        })
+        if (mentions.length > 10) {
+          doc.text(`  ... and ${mentions.length - 10} more mentions`, 14, yPos)
+          yPos += 6
+        }
+        yPos += 4
+      }
+
+      // Linked Events
+      if (linkedEvents.length > 0) {
+        checkPage(20)
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`Upcoming Events (${linkedEvents.length})`, 14, yPos)
+        yPos += 8
+
+        doc.setFontSize(10)
+        linkedEvents.forEach((event) => {
+          checkPage(8)
+          const eventDate = new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          doc.setFont('helvetica', 'normal')
+          doc.text(`• ${eventDate} - ${event.name} (${event.city}, ${event.state})`, 14, yPos)
+          yPos += 6
+        })
+        yPos += 4
+      }
+
+      // Top Prospects
+      if (program.topProspects) {
+        checkPage(20)
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Top Prospects', 14, yPos)
+        yPos += 8
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        const prospects = doc.splitTextToSize(program.topProspects, 180)
+        prospects.forEach((line) => {
+          checkPage()
+          doc.text(line, 14, yPos)
+          yPos += 5
+        })
+      }
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        doc.setFontSize(8)
+        doc.setTextColor(150)
+        doc.text(`adidas ${sportName} - ${program.name}`, 14, 285)
+        doc.text(`Page ${i} of ${pageCount}`, 190, 285, { align: 'right' })
+      }
+
+      // Save the PDF
+      const filename = `${program.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-report-${new Date().toISOString().split('T')[0]}.pdf`
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile) {
+        const pdfBlob = doc.output('blob')
+        const blobUrl = URL.createObjectURL(pdfBlob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
+        alert('PDF ready! Check your Downloads.')
+      } else {
+        doc.save(filename)
+      }
+    } catch (err) {
+      console.error('PDF export error:', err)
+      alert(`Could not generate PDF: ${err.message || 'Unknown error'}`)
+    }
+  }, [program, sport, mentions, linkedEvents])
+
   return (
     <div
       ref={panelRef}
@@ -431,12 +642,21 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
               </div>
             )}
 
-            {isUserAllowed && (
-              <div className="detail-actions">
-                <button className="detail-edit-btn" onClick={() => onEdit(program)}>Edit Program</button>
-                <button className="detail-delete-btn" onClick={() => onDelete(program.id)}>Remove</button>
-              </div>
-            )}
+            <div className="detail-actions">
+              <button className="detail-export-btn" onClick={handleExportProgramPDF}>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}>
+                  <path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+                  <polyline points="12,2 12,6 16,6"/>
+                </svg>
+                Export PDF
+              </button>
+              {isUserAllowed && (
+                <>
+                  <button className="detail-edit-btn" onClick={() => onEdit(program)}>Edit Program</button>
+                  <button className="detail-delete-btn" onClick={() => onDelete(program.id)}>Remove</button>
+                </>
+              )}
+            </div>
           </div>
         )}
 
