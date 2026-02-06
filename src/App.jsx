@@ -2035,6 +2035,7 @@ function App() {
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
       // Header
       doc.setFontSize(20)
@@ -2045,31 +2046,53 @@ function App() {
       doc.text(`Generated: ${today}`, 14, 28)
       doc.text(`Total Programs: ${filteredPrograms.length}`, 14, 34)
 
-      // Programs table
-      const tableData = filteredPrograms.map(p => [
-        p.name || '',
-        p.city || '',
-        p.state || '',
-        p.region || '',
-        p.level || '',
-        p.conference || '',
-        p.headCoach || ''
-      ])
+      if (isMobile) {
+        // Simpler text-based list for mobile (autoTable can crash on mobile Safari)
+        let yPos = 46
+        const lineHeight = 6
+        const pageHeight = doc.internal.pageSize.height - 20
 
-      doc.autoTable({
-        startY: 42,
-        head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
-        body: tableData,
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        margin: { left: 14, right: 14 }
-      })
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Program | City | State | Level | Coach', 14, yPos)
+        yPos += lineHeight + 2
+
+        doc.setFont('helvetica', 'normal')
+        filteredPrograms.forEach((p) => {
+          if (yPos > pageHeight) {
+            doc.addPage()
+            yPos = 20
+          }
+          const line = `${p.name || '-'} | ${p.city || '-'}, ${p.state || '-'} | ${p.level || '-'} | ${p.headCoach || '-'}`
+          doc.text(line.substring(0, 100), 14, yPos)
+          yPos += lineHeight
+        })
+      } else {
+        // Full table for desktop
+        const tableData = filteredPrograms.map(p => [
+          p.name || '',
+          p.city || '',
+          p.state || '',
+          p.region || '',
+          p.level || '',
+          p.conference || '',
+          p.headCoach || ''
+        ])
+
+        doc.autoTable({
+          startY: 42,
+          head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
+          body: tableData,
+          styles: { fontSize: 8, cellPadding: 2 },
+          headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { left: 14, right: 14 }
+        })
+      }
 
       const filename = `adidas-select-${activeTab}-programs-${new Date().toISOString().split('T')[0]}.pdf`
 
       // Mobile-friendly download approach
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
       if (isMobile) {
         // Use blob URL for better mobile support
         const pdfBlob = doc.output('blob')
@@ -2077,11 +2100,12 @@ function App() {
         const link = document.createElement('a')
         link.href = blobUrl
         link.download = filename
+        link.target = '_blank'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
         setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
-        alert('PDF downloaded! Check your Downloads folder or browser downloads.')
+        alert('PDF ready! Check your Downloads or tap the download icon in your browser.')
       } else {
         doc.save(filename)
       }
@@ -2089,7 +2113,7 @@ function App() {
       setShowExportMenu(false)
     } catch (err) {
       console.error('PDF export error:', err)
-      alert('Could not generate PDF. Please try again.')
+      alert(`Could not generate PDF: ${err.message || 'Unknown error'}. Try exporting CSV instead.`)
     }
   }, [activeTab, filteredPrograms])
 
