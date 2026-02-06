@@ -10,9 +10,6 @@ import {
   addSocialMetric,
   subscribeToSocialMetrics,
   deleteSocialMetric,
-  addMention,
-  subscribeToMentions,
-  deleteMention,
   subscribeToLinkedEvents
 } from '../firebase'
 
@@ -103,11 +100,6 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   const [newFollowerCount, setNewFollowerCount] = useState('')
   const [metricLoading, setMetricLoading] = useState(false)
 
-  // Mentions state
-  const [mentions, setMentions] = useState([])
-  const [newMention, setNewMention] = useState({ source: '', url: '', description: '' })
-  const [mentionLoading, setMentionLoading] = useState(false)
-
   // Linked events state
   const [linkedEvents, setLinkedEvents] = useState([])
 
@@ -123,9 +115,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     const unsub1 = subscribeToNotes(sport, program.id, setNotes)
     const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
     const unsub3 = subscribeToSocialMetrics(sport, program.id, setSocialMetrics)
-    const unsub4 = subscribeToMentions(sport, program.id, setMentions)
-    const unsub5 = subscribeToLinkedEvents(program.id, setLinkedEvents)
-    return () => { unsub1(); unsub2(); unsub3(); unsub4(); unsub5() }
+    const unsub4 = subscribeToLinkedEvents(program.id, setLinkedEvents)
+    return () => { unsub1(); unsub2(); unsub3(); unsub4() }
   }, [program?.id, sport])
 
   useEffect(() => {
@@ -135,8 +126,6 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     setSchedule([])
     setSocialMetrics([])
     setNewFollowerCount('')
-    setMentions([])
-    setNewMention({ source: '', url: '', description: '' })
     setLinkedEvents([])
   }, [program?.id])
 
@@ -252,34 +241,6 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     }
   }
 
-  const handleAddMention = async (e) => {
-    e.preventDefault()
-    if (!newMention.source.trim() || !user) return
-    setMentionLoading(true)
-    try {
-      await addMention(sport, program.id, {
-        source: newMention.source.trim(),
-        url: newMention.url.trim(),
-        description: newMention.description.trim(),
-        addedBy: user.email,
-        timestamp: Date.now()
-      })
-      setNewMention({ source: '', url: '', description: '' })
-    } catch (err) {
-      console.error('Error adding mention:', err)
-    } finally {
-      setMentionLoading(false)
-    }
-  }
-
-  const handleDeleteMention = async (mentionId) => {
-    try {
-      await deleteMention(sport, program.id, mentionId)
-    } catch (err) {
-      console.error('Error deleting mention:', err)
-    }
-  }
-
   // Compute chart data for Instagram follower growth
   const igMetrics = useMemo(() => socialMetrics.filter(m => m.platform === 'instagram'), [socialMetrics])
 
@@ -292,10 +253,28 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     transition: isDragging ? 'none' : undefined
   } : {}
 
-  const tabs = ['info', 'contact', 'schedule', 'mentions', 'notes']
+  const tabs = ['info', 'contact', 'schedule', 'notes']
+
+  // Helper to load image and convert to data URL for PDF
+  const loadImageAsDataUrl = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0)
+        resolve(canvas.toDataURL('image/png'))
+      }
+      img.onerror = () => resolve(null)
+      img.src = url
+    })
+  }
 
   // Generate individual program PDF report
-  const handleExportProgramPDF = useCallback(() => {
+  const handleExportProgramPDF = useCallback(async () => {
     try {
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -307,6 +286,18 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
         if (yPos + height > 270) {
           doc.addPage()
           yPos = 20
+        }
+      }
+
+      // Add team logo if available
+      if (program.logo) {
+        try {
+          const logoDataUrl = await loadImageAsDataUrl(program.logo)
+          if (logoDataUrl) {
+            doc.addImage(logoDataUrl, 'PNG', 165, 12, 30, 30)
+          }
+        } catch (e) {
+          console.warn('Could not load logo for PDF:', e)
         }
       }
 
@@ -391,45 +382,16 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
         doc.setFont('helvetica', 'normal')
 
         if (program.twitter) {
-          doc.text(`Twitter: @${program.twitter}`, 14, yPos)
+          const twitterHandle = program.twitter.replace(/^@+/, '')
+          doc.text(`Twitter: @${twitterHandle}`, 14, yPos)
           yPos += 6
         }
         if (program.instagram) {
-          doc.text(`Instagram: @${program.instagram}`, 14, yPos)
+          const instagramHandle = program.instagram.replace(/^@+/, '')
+          doc.text(`Instagram: @${instagramHandle}`, 14, yPos)
           yPos += 6
         }
         yPos += 6
-      }
-
-      // Mentions
-      if (mentions.length > 0) {
-        checkPage(20)
-        doc.setFontSize(14)
-        doc.setFont('helvetica', 'bold')
-        doc.text(`Media Mentions (${mentions.length})`, 14, yPos)
-        yPos += 8
-
-        doc.setFontSize(10)
-        mentions.slice(0, 10).forEach((mention) => {
-          checkPage(12)
-          doc.setFont('helvetica', 'bold')
-          doc.text(`• ${mention.source}`, 14, yPos)
-          doc.setFont('helvetica', 'normal')
-          const date = new Date(mention.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          doc.text(` - ${date}`, 14 + doc.getTextWidth(`• ${mention.source}`), yPos)
-          yPos += 5
-          if (mention.description) {
-            const desc = mention.description.substring(0, 80) + (mention.description.length > 80 ? '...' : '')
-            doc.text(`  ${desc}`, 14, yPos)
-            yPos += 5
-          }
-          yPos += 2
-        })
-        if (mentions.length > 10) {
-          doc.text(`  ... and ${mentions.length - 10} more mentions`, 14, yPos)
-          yPos += 6
-        }
-        yPos += 4
       }
 
       // Linked Events
@@ -571,7 +533,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
             onClick={() => setActiveDetailTab(tab)}
           >
-            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'schedule' ? 'Schedule' : tab === 'mentions' ? `Mentions (${mentions.length})` : `Notes (${notes.length})`}
+            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'schedule' ? 'Schedule' : `Notes (${notes.length})`}
           </button>
         ))}
       </div>
@@ -856,80 +818,6 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {activeDetailTab === 'mentions' && (
-          <div className="detail-mentions-tab">
-            {!isUserAllowed && mentions.length === 0 ? (
-              <p className="detail-empty">No mentions recorded yet.</p>
-            ) : (
-              <>
-                {isUserAllowed && (
-                  <form className="add-mention-form" onSubmit={handleAddMention}>
-                    <input
-                      type="text"
-                      value={newMention.source}
-                      onChange={e => setNewMention(prev => ({ ...prev, source: e.target.value }))}
-                      placeholder="Source (e.g., ESPN, Bleacher Report)"
-                      className="mention-input"
-                    />
-                    <input
-                      type="url"
-                      value={newMention.url}
-                      onChange={e => setNewMention(prev => ({ ...prev, url: e.target.value }))}
-                      placeholder="URL (optional)"
-                      className="mention-input"
-                    />
-                    <input
-                      type="text"
-                      value={newMention.description}
-                      onChange={e => setNewMention(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Description (optional)"
-                      className="mention-input"
-                    />
-                    <button type="submit" disabled={mentionLoading || !newMention.source.trim()} className="mention-submit-btn">
-                      {mentionLoading ? 'Adding...' : 'Add Mention'}
-                    </button>
-                  </form>
-                )}
-
-                {mentions.length === 0 ? (
-                  <p className="detail-empty">No mentions recorded yet.</p>
-                ) : (
-                  <div className="mentions-list">
-                    {mentions.map(mention => (
-                      <div key={mention.id} className="mention-item">
-                        <div className="mention-header">
-                          <span className="mention-source">{mention.source}</span>
-                          <span className="mention-time">
-                            {new Date(mention.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                        </div>
-                        {mention.description && (
-                          <p className="mention-description">{mention.description}</p>
-                        )}
-                        {mention.url && (
-                          <a href={mention.url} target="_blank" rel="noopener noreferrer" className="mention-link">
-                            View Source
-                          </a>
-                        )}
-                        {isUserAllowed && (
-                          <button className="mention-delete" onClick={() => handleDeleteMention(mention.id)}>&times;</button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Mentions Summary */}
-                {mentions.length > 0 && (
-                  <div className="mentions-summary">
-                    <span className="mentions-count">{mentions.length} total mentions</span>
-                  </div>
-                )}
-              </>
             )}
           </div>
         )}
