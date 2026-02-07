@@ -5351,3 +5351,584 @@ textarea {
     min-width: 150px;
   }
 }
+
+/* ============================
+   TARGETS SECTION STYLES
+   ============================ */
+
+.targets-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.targets-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.targets-sport-toggle {
+  display: flex;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid var(--border-color);
+}
+
+.targets-sport-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.targets-sport-btn.active {
+  background: var(--accent-color);
+  color: white;
+}
+
+.targets-view-toggle {
+  display: flex;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid var(--border-color);
+}
+
+.targets-view-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.15s;
+}
+
+.targets-view-btn.active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.targets-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.targets-filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.targets-add-btn {
+  margin-left: auto;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent-color);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.targets-add-btn:hover {
+  opacity: 0.9;
+}
+
+.targets-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Kanban Pipeline View */
+.targets-kanban {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  overflow-x: auto;
+  flex: 1;
+  align-items: flex-start;
+}
+
+.targets-kanban-column {
+  min-width: 280px;
+  max-width: 320px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 240px);
+}
+
+.targets-kanban-header {
+  padding: 12px 16px;
+  border-top: 4px solid #6b7280;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-primary);
+}
+
+.targets-kanban-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.targets-kanban-count {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.targets-kanban-cards {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.targets-kanban-card {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.targets-kanban-card:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.targets-kanban-card.priority-high {
+  border-left: 3px solid #ef4444;
+}
+
+.targets-kanban-card.priority-medium {
+  border-left: 3px solid #f59e0b;
+}
+
+.targets-kanban-card.priority-low {
+  border-left: 3px solid #6b7280;
+}
+
+.targets-kanban-card.closed {
+  padding: 8px 12px;
+  opacity: 0.7;
+}
+
+.targets-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.targets-card-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: white;
+  padding: 2px;
+}
+
+.targets-card-info h5 {
+  margin: 0 0 2px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.targets-card-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.targets-card-competition {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.targets-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.targets-card-priority {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.targets-card-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.targets-kanban-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  padding: 20px;
+}
+
+.targets-kanban-closed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 200px;
+}
+
+.targets-kanban-signed,
+.targets-kanban-lost {
+  min-width: 200px;
+  max-width: 200px;
+}
+
+/* List View */
+.targets-list {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.targets-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.targets-table th {
+  background: var(--bg-secondary);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.targets-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.targets-table-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.targets-table-row:hover {
+  background: var(--bg-secondary);
+}
+
+.targets-table-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.targets-table-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: white;
+  padding: 2px;
+}
+
+.targets-status-badge,
+.targets-priority-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+.targets-table-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 20px;
+}
+
+.targets-table-empty button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-color);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.targets-table-empty button:hover {
+  background: var(--accent-color);
+  color: white;
+}
+
+/* Map View */
+.targets-map-layout {
+  flex: 1;
+  position: relative;
+}
+
+.target-marker-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 3px solid #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.target-marker-icon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.target-marker-icon span {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Target Detail Panel */
+.target-detail-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 380px;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.target-detail-panel.open {
+  transform: translateX(0);
+}
+
+.target-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.target-status-badge,
+.target-priority-badge,
+.target-region-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: white;
+}
+
+.target-status-quick {
+  margin-top: 12px;
+}
+
+.target-status-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.detail-intel-tab,
+.detail-activity-tab {
+  padding: 16px;
+}
+
+.detail-meta {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.detail-meta-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Form tabs for AddTargetForm */
+.form-section-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 20px;
+  gap: 4px;
+  background: var(--bg-secondary);
+}
+
+.form-section-tab {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  position: relative;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.form-section-tab.active {
+  color: var(--text-primary);
+  font-weight: 500;
+  border-bottom-color: var(--accent-color);
+}
+
+.form-section-tab:hover {
+  color: var(--text-primary);
+}
+
+.target-form-container {
+  max-height: 90vh;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .targets-header {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .targets-sport-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .targets-view-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  .targets-add-btn {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .targets-kanban {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .targets-kanban-column {
+    min-width: 260px;
+    max-width: 280px;
+  }
+
+  .targets-list {
+    padding: 12px;
+  }
+
+  .targets-table {
+    font-size: 0.8rem;
+  }
+
+  .targets-table th,
+  .targets-table td {
+    padding: 10px 12px;
+  }
+
+  .target-detail-panel {
+    width: 100%;
+    top: auto;
+    bottom: 0;
+    height: auto;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    transform: translateY(100%);
+  }
+
+  .target-detail-panel.open {
+    transform: translateY(0);
+  }
+
+  .form-section-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 12px;
+  }
+
+  .form-section-tab {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}

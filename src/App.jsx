@@ -30,14 +30,23 @@ import {
   archiveProgram,
   restoreProgram,
   subscribeToArchivedPrograms,
-  linkEventToPrograms
+  linkEventToPrograms,
+  addTargetProgram,
+  subscribeToTargetPrograms,
+  editTargetProgram,
+  deleteTargetProgram,
+  addTargetNote,
+  subscribeToTargetNotes,
+  deleteTargetNote
 } from './firebase'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import AddProgramForm from './components/AddProgramForm'
 import AddEventForm from './components/AddEventForm'
+import AddTargetForm from './components/AddTargetForm'
 import SplashScreen from './components/SplashScreen'
 import DetailPanel from './components/DetailPanel'
+import TargetDetailPanel from './components/TargetDetailPanel'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 
@@ -75,7 +84,26 @@ const createLogoIcon = (logoUrl, name, useContain = false) => {
 const TABS = [
   { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
   { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' },
-  { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' }
+  { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' },
+  { id: 'targets', name: 'Target Programs', icon: '/logos/adidas-logo.png' }
+]
+
+// Pipeline status configuration
+const PIPELINE_STATUSES = [
+  { id: 'identified', label: 'Identified', description: 'On our radar', color: '#6b7280' },
+  { id: 'contacted', label: 'Contacted', description: 'Initial outreach made', color: '#3b82f6' },
+  { id: 'in_discussion', label: 'In Discussion', description: 'Active conversations', color: '#8b5cf6' },
+  { id: 'proposal_sent', label: 'Proposal Sent', description: 'Offer extended', color: '#f59e0b' },
+  { id: 'negotiating', label: 'Negotiating', description: 'Working terms', color: '#ec4899' },
+  { id: 'signed', label: 'Signed', description: 'Won', color: '#10b981' },
+  { id: 'lost', label: 'Lost', description: 'Went elsewhere', color: '#ef4444' }
+]
+
+// Priority configuration
+const PRIORITIES = [
+  { id: 'high', label: 'High', description: 'Must-have programs', color: '#ef4444' },
+  { id: 'medium', label: 'Medium', description: 'Strong targets', color: '#f59e0b' },
+  { id: 'low', label: 'Low', description: 'Nice to have', color: '#6b7280' }
 ]
 
 // Auth Modal Component
@@ -1604,6 +1632,17 @@ function App() {
   // Bulk edit modal
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false)
 
+  // Target Programs state
+  const [targetPrograms, setTargetPrograms] = useState([])
+  const [isTargetsLoading, setIsTargetsLoading] = useState(true)
+  const [selectedTargetProgram, setSelectedTargetProgram] = useState(null)
+  const [isTargetFormOpen, setIsTargetFormOpen] = useState(false)
+  const [editingTarget, setEditingTarget] = useState(null)
+  const [targetsSport, setTargetsSport] = useState('basketball') // which sport we're viewing targets for
+  const [targetsViewMode, setTargetsViewMode] = useState('kanban') // 'kanban' or 'list' or 'map'
+  const [targetStatusFilter, setTargetStatusFilter] = useState('all')
+  const [targetPriorityFilter, setTargetPriorityFilter] = useState('all')
+
   // Ref for map screenshot
   const mapRef = useRef(null)
 
@@ -1673,10 +1712,21 @@ function App() {
 
   // Subscribe to archived programs
   useEffect(() => {
-    if (activeTab === 'events') return
+    if (activeTab === 'events' || activeTab === 'targets') return
     const unsubscribe = subscribeToArchivedPrograms(activeTab, setArchivedPrograms)
     return () => unsubscribe()
   }, [activeTab])
+
+  // Subscribe to target programs
+  useEffect(() => {
+    if (activeTab !== 'targets') return
+    setIsTargetsLoading(true)
+    const unsubscribe = subscribeToTargetPrograms(targetsSport, (data) => {
+      setTargetPrograms(data)
+      setIsTargetsLoading(false)
+    })
+    return () => unsubscribe()
+  }, [activeTab, targetsSport])
 
   // Apply dark mode to document
   useEffect(() => {
@@ -2028,6 +2078,89 @@ function App() {
       }
     }
   }
+
+  // Target Program handlers
+  const handleAddTargetProgram = async (targetData) => {
+    try {
+      await addTargetProgram(targetsSport, {
+        ...targetData,
+        addedBy: user?.email || 'unknown',
+        timestamp: Date.now()
+      })
+      setIsTargetFormOpen(false)
+    } catch (err) {
+      console.error('Error adding target program:', err)
+      alert('Could not add target program. Please try again.')
+    }
+  }
+
+  const handleEditTargetProgram = async (targetData) => {
+    try {
+      await editTargetProgram(targetsSport, targetData)
+      setIsTargetFormOpen(false)
+      setEditingTarget(null)
+      // Update selected if it's the same one
+      if (selectedTargetProgram?.id === targetData.id) {
+        setSelectedTargetProgram(targetData)
+      }
+    } catch (err) {
+      console.error('Error editing target program:', err)
+      alert('Could not update target program. Please try again.')
+    }
+  }
+
+  const handleDeleteTargetProgram = async (targetId) => {
+    if (window.confirm('Delete this target program? This cannot be undone.')) {
+      try {
+        await deleteTargetProgram(targetsSport, targetId)
+        if (selectedTargetProgram?.id === targetId) {
+          setSelectedTargetProgram(null)
+        }
+      } catch (err) {
+        console.error('Error deleting target program:', err)
+        alert('Could not delete target program. Please try again.')
+      }
+    }
+  }
+
+  const handleUpdateTargetStatus = async (targetId, newStatus) => {
+    const target = targetPrograms.find(t => t.id === targetId)
+    if (target) {
+      try {
+        await editTargetProgram(targetsSport, { ...target, status: newStatus })
+      } catch (err) {
+        console.error('Error updating target status:', err)
+      }
+    }
+  }
+
+  const openEditTargetForm = (target) => {
+    setEditingTarget(target)
+    setIsTargetFormOpen(true)
+  }
+
+  const closeTargetForm = () => {
+    setIsTargetFormOpen(false)
+    setEditingTarget(null)
+  }
+
+  // Filtered target programs
+  const filteredTargetPrograms = useMemo(() => {
+    return targetPrograms.filter(target => {
+      const matchesStatus = targetStatusFilter === 'all' || target.status === targetStatusFilter
+      const matchesPriority = targetPriorityFilter === 'all' || target.priority === targetPriorityFilter
+      return matchesStatus && matchesPriority
+    })
+  }, [targetPrograms, targetStatusFilter, targetPriorityFilter])
+
+  // Group targets by status for kanban view
+  const targetsByStatus = useMemo(() => {
+    const groups = {}
+    PIPELINE_STATUSES.forEach(status => {
+      groups[status.id] = filteredTargetPrograms.filter(t => t.status === status.id)
+    })
+    return groups
+  }, [filteredTargetPrograms])
 
   // PDF Export function
   const handleExportPDF = useCallback(() => {
@@ -2440,7 +2573,274 @@ function App() {
       </div>}
 
       <main className="main">
-        {activeTab === 'events' ? (
+        {activeTab === 'targets' ? (
+          /* Targets Pipeline View */
+          <div className="targets-layout">
+            {/* Targets Header with Sport Toggle and View Mode */}
+            <div className="targets-header">
+              <div className="targets-sport-toggle">
+                <button
+                  className={`targets-sport-btn ${targetsSport === 'basketball' ? 'active' : ''}`}
+                  onClick={() => setTargetsSport('basketball')}
+                >
+                  Basketball
+                </button>
+                <button
+                  className={`targets-sport-btn ${targetsSport === 'football' ? 'active' : ''}`}
+                  onClick={() => setTargetsSport('football')}
+                >
+                  Football
+                </button>
+              </div>
+
+              <div className="targets-view-toggle">
+                <button
+                  className={`targets-view-btn ${targetsViewMode === 'kanban' ? 'active' : ''}`}
+                  onClick={() => setTargetsViewMode('kanban')}
+                >
+                  Pipeline
+                </button>
+                <button
+                  className={`targets-view-btn ${targetsViewMode === 'list' ? 'active' : ''}`}
+                  onClick={() => setTargetsViewMode('list')}
+                >
+                  List
+                </button>
+                <button
+                  className={`targets-view-btn ${targetsViewMode === 'map' ? 'active' : ''}`}
+                  onClick={() => setTargetsViewMode('map')}
+                >
+                  Map
+                </button>
+              </div>
+
+              <div className="targets-filters">
+                <select
+                  value={targetPriorityFilter}
+                  onChange={(e) => setTargetPriorityFilter(e.target.value)}
+                  className="targets-filter-select"
+                >
+                  <option value="all">All Priorities</option>
+                  {PRIORITIES.map(p => (
+                    <option key={p.id} value={p.id}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {isUserAllowed && (
+                <button
+                  className="targets-add-btn"
+                  onClick={() => setIsTargetFormOpen(true)}
+                >
+                  + Add Target
+                </button>
+              )}
+            </div>
+
+            {/* Main Content */}
+            {isTargetsLoading ? (
+              <div className="targets-loading">Loading targets...</div>
+            ) : targetsViewMode === 'kanban' ? (
+              /* Kanban Pipeline View */
+              <div className="targets-kanban">
+                {PIPELINE_STATUSES.filter(s => s.id !== 'signed' && s.id !== 'lost').map(status => (
+                  <div key={status.id} className="targets-kanban-column">
+                    <div className="targets-kanban-header" style={{ borderTopColor: status.color }}>
+                      <h4>{status.label}</h4>
+                      <span className="targets-kanban-count">{targetsByStatus[status.id]?.length || 0}</span>
+                    </div>
+                    <div className="targets-kanban-cards">
+                      {targetsByStatus[status.id]?.map(target => (
+                        <div
+                          key={target.id}
+                          className={`targets-kanban-card priority-${target.priority}`}
+                          onClick={() => setSelectedTargetProgram(target)}
+                        >
+                          <div className="targets-card-header">
+                            {target.logo && <img src={target.logo} alt="" className="targets-card-logo" />}
+                            <div className="targets-card-info">
+                              <h5>{target.name}</h5>
+                              <p>{target.city}, {target.state}</p>
+                            </div>
+                          </div>
+                          {target.competition && (
+                            <div className="targets-card-competition">
+                              Currently: {target.competition}
+                            </div>
+                          )}
+                          <div className="targets-card-footer">
+                            <span
+                              className="targets-card-priority"
+                              style={{ backgroundColor: PRIORITIES.find(p => p.id === target.priority)?.color || '#6b7280' }}
+                            >
+                              {target.priority}
+                            </span>
+                            {target.targetSignDate && (
+                              <span className="targets-card-date">
+                                Target: {new Date(target.targetSignDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(!targetsByStatus[status.id] || targetsByStatus[status.id].length === 0) && (
+                        <div className="targets-kanban-empty">No targets</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Closed columns (Signed/Lost) */}
+                <div className="targets-kanban-closed">
+                  <div className="targets-kanban-column targets-kanban-signed">
+                    <div className="targets-kanban-header" style={{ borderTopColor: '#10b981' }}>
+                      <h4>Signed</h4>
+                      <span className="targets-kanban-count">{targetsByStatus['signed']?.length || 0}</span>
+                    </div>
+                    <div className="targets-kanban-cards">
+                      {targetsByStatus['signed']?.map(target => (
+                        <div
+                          key={target.id}
+                          className="targets-kanban-card closed"
+                          onClick={() => setSelectedTargetProgram(target)}
+                        >
+                          <span>{target.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="targets-kanban-column targets-kanban-lost">
+                    <div className="targets-kanban-header" style={{ borderTopColor: '#ef4444' }}>
+                      <h4>Lost</h4>
+                      <span className="targets-kanban-count">{targetsByStatus['lost']?.length || 0}</span>
+                    </div>
+                    <div className="targets-kanban-cards">
+                      {targetsByStatus['lost']?.map(target => (
+                        <div
+                          key={target.id}
+                          className="targets-kanban-card closed"
+                          onClick={() => setSelectedTargetProgram(target)}
+                        >
+                          <span>{target.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : targetsViewMode === 'list' ? (
+              /* List View */
+              <div className="targets-list">
+                <table className="targets-table">
+                  <thead>
+                    <tr>
+                      <th>Program</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Priority</th>
+                      <th>Competition</th>
+                      <th>Target Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTargetPrograms.map(target => (
+                      <tr
+                        key={target.id}
+                        onClick={() => setSelectedTargetProgram(target)}
+                        className="targets-table-row"
+                      >
+                        <td className="targets-table-name">
+                          {target.logo && <img src={target.logo} alt="" className="targets-table-logo" />}
+                          <span>{target.name}</span>
+                        </td>
+                        <td>{target.city}, {target.state}</td>
+                        <td>
+                          <span
+                            className="targets-status-badge"
+                            style={{ backgroundColor: PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280' }}
+                          >
+                            {PIPELINE_STATUSES.find(s => s.id === target.status)?.label || target.status}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className="targets-priority-badge"
+                            style={{ backgroundColor: PRIORITIES.find(p => p.id === target.priority)?.color || '#6b7280' }}
+                          >
+                            {target.priority}
+                          </span>
+                        </td>
+                        <td>{target.competition || '-'}</td>
+                        <td>
+                          {target.targetSignDate
+                            ? new Date(target.targetSignDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredTargetPrograms.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="targets-table-empty">
+                          No target programs found.
+                          {isUserAllowed && <button onClick={() => setIsTargetFormOpen(true)}>Add your first target</button>}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Map View */
+              <div className="targets-map-layout">
+                <MapContainer
+                  key="targets"
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  className="map-container"
+                  zoomControl={true}
+                  scrollWheelZoom={true}
+                >
+                  <DynamicTileLayer darkMode={darkMode} />
+                  <MapViewPreserver />
+                  <StateLabels />
+                  {filteredTargetPrograms.map(target => (
+                    target && target.coordinates && (
+                      <Marker
+                        key={target.id}
+                        position={target.coordinates}
+                        icon={L.divIcon({
+                          className: 'target-marker',
+                          html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
+                            ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
+                          </div>`,
+                          iconSize: [32, 32],
+                          iconAnchor: [16, 32],
+                          popupAnchor: [0, -32]
+                        })}
+                        eventHandlers={{
+                          click: () => setSelectedTargetProgram(target)
+                        }}
+                      />
+                    )
+                  ))}
+                </MapContainer>
+              </div>
+            )}
+
+            {/* Target Detail Panel */}
+            <TargetDetailPanel
+              target={selectedTargetProgram}
+              sport={targetsSport}
+              isOpen={!!selectedTargetProgram}
+              onClose={() => setSelectedTargetProgram(null)}
+              isUserAllowed={isUserAllowed}
+              user={user}
+              onEdit={(t) => { setSelectedTargetProgram(null); openEditTargetForm(t) }}
+              onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
+              onStatusChange={handleUpdateTargetStatus}
+            />
+          </div>
+        ) : activeTab === 'events' ? (
           /* Events Split Layout */
           <div className="events-split-layout" ref={mapRef}>
             <div className="events-map-panel">
@@ -2777,6 +3177,8 @@ function App() {
         <p>
           {activeTab === 'events'
             ? `${events.length} events`
+            : activeTab === 'targets'
+            ? `${filteredTargetPrograms.length} target programs`
             : `${filteredPrograms.length} programs displayed`}
           {user && ` | Signed in as ${user.email}`}
         </p>
@@ -2817,6 +3219,15 @@ function App() {
         onEdit={handleEditEvent}
         editEvent={editingEvent}
         allPrograms={programs}
+      />
+
+      <AddTargetForm
+        isOpen={isTargetFormOpen}
+        onClose={closeTargetForm}
+        onAdd={handleAddTargetProgram}
+        onEdit={handleEditTargetProgram}
+        sport={targetsSport}
+        editTarget={editingTarget}
       />
 
       {showExportMenu && (

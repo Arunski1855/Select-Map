@@ -377,4 +377,78 @@ export const subscribeToLinkedEvents = (programId, callback) => {
   })
 }
 
+// Target Programs (recruitment pipeline)
+export const addTargetProgram = async (sport, targetData) => {
+  const targetsRef = ref(database, `targetPrograms/${sport}`)
+  const newRef = push(targetsRef)
+  await set(newRef, { ...targetData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToTargetPrograms = (sport, callback) => {
+  const targetsRef = ref(database, `targetPrograms/${sport}`)
+  return onValue(targetsRef, (snapshot) => {
+    const data = snapshot.val()
+    const targets = data ? Object.values(data).sort((a, b) => {
+      // Sort by status order (active pipeline stages first)
+      const statusOrder = {
+        negotiating: 0,
+        proposal_sent: 1,
+        in_discussion: 2,
+        contacted: 3,
+        identified: 4,
+        signed: 5,
+        lost: 6
+      }
+      const statusDiff = (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4)
+      if (statusDiff !== 0) return statusDiff
+      // Then by priority (high first)
+      const priorityOrder = { high: 0, medium: 1, low: 2 }
+      const priorityDiff = (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1)
+      if (priorityDiff !== 0) return priorityDiff
+      // Then by timestamp (newest first)
+      return (b.timestamp || 0) - (a.timestamp || 0)
+    }) : []
+    callback(targets)
+  }, (error) => {
+    console.error('Firebase target programs error:', error)
+    callback([])
+  })
+}
+
+export const editTargetProgram = async (sport, targetData) => {
+  const targetRef = ref(database, `targetPrograms/${sport}/${targetData.id}`)
+  await set(targetRef, { ...targetData, updatedAt: Date.now() })
+}
+
+export const deleteTargetProgram = async (sport, targetId) => {
+  const targetRef = ref(database, `targetPrograms/${sport}/${targetId}`)
+  await remove(targetRef)
+}
+
+// Target program notes (activity tracking)
+export const addTargetNote = async (sport, targetId, noteData) => {
+  const notesRef = ref(database, `targetNotes/${sport}/${targetId}`)
+  const newRef = push(notesRef)
+  await set(newRef, { ...noteData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToTargetNotes = (sport, targetId, callback) => {
+  const notesRef = ref(database, `targetNotes/${sport}/${targetId}`)
+  return onValue(notesRef, (snapshot) => {
+    const data = snapshot.val()
+    const notes = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
+    callback(notes)
+  }, (error) => {
+    console.error('Firebase target notes error:', error)
+    callback([])
+  })
+}
+
+export const deleteTargetNote = async (sport, targetId, noteId) => {
+  const noteRef = ref(database, `targetNotes/${sport}/${targetId}/${noteId}`)
+  await remove(noteRef)
+}
+
 export { database, auth }
