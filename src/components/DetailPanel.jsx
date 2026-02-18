@@ -330,8 +330,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   } : {}
 
   const tabs = isUserAllowed
-    ? ['info', 'contact', 'schedule', 'notes', 'contract']
-    : ['info', 'contact', 'schedule', 'notes']
+    ? ['info', 'contact', 'notes', 'contract']
+    : ['info', 'contact', 'notes']
 
   // Helper to load image and convert to data URL for PDF
   const loadImageAsDataUrl = (url) => {
@@ -611,7 +611,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
             onClick={() => setActiveDetailTab(tab)}
           >
-            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'schedule' ? 'Schedule' : tab === 'notes' ? `Notes (${notes.length})` : 'Contract'}
+            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'notes' ? `Notes (${notes.length})` : 'Contract'}
           </button>
         ))}
       </div>
@@ -652,6 +652,11 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   MaxPreps
                 </a>
               )}
+              {program.maxprepsUrl && (
+                <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-schedule">
+                  Schedule
+                </a>
+              )}
               {program.tcaStoreUrl && (
                 <a href={program.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-tca">
                   TCA Store
@@ -663,6 +668,23 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                 </a>
               )}
             </div>
+
+            {linkedEvents.length > 0 && (
+              <div className="linked-events-section">
+                <h4 className="detail-section-heading">Linked Events</h4>
+                <div className="linked-events-list">
+                  {linkedEvents.map(event => (
+                    <div key={event.id} className="linked-event-item">
+                      <span className="linked-event-date">
+                        {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className="linked-event-name">{event.name}</span>
+                      <span className="linked-event-location">{event.city}, {event.state}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {program.gallery && (Array.isArray(program.gallery) ? program.gallery : Object.values(program.gallery)).length > 0 && (
               <div className="detail-gallery">
@@ -865,36 +887,6 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                     </button>
                   </form>
                 )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeDetailTab === 'schedule' && (
-          <div className="detail-schedule-tab">
-            {program.maxprepsUrl ? (
-              <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="maxpreps-banner">
-                View full schedule & results on MaxPreps &rarr;
-              </a>
-            ) : (
-              <p className="detail-empty">No MaxPreps link added yet.</p>
-            )}
-
-            {/* Linked Events Section */}
-            {linkedEvents.length > 0 && (
-              <div className="linked-events-section">
-                <h4 className="detail-section-heading">Linked Events</h4>
-                <div className="linked-events-list">
-                  {linkedEvents.map(event => (
-                    <div key={event.id} className="linked-event-item">
-                      <span className="linked-event-date">
-                        {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </span>
-                      <span className="linked-event-name">{event.name}</span>
-                      <span className="linked-event-location">{event.city}, {event.state}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
           </div>
