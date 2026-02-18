@@ -326,6 +326,13 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   const regionColor = REGIONS[program.region]?.color || '#333'
   const levelColor = LEVEL_COLORS[program.level] || null
 
+  // Auto-detect contract expiry year from term field
+  const currentYear = new Date().getFullYear()
+  const termYears = contractDetails?.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+  const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+  const isContractExpiring = contractDetails?.contractExpiring2026 || termEndYear === currentYear
+  const expiringYear = termEndYear === currentYear ? termEndYear : currentYear
+
   const sheetStyle = sheetHeight ? {
     height: `${sheetHeight}px`,
     maxHeight: `${sheetHeight}px`,
@@ -588,8 +595,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             {program.onboarding2026 && (
               <span className="detail-onboarding-badge">2026</span>
             )}
-            {isUserAllowed && contractDetails?.contractExpiring2026 && (
-              <span className="detail-expiring-badge">Expiring 2026</span>
+            {isUserAllowed && isContractExpiring && (
+              <span className="detail-expiring-badge">Expiring {expiringYear}</span>
             )}
           </div>
         </div>
@@ -995,7 +1002,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                       checked={contractForm.contractExpiring2026}
                       onChange={e => setContractForm(prev => ({ ...prev, contractExpiring2026: e.target.checked }))}
                     />
-                    <span>Contract expiring in 2026</span>
+                    <span>Flag as expiring this year <span className="contract-checkbox-hint">(auto-detected if term includes {currentYear})</span></span>
                   </label>
                 </div>
                 <div className="contract-form-actions">

@@ -5976,6 +5976,12 @@ textarea {
   padding: 16px;
 }
 
+.contract-checkbox-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 .contract-warning {
   display: flex;
   align-items: center;
