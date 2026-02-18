@@ -6043,6 +6043,17 @@ textarea {
 .contract-value-multiline {
   white-space: pre-wrap;
   line-height: 1.5;
+  text-align: left;
+}
+
+/* Incentive structure row: stack label above value */
+.contract-row:has(.contract-value-multiline) {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contract-row:has(.contract-value-multiline) .contract-value-multiline {
+  text-align: left;
 }
 
 .contract-meta {
@@ -6310,16 +6321,17 @@ textarea {
 .contract-map-legend {
   position: absolute;
   bottom: 28px;
-  left: 10px;
-  z-index: 1000;
+  right: 10px;
+  z-index: 9999;
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  gap: 6px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  pointer-events: none;
 }
 
 .dark .contract-map-legend {
