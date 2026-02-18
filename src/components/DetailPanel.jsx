@@ -115,7 +115,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     term: '',
     travelStipend: '',
     productAllotment: '',
-    incentiveStructure: ''
+    incentiveStructure: '',
+    contractExpiring2026: false
   })
   const [contractLoading, setContractLoading] = useState(false)
 
@@ -158,7 +159,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     setContractDetails(null)
     setContractHistory([])
     setIsEditingContract(false)
-    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '' })
+    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '', contractExpiring2026: false })
   }, [program?.id])
 
   useEffect(() => {
@@ -279,14 +280,15 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       term: contractDetails?.term || '',
       travelStipend: contractDetails?.travelStipend || '',
       productAllotment: contractDetails?.productAllotment || '',
-      incentiveStructure: contractDetails?.incentiveStructure || ''
+      incentiveStructure: contractDetails?.incentiveStructure || '',
+      contractExpiring2026: contractDetails?.contractExpiring2026 || false
     })
     setIsEditingContract(true)
   }
 
   const handleCancelContractEdit = () => {
     setIsEditingContract(false)
-    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '' })
+    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '', contractExpiring2026: false })
   }
 
   const handleSaveContract = async (e) => {
@@ -303,6 +305,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       if (contractForm.travelStipend !== (oldDetails.travelStipend || '')) changes.push(`Travel Stipend: "${oldDetails.travelStipend || '(empty)'}" → "${contractForm.travelStipend || '(empty)'}"`)
       if (contractForm.productAllotment !== (oldDetails.productAllotment || '')) changes.push(`Product Allotment: "${oldDetails.productAllotment || '(empty)'}" → "${contractForm.productAllotment || '(empty)'}"`)
       if (contractForm.incentiveStructure !== (oldDetails.incentiveStructure || '')) changes.push(`Incentive Structure: "${oldDetails.incentiveStructure || '(empty)'}" → "${contractForm.incentiveStructure || '(empty)'}"`)
+      if (contractForm.contractExpiring2026 !== (oldDetails.contractExpiring2026 || false)) changes.push(`Expiring 2026: ${oldDetails.contractExpiring2026 ? 'Yes' : 'No'} → ${contractForm.contractExpiring2026 ? 'Yes' : 'No'}`)
 
       if (changes.length > 0) {
         await addContractHistory(sport, program.id, 'updated', user.email, { changes })
@@ -584,6 +587,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             )}
             {program.onboarding2026 && (
               <span className="detail-onboarding-badge">2026</span>
+            )}
+            {isUserAllowed && contractDetails?.contractExpiring2026 && (
+              <span className="detail-expiring-badge">Expiring 2026</span>
             )}
           </div>
         </div>
@@ -981,6 +987,16 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                     placeholder="e.g., Championship bonus: $10k, Playoff appearance: $5k"
                     rows={3}
                   />
+                </div>
+                <div className="contract-field contract-field-checkbox">
+                  <label className="contract-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={contractForm.contractExpiring2026}
+                      onChange={e => setContractForm(prev => ({ ...prev, contractExpiring2026: e.target.checked }))}
+                    />
+                    <span>Contract expiring in 2026</span>
+                  </label>
                 </div>
                 <div className="contract-form-actions">
                   <button type="button" className="contract-cancel-btn" onClick={handleCancelContractEdit} disabled={contractLoading}>
