@@ -10,7 +10,11 @@ import {
   addSocialMetric,
   subscribeToSocialMetrics,
   deleteSocialMetric,
-  subscribeToLinkedEvents
+  subscribeToLinkedEvents,
+  subscribeToContractDetails,
+  updateContractDetails,
+  addContractHistory,
+  subscribeToContractHistory
 } from '../firebase'
 
 // Error boundary to prevent white-screen crashes
@@ -103,6 +107,18 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   // Linked events state
   const [linkedEvents, setLinkedEvents] = useState([])
 
+  // Contract details state (private, auth-gated)
+  const [contractDetails, setContractDetails] = useState(null)
+  const [contractHistory, setContractHistory] = useState([])
+  const [isEditingContract, setIsEditingContract] = useState(false)
+  const [contractForm, setContractForm] = useState({
+    term: '',
+    travelStipend: '',
+    productAllotment: '',
+    incentiveStructure: ''
+  })
+  const [contractLoading, setContractLoading] = useState(false)
+
   // Bottom sheet drag state
   const [sheetHeight, setSheetHeight] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -119,6 +135,18 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     return () => { unsub1(); unsub2(); unsub3(); unsub4() }
   }, [program?.id, sport])
 
+  // Subscribe to contract details only when user is authorized
+  useEffect(() => {
+    if (!program?.id || !sport || sport === 'events' || !isUserAllowed) {
+      setContractDetails(null)
+      setContractHistory([])
+      return
+    }
+    const unsub1 = subscribeToContractDetails(sport, program.id, setContractDetails)
+    const unsub2 = subscribeToContractHistory(sport, program.id, setContractHistory)
+    return () => { unsub1(); unsub2() }
+  }, [program?.id, sport, isUserAllowed])
+
   useEffect(() => {
     setActiveDetailTab('info')
     setSheetHeight(null)
@@ -127,6 +155,10 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     setSocialMetrics([])
     setNewFollowerCount('')
     setLinkedEvents([])
+    setContractDetails(null)
+    setContractHistory([])
+    setIsEditingContract(false)
+    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '' })
   }, [program?.id])
 
   useEffect(() => {
@@ -241,6 +273,50 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     }
   }
 
+  // Contract detail handlers
+  const handleEditContract = () => {
+    setContractForm({
+      term: contractDetails?.term || '',
+      travelStipend: contractDetails?.travelStipend || '',
+      productAllotment: contractDetails?.productAllotment || '',
+      incentiveStructure: contractDetails?.incentiveStructure || ''
+    })
+    setIsEditingContract(true)
+  }
+
+  const handleCancelContractEdit = () => {
+    setIsEditingContract(false)
+    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '' })
+  }
+
+  const handleSaveContract = async (e) => {
+    e.preventDefault()
+    if (!user) return
+    setContractLoading(true)
+    try {
+      const oldDetails = contractDetails || {}
+      await updateContractDetails(sport, program.id, contractForm, user.email)
+
+      // Log the change to contract history
+      const changes = []
+      if (contractForm.term !== (oldDetails.term || '')) changes.push(`Term: "${oldDetails.term || '(empty)'}" → "${contractForm.term || '(empty)'}"`)
+      if (contractForm.travelStipend !== (oldDetails.travelStipend || '')) changes.push(`Travel Stipend: "${oldDetails.travelStipend || '(empty)'}" → "${contractForm.travelStipend || '(empty)'}"`)
+      if (contractForm.productAllotment !== (oldDetails.productAllotment || '')) changes.push(`Product Allotment: "${oldDetails.productAllotment || '(empty)'}" → "${contractForm.productAllotment || '(empty)'}"`)
+      if (contractForm.incentiveStructure !== (oldDetails.incentiveStructure || '')) changes.push(`Incentive Structure: "${oldDetails.incentiveStructure || '(empty)'}" → "${contractForm.incentiveStructure || '(empty)'}"`)
+
+      if (changes.length > 0) {
+        await addContractHistory(sport, program.id, 'updated', user.email, { changes })
+      }
+
+      setIsEditingContract(false)
+    } catch (err) {
+      console.error('Error saving contract:', err)
+      alert('Failed to save contract details. Please try again.')
+    } finally {
+      setContractLoading(false)
+    }
+  }
+
   // Compute chart data for Instagram follower growth
   const igMetrics = useMemo(() => socialMetrics.filter(m => m.platform === 'instagram'), [socialMetrics])
 
@@ -253,7 +329,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     transition: isDragging ? 'none' : undefined
   } : {}
 
-  const tabs = ['info', 'contact', 'schedule', 'notes']
+  const tabs = isUserAllowed
+    ? ['info', 'contact', 'schedule', 'notes', 'contract']
+    : ['info', 'contact', 'schedule', 'notes']
 
   // Helper to load image and convert to data URL for PDF
   const loadImageAsDataUrl = (url) => {
@@ -533,7 +611,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
             onClick={() => setActiveDetailTab(tab)}
           >
-            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'schedule' ? 'Schedule' : `Notes (${notes.length})`}
+            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'schedule' ? 'Schedule' : tab === 'notes' ? `Notes (${notes.length})` : 'Contract'}
           </button>
         ))}
       </div>
@@ -857,6 +935,129 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   </div>
                 )}
               </>
+            )}
+          </div>
+        )}
+
+        {activeDetailTab === 'contract' && isUserAllowed && (
+          <div className="detail-contract-tab">
+            <div className="contract-warning">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>Private contract details - authorized users only</span>
+            </div>
+
+            {isEditingContract ? (
+              <form className="contract-edit-form" onSubmit={handleSaveContract}>
+                <div className="contract-field">
+                  <label htmlFor="contract-term">Term (Contract Length)</label>
+                  <input
+                    id="contract-term"
+                    type="text"
+                    value={contractForm.term}
+                    onChange={e => setContractForm(prev => ({ ...prev, term: e.target.value }))}
+                    placeholder="e.g., 3 years, 2024-2027"
+                  />
+                </div>
+                <div className="contract-field">
+                  <label htmlFor="contract-travel">Travel Stipend</label>
+                  <input
+                    id="contract-travel"
+                    type="text"
+                    value={contractForm.travelStipend}
+                    onChange={e => setContractForm(prev => ({ ...prev, travelStipend: e.target.value }))}
+                    placeholder="e.g., $5,000 annual"
+                  />
+                </div>
+                <div className="contract-field">
+                  <label htmlFor="contract-product">Product Allotment</label>
+                  <input
+                    id="contract-product"
+                    type="text"
+                    value={contractForm.productAllotment}
+                    onChange={e => setContractForm(prev => ({ ...prev, productAllotment: e.target.value }))}
+                    placeholder="e.g., $50,000/year"
+                  />
+                </div>
+                <div className="contract-field">
+                  <label htmlFor="contract-incentive">Incentive Structure</label>
+                  <textarea
+                    id="contract-incentive"
+                    value={contractForm.incentiveStructure}
+                    onChange={e => setContractForm(prev => ({ ...prev, incentiveStructure: e.target.value }))}
+                    placeholder="e.g., Championship bonus: $10k, Playoff appearance: $5k"
+                    rows={3}
+                  />
+                </div>
+                <div className="contract-form-actions">
+                  <button type="button" className="contract-cancel-btn" onClick={handleCancelContractEdit} disabled={contractLoading}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="contract-save-btn" disabled={contractLoading}>
+                    {contractLoading ? 'Saving...' : 'Save Contract Details'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="contract-display">
+                {contractDetails ? (
+                  <div className="contract-details">
+                    <div className="contract-row">
+                      <span className="contract-label">Term</span>
+                      <span className="contract-value">{contractDetails.term || '—'}</span>
+                    </div>
+                    <div className="contract-row">
+                      <span className="contract-label">Travel Stipend</span>
+                      <span className="contract-value">{contractDetails.travelStipend || '—'}</span>
+                    </div>
+                    <div className="contract-row">
+                      <span className="contract-label">Product Allotment</span>
+                      <span className="contract-value">{contractDetails.productAllotment || '—'}</span>
+                    </div>
+                    <div className="contract-row">
+                      <span className="contract-label">Incentive Structure</span>
+                      <span className="contract-value contract-value-multiline">{contractDetails.incentiveStructure || '—'}</span>
+                    </div>
+                    {contractDetails.lastUpdated && (
+                      <div className="contract-meta">
+                        Last updated {new Date(contractDetails.lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} by {contractDetails.updatedBy}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="detail-empty">No contract details added yet.</p>
+                )}
+                <button className="contract-edit-btn" onClick={handleEditContract}>
+                  {contractDetails ? 'Edit Contract Details' : 'Add Contract Details'}
+                </button>
+              </div>
+            )}
+
+            {/* Contract History */}
+            {contractHistory.length > 0 && (
+              <div className="contract-history">
+                <h4 className="contract-history-heading">Change History</h4>
+                <div className="contract-history-list">
+                  {contractHistory.slice(0, 10).map(entry => (
+                    <div key={entry.id} className="contract-history-item">
+                      <div className="contract-history-header">
+                        <span className="contract-history-user">{entry.userEmail}</span>
+                        <span className="contract-history-time">
+                          {new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      {entry.details?.changes && (
+                        <ul className="contract-history-changes">
+                          {entry.details.changes.map((change, idx) => (
+                            <li key={idx}>{change}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}

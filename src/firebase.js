@@ -451,4 +451,50 @@ export const deleteTargetNote = async (sport, targetId, noteId) => {
   await remove(noteRef)
 }
 
+// Contract details (private, auth-gated)
+export const subscribeToContractDetails = (sport, programId, callback) => {
+  const contractRef = ref(database, `contractDetails/${sport}/${programId}`)
+  return onValue(contractRef, (snapshot) => {
+    const data = snapshot.val()
+    callback(data || null)
+  }, (error) => {
+    console.error('Firebase contract details error:', error)
+    callback(null)
+  })
+}
+
+export const updateContractDetails = async (sport, programId, details, userEmail) => {
+  const contractRef = ref(database, `contractDetails/${sport}/${programId}`)
+  await set(contractRef, {
+    ...details,
+    lastUpdated: Date.now(),
+    updatedBy: userEmail
+  })
+}
+
+// Contract audit history
+export const addContractHistory = async (sport, programId, action, userEmail, details = {}) => {
+  const historyRef = ref(database, `contractHistory/${sport}/${programId}`)
+  const newRef = push(historyRef)
+  await set(newRef, {
+    id: newRef.key,
+    action,
+    userEmail,
+    timestamp: Date.now(),
+    details
+  })
+}
+
+export const subscribeToContractHistory = (sport, programId, callback) => {
+  const historyRef = ref(database, `contractHistory/${sport}/${programId}`)
+  return onValue(historyRef, (snapshot) => {
+    const data = snapshot.val()
+    const history = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : []
+    callback(history)
+  }, (error) => {
+    console.error('Firebase contract history error:', error)
+    callback([])
+  })
+}
+
 export { database, auth }
