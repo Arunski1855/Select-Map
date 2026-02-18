@@ -138,9 +138,11 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
 
   // Subscribe to contract details only when user is authorized
   useEffect(() => {
+    // Clear stale data first so old program's contract doesn't linger
+    setContractDetails(null)
+    setContractHistory([])
+
     if (!program?.id || !sport || sport === 'events' || !isUserAllowed) {
-      setContractDetails(null)
-      setContractHistory([])
       return
     }
     const unsub1 = subscribeToContractDetails(sport, program.id, setContractDetails)
@@ -156,8 +158,6 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     setSocialMetrics([])
     setNewFollowerCount('')
     setLinkedEvents([])
-    setContractDetails(null)
-    setContractHistory([])
     setIsEditingContract(false)
     setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '', contractExpiring2026: false })
   }, [program?.id])
