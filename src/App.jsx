@@ -37,7 +37,8 @@ import {
   deleteTargetProgram,
   addTargetNote,
   subscribeToTargetNotes,
-  deleteTargetNote
+  deleteTargetNote,
+  subscribeToAllContractDetails
 } from './firebase'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
@@ -62,13 +63,14 @@ const REGIONS = {
 
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
 const iconCache = new Map()
-const createLogoIcon = (logoUrl, name, useContain = false) => {
-  const cacheKey = `${logoUrl}|${name}|${useContain}`
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
+  const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}" title="${name}">
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}" title="${name}">
         <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
       </div>
     `,
@@ -1567,6 +1569,186 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
   )
 }
 
+// Contract Dashboard Modal Component
+function ContractDashboard({ isOpen, onClose, programs, allContractDetails, sport }) {
+  const [sortCol, setSortCol] = useState('name')
+  const [sortDir, setSortDir] = useState('asc')
+  const [filterStatus, setFilterStatus] = useState('all') // 'all', 'expiring', 'active', 'none'
+
+  if (!isOpen) return null
+
+  const currentYear = new Date().getFullYear()
+
+  const getContractStatus = (contract) => {
+    if (!contract) return 'none'
+    const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+    const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+    const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
+    return isExpiring ? 'expiring' : 'active'
+  }
+
+  const rows = programs
+    .filter(p => p && p.id)
+    .map(p => {
+      const contract = allContractDetails[p.id] || null
+      const status = getContractStatus(contract)
+      return { program: p, contract, status }
+    })
+    .filter(r => filterStatus === 'all' || r.status === filterStatus)
+
+  rows.sort((a, b) => {
+    let aVal, bVal
+    switch (sortCol) {
+      case 'name': aVal = a.program.name || ''; bVal = b.program.name || ''; break
+      case 'region': aVal = a.program.region || ''; bVal = b.program.region || ''; break
+      case 'term': aVal = a.contract?.term || ''; bVal = b.contract?.term || ''; break
+      case 'travel': aVal = a.contract?.travelStipend || ''; bVal = b.contract?.travelStipend || ''; break
+      case 'product': aVal = a.contract?.productAllotment || ''; bVal = b.contract?.productAllotment || ''; break
+      case 'status': aVal = a.status; bVal = b.status; break
+      default: aVal = ''; bVal = ''
+    }
+    const cmp = aVal.localeCompare(bVal)
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  const handleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
+  }
+
+  const totalContracts = programs.filter(p => allContractDetails[p.id]).length
+  const expiringCount = programs.filter(p => getContractStatus(allContractDetails[p.id]) === 'expiring').length
+  const activeCount = programs.filter(p => getContractStatus(allContractDetails[p.id]) === 'active').length
+  const noContractCount = programs.length - totalContracts
+
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <span className="sort-icon sort-icon-neutral">⇅</span>
+    return <span className="sort-icon">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
+
+  const statusLabel = (status) => {
+    if (status === 'expiring') return <span className="cd-status cd-status-expiring">Expiring {currentYear}</span>
+    if (status === 'active') return <span className="cd-status cd-status-active">Active</span>
+    return <span className="cd-status cd-status-none">No Contract</span>
+  }
+
+  const handleExportCSV = () => {
+    const headers = ['School', 'Region', 'State', 'Term', 'Travel Stipend', 'Product Allotment', 'Incentive Structure', 'Status', 'Last Updated']
+    const csvRows = rows.map(r => [
+      r.program.name || '',
+      r.program.region || '',
+      r.program.state || '',
+      r.contract?.term || '',
+      r.contract?.travelStipend || '',
+      r.contract?.productAllotment || '',
+      r.contract?.incentiveStructure || '',
+      r.status,
+      r.contract?.lastUpdated ? new Date(r.contract.lastUpdated).toLocaleDateString() : ''
+    ])
+    const csv = [headers, ...csvRows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const link = document.createElement('a')
+    link.download = `adidas-select-contracts-${sport}-${new Date().toISOString().split('T')[0]}.csv`
+    link.href = URL.createObjectURL(blob)
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="contract-dashboard-modal" onClick={e => e.stopPropagation()}>
+        <div className="cd-header">
+          <div className="cd-title-row">
+            <h2 className="cd-title">Contract Overview — {sport === 'basketball' ? 'Select Basketball' : 'Select Football'}</h2>
+            <button className="modal-close" onClick={onClose}>&times;</button>
+          </div>
+          <div className="cd-summary">
+            <div className="cd-summary-item">
+              <span className="cd-summary-value">{programs.length}</span>
+              <span className="cd-summary-label">Total Programs</span>
+            </div>
+            <div className="cd-summary-item">
+              <span className="cd-summary-value">{totalContracts}</span>
+              <span className="cd-summary-label">Under Contract</span>
+            </div>
+            <div className="cd-summary-item cd-summary-expiring">
+              <span className="cd-summary-value">{expiringCount}</span>
+              <span className="cd-summary-label">Expiring {currentYear}</span>
+            </div>
+            <div className="cd-summary-item cd-summary-active">
+              <span className="cd-summary-value">{activeCount}</span>
+              <span className="cd-summary-label">Active</span>
+            </div>
+            <div className="cd-summary-item cd-summary-none">
+              <span className="cd-summary-value">{noContractCount}</span>
+              <span className="cd-summary-label">No Data</span>
+            </div>
+          </div>
+          <div className="cd-controls">
+            <div className="cd-filter-pills">
+              {['all', 'expiring', 'active', 'none'].map(s => (
+                <button
+                  key={s}
+                  className={`cd-filter-pill ${filterStatus === s ? 'active' : ''} ${s !== 'all' ? `cd-pill-${s}` : ''}`}
+                  onClick={() => setFilterStatus(s)}
+                >
+                  {s === 'all' ? 'All' : s === 'none' ? 'No Contract' : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button className="cd-export-btn" onClick={handleExportCSV}>Export CSV</button>
+          </div>
+        </div>
+
+        <div className="cd-table-wrap">
+          <table className="cd-table">
+            <thead>
+              <tr>
+                <th className="cd-th sortable" onClick={() => handleSort('name')}>School <SortIcon col="name" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('region')}>Region <SortIcon col="region" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('term')}>Term <SortIcon col="term" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('travel')}>Travel Stipend <SortIcon col="travel" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('product')}>Product Allotment <SortIcon col="product" /></th>
+                <th className="cd-th">Incentive Structure</th>
+                <th className="cd-th sortable" onClick={() => handleSort('status')}>Status <SortIcon col="status" /></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ program, contract, status }) => (
+                <tr key={program.id} className={`cd-row cd-row-${status}`}>
+                  <td className="cd-td cd-td-name">
+                    {program.logo && <img src={program.logo} alt="" className="cd-logo" />}
+                    <span>{program.name}</span>
+                  </td>
+                  <td className="cd-td">{program.region || '—'}</td>
+                  <td className="cd-td">{contract?.term || '—'}</td>
+                  <td className="cd-td">{contract?.travelStipend || '—'}</td>
+                  <td className="cd-td">{contract?.productAllotment || '—'}</td>
+                  <td className="cd-td cd-td-incentive">{contract?.incentiveStructure || '—'}</td>
+                  <td className="cd-td">{statusLabel(status)}</td>
+                </tr>
+              ))}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="cd-empty">No programs match the selected filter.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="cd-footer">
+          <span>{rows.length} program{rows.length !== 1 ? 's' : ''} shown</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
@@ -1642,6 +1824,11 @@ function App() {
   const [targetsViewMode, setTargetsViewMode] = useState('kanban') // 'kanban' or 'list' or 'map'
   const [targetStatusFilter, setTargetStatusFilter] = useState('all')
   const [targetPriorityFilter, setTargetPriorityFilter] = useState('all')
+
+  // Contract dashboard and map layer
+  const [allContractDetails, setAllContractDetails] = useState({})
+  const [showContractMapLayer, setShowContractMapLayer] = useState(false)
+  const [isContractDashboardOpen, setIsContractDashboardOpen] = useState(false)
 
   // Ref for map screenshot
   const mapRef = useRef(null)
@@ -1728,6 +1915,16 @@ function App() {
     return () => unsubscribe()
   }, [activeTab, targetsSport])
 
+  // Subscribe to all contract details for the current sport (auth-gated)
+  useEffect(() => {
+    if (!isUserAllowed || activeTab === 'events' || activeTab === 'targets') {
+      setAllContractDetails({})
+      return
+    }
+    const unsubscribe = subscribeToAllContractDetails(activeTab, setAllContractDetails)
+    return () => unsubscribe()
+  }, [isUserAllowed, activeTab])
+
   // Apply dark mode to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
@@ -1799,13 +1996,26 @@ function App() {
   // Create icons for all programs (memoized to prevent re-renders)
   const programIcons = useMemo(() => {
     const icons = {}
+    const currentYear = new Date().getFullYear()
     filteredPrograms.forEach(program => {
       if (program && program.id) {
-        icons[program.id] = createLogoIcon(program.logo, program.name)
+        let contractStatus = null
+        if (showContractMapLayer && isUserAllowed) {
+          const contract = allContractDetails[program.id]
+          if (contract) {
+            const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+            const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+            const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
+            contractStatus = isExpiring ? 'expiring' : 'active'
+          } else {
+            contractStatus = 'none'
+          }
+        }
+        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus)
       }
     })
     return icons
-  }, [filteredPrograms])
+  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
@@ -2455,6 +2665,22 @@ function App() {
                 <span className="stat-label">Bulk Edit</span>
               </div>
             )}
+            {isUserAllowed && activeTab !== 'events' && activeTab !== 'targets' && (
+              <div className="stat-item stat-contracts" onClick={() => setIsContractDashboardOpen(true)} title="Contract overview">
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="2" width="14" height="16" rx="2"/>
+                    <line x1="6" y1="6" x2="14" y2="6"/>
+                    <line x1="6" y1="10" x2="14" y2="10"/>
+                    <line x1="6" y1="14" x2="10" y2="14"/>
+                    <circle cx="14" cy="14" r="3" fill="none"/>
+                    <line x1="12.5" y1="14" x2="15.5" y2="14"/>
+                    <line x1="14" y1="12.5" x2="14" y2="15.5"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Contracts</span>
+              </div>
+            )}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
@@ -2518,6 +2744,19 @@ function App() {
           </div>
         )}
 
+
+        {isUserAllowed && activeTab !== 'targets' && (
+          <button
+            className={`contract-layer-toggle-btn${showContractMapLayer ? ' active' : ''}`}
+            onClick={() => setShowContractMapLayer(v => !v)}
+            title="Toggle contract status map layer"
+          >
+            <span className="contract-layer-dot contract-layer-dot-expiring" />
+            <span className="contract-layer-dot contract-layer-dot-active" />
+            <span className="contract-layer-dot contract-layer-dot-none" />
+            {showContractMapLayer ? 'Contracts On' : 'Contracts'}
+          </button>
+        )}
 
         <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
           {showFilters ? 'Less Filters' : 'More Filters'}
@@ -3158,6 +3397,14 @@ function App() {
               </MapContainer>
             )}
 
+            {showContractMapLayer && isUserAllowed && (
+              <div className="contract-map-legend">
+                <div className="cml-item"><span className="cml-dot cml-dot-expiring" /> Expiring {new Date().getFullYear()}</div>
+                <div className="cml-item"><span className="cml-dot cml-dot-active" /> Active</div>
+                <div className="cml-item"><span className="cml-dot cml-dot-none" /> No Data</div>
+              </div>
+            )}
+
             <DetailPanel
               program={selectedProgram}
               mtZionPrograms={selectedMtZionGroup}
@@ -3320,6 +3567,14 @@ function App() {
         onClose={() => setIsBulkEditOpen(false)}
         programs={programs}
         onSave={handleEditProgram}
+        sport={activeTab}
+      />
+
+      <ContractDashboard
+        isOpen={isContractDashboardOpen}
+        onClose={() => setIsContractDashboardOpen(false)}
+        programs={programs}
+        allContractDetails={allContractDetails}
         sport={activeTab}
       />
     </div>

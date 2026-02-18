@@ -497,4 +497,16 @@ export const subscribeToContractHistory = (sport, programId, callback) => {
   })
 }
 
+// Subscribe to all contract details for a sport (for dashboard and map layer)
+export const subscribeToAllContractDetails = (sport, callback) => {
+  const contractRef = ref(database, `contractDetails/${sport}`)
+  return onValue(contractRef, (snapshot) => {
+    const data = snapshot.val()
+    callback(data || {})
+  }, (error) => {
+    console.error('Firebase all contract details error:', error)
+    callback({})
+  })
+}
+
 export { database, auth }
