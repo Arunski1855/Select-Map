@@ -6720,3 +6720,527 @@ textarea {
     padding: 4px 10px;
   }
 }
+
+/* ===========================================
+   COMPETITOR EVENTS MODAL
+   =========================================== */
+
+.competitor-events-btn {
+  background: linear-gradient(135deg, #F35B04 0%, #E03A3E 50%, #00857C 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.competitor-events-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.ce-modal {
+  background: white;
+  border-radius: 16px;
+  width: min(95vw, 800px);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dark .ce-modal {
+  background: #1a1a1a;
+  color: #eee;
+}
+
+.ce-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.dark .ce-header {
+  border-color: #333;
+}
+
+.ce-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ce-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ce-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ce-filter-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ce-filter-pill {
+  background: #f3f4f6;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dark .ce-filter-pill {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #ccc;
+}
+
+.ce-filter-pill:hover {
+  background: #e5e5e5;
+}
+
+.dark .ce-filter-pill:hover {
+  background: #3a3a3a;
+}
+
+.ce-filter-pill.active {
+  background: #000;
+  color: white;
+  border-color: #000;
+}
+
+.dark .ce-filter-pill.active {
+  background: #fff;
+  color: #000;
+}
+
+.ce-add-btn {
+  background: #000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dark .ce-add-btn {
+  background: #fff;
+  color: #000;
+}
+
+.ce-add-btn:hover {
+  transform: scale(1.02);
+}
+
+.ce-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+}
+
+.ce-form {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e5e5;
+}
+
+.dark .ce-form {
+  background: #252525;
+  border-color: #3a3a3a;
+}
+
+.ce-form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.ce-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  flex: 1;
+}
+
+.ce-form-field-wide {
+  flex: 2;
+  min-width: 200px;
+}
+
+.ce-form-field-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: auto;
+}
+
+.ce-form-field-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.ce-form-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dark .ce-form-field label {
+  color: #999;
+}
+
+.ce-form-field input,
+.ce-form-field select {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.dark .ce-form-field input,
+.dark .ce-form-field select {
+  background: #1a1a1a;
+  border-color: #444;
+  color: #eee;
+}
+
+.ce-form-field input:focus,
+.ce-form-field select:focus {
+  outline: none;
+  border-color: #000;
+}
+
+.dark .ce-form-field input:focus,
+.dark .ce-form-field select:focus {
+  border-color: #888;
+}
+
+.ce-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ce-cancel-btn {
+  background: #e5e5e5;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dark .ce-cancel-btn {
+  background: #3a3a3a;
+  color: #ccc;
+}
+
+.ce-save-btn {
+  background: #000;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dark .ce-save-btn {
+  background: #fff;
+  color: #000;
+}
+
+.ce-section {
+  margin-bottom: 24px;
+}
+
+.ce-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ce-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e5e5;
+}
+
+.dark .ce-section-title {
+  color: #888;
+}
+
+.dark .ce-section-title::after {
+  background: #333;
+}
+
+.ce-section-title-past {
+  color: #999;
+}
+
+.ce-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ce-event-list-past {
+  opacity: 0.65;
+}
+
+.ce-event-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  transition: all 0.15s ease;
+}
+
+.dark .ce-event-row {
+  background: #252525;
+  border-color: #333;
+}
+
+.ce-event-row:hover {
+  border-color: #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.dark .ce-event-row:hover {
+  border-color: #555;
+}
+
+.ce-event-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ce-event-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ce-live-badge {
+  background: #dc2626;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.ce-event-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ce-brand-badge {
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ce-event-type {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.ce-event-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 100px;
+}
+
+.ce-event-date {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.dark .ce-event-date {
+  color: #ddd;
+}
+
+.ce-event-location {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.dark .ce-event-location {
+  color: #999;
+}
+
+.ce-event-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ce-event-row:hover .ce-event-actions {
+  opacity: 1;
+}
+
+.ce-edit-btn,
+.ce-delete-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.15s ease;
+}
+
+.ce-edit-btn {
+  background: #e5e5e5;
+  color: #333;
+}
+
+.dark .ce-edit-btn {
+  background: #3a3a3a;
+  color: #ccc;
+}
+
+.ce-edit-btn:hover {
+  background: #ddd;
+}
+
+.ce-delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dark .ce-delete-btn {
+  background: #3a2525;
+}
+
+.ce-delete-btn:hover {
+  background: #fecaca;
+}
+
+.ce-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .ce-modal {
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 12px 12px 0 0;
+    max-height: 90vh;
+  }
+
+  .ce-header { padding: 16px; }
+
+  .ce-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ce-filter-pills {
+    justify-content: center;
+  }
+
+  .ce-add-btn {
+    width: 100%;
+  }
+
+  .ce-body { padding: 16px; }
+
+  .ce-form-row {
+    flex-direction: column;
+  }
+
+  .ce-form-field {
+    width: 100%;
+  }
+
+  .ce-event-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .ce-event-details {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ce-event-actions {
+    opacity: 1;
+    justify-content: flex-end;
+  }
+
+  .competitor-events-btn {
+    font-size: 0.72rem;
+    padding: 5px 10px;
+  }
+}

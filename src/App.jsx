@@ -38,7 +38,11 @@ import {
   addTargetNote,
   subscribeToTargetNotes,
   deleteTargetNote,
-  subscribeToAllContractDetails
+  subscribeToAllContractDetails,
+  subscribeToCompetitorEvents,
+  addCompetitorEvent,
+  updateCompetitorEvent,
+  deleteCompetitorEvent
 } from './firebase'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
@@ -1757,6 +1761,315 @@ function ContractDashboard({ isOpen, onClose, programs, allContractDetails, spor
   )
 }
 
+// Competitor Events Modal Component
+const COMPETITOR_BRANDS = {
+  nike: { label: 'Nike', color: '#F35B04' },
+  ua: { label: 'Under Armour', color: '#E03A3E' },
+  puma: { label: 'Puma', color: '#00857C' },
+  general: { label: 'General', color: '#6b7280' }
+}
+
+const EVENT_TYPES = ['Circuit', 'Camp', 'Showcase', 'Combine', 'Tournament', 'Other']
+
+function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDelete, isUserAllowed, userEmail }) {
+  const [filterBrand, setFilterBrand] = useState('all')
+  const [isAdding, setIsAdding] = useState(false)
+  const [editingEvent, setEditingEvent] = useState(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    brand: 'nike',
+    date: '',
+    endDate: '',
+    city: '',
+    state: '',
+    type: 'Circuit',
+    isLivePeriod: false,
+    notes: ''
+  })
+
+  if (!isOpen) return null
+
+  const filteredEvents = filterBrand === 'all'
+    ? events
+    : events.filter(e => e.brand === filterBrand)
+
+  // Split into upcoming and past
+  const today = new Date().toISOString().split('T')[0]
+  const upcomingEvents = filteredEvents.filter(e => e.date >= today)
+  const pastEvents = filteredEvents.filter(e => e.date < today).reverse()
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      brand: 'nike',
+      date: '',
+      endDate: '',
+      city: '',
+      state: '',
+      type: 'Circuit',
+      isLivePeriod: false,
+      notes: ''
+    })
+    setIsAdding(false)
+    setEditingEvent(null)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      if (editingEvent) {
+        await onUpdate(editingEvent.id, { ...formData, addedBy: editingEvent.addedBy })
+      } else {
+        await onAdd({ ...formData, addedBy: userEmail })
+      }
+      resetForm()
+    } catch (err) {
+      console.error('Error saving competitor event:', err)
+      alert('Failed to save event. Please try again.')
+    }
+  }
+
+  const handleEdit = (event) => {
+    setFormData({
+      name: event.name || '',
+      brand: event.brand || 'nike',
+      date: event.date || '',
+      endDate: event.endDate || '',
+      city: event.city || '',
+      state: event.state || '',
+      type: event.type || 'Circuit',
+      isLivePeriod: event.isLivePeriod || false,
+      notes: event.notes || ''
+    })
+    setEditingEvent(event)
+    setIsAdding(true)
+  }
+
+  const handleDelete = async (eventId) => {
+    if (!confirm('Delete this competitor event?')) return
+    try {
+      await onDelete(eventId)
+    } catch (err) {
+      console.error('Error deleting competitor event:', err)
+    }
+  }
+
+  const formatDateRange = (start, end) => {
+    const startDate = new Date(start + 'T00:00:00')
+    const opts = { month: 'short', day: 'numeric' }
+    if (!end || start === end) {
+      return startDate.toLocaleDateString('en-US', opts)
+    }
+    const endDate = new Date(end + 'T00:00:00')
+    if (startDate.getMonth() === endDate.getMonth()) {
+      return `${startDate.toLocaleDateString('en-US', opts)}-${endDate.getDate()}`
+    }
+    return `${startDate.toLocaleDateString('en-US', opts)} - ${endDate.toLocaleDateString('en-US', opts)}`
+  }
+
+  const renderEventRow = (event) => (
+    <div key={event.id} className="ce-event-row">
+      <div className="ce-event-main">
+        <div className="ce-event-name">
+          {event.name}
+          {event.isLivePeriod && <span className="ce-live-badge">LIVE</span>}
+        </div>
+        <div className="ce-event-meta">
+          <span
+            className="ce-brand-badge"
+            style={{ background: COMPETITOR_BRANDS[event.brand]?.color || '#6b7280' }}
+          >
+            {COMPETITOR_BRANDS[event.brand]?.label || event.brand}
+          </span>
+          <span className="ce-event-type">{event.type}</span>
+        </div>
+      </div>
+      <div className="ce-event-details">
+        <span className="ce-event-date">{formatDateRange(event.date, event.endDate)}</span>
+        <span className="ce-event-location">{event.city}, {event.state}</span>
+      </div>
+      {isUserAllowed && (
+        <div className="ce-event-actions">
+          <button className="ce-edit-btn" onClick={() => handleEdit(event)} title="Edit">✎</button>
+          <button className="ce-delete-btn" onClick={() => handleDelete(event.id)} title="Delete">×</button>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="ce-modal" onClick={e => e.stopPropagation()}>
+        <div className="ce-header">
+          <div className="ce-title-row">
+            <h2 className="ce-title">Competitor Events</h2>
+            <button className="modal-close" onClick={onClose}>&times;</button>
+          </div>
+          <div className="ce-controls">
+            <div className="ce-filter-pills">
+              <button
+                className={`ce-filter-pill ${filterBrand === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterBrand('all')}
+              >
+                All ({events.length})
+              </button>
+              {Object.entries(COMPETITOR_BRANDS).map(([key, { label, color }]) => {
+                const count = events.filter(e => e.brand === key).length
+                return (
+                  <button
+                    key={key}
+                    className={`ce-filter-pill ${filterBrand === key ? 'active' : ''}`}
+                    style={filterBrand === key ? { background: color, borderColor: color } : {}}
+                    onClick={() => setFilterBrand(key)}
+                  >
+                    {label} ({count})
+                  </button>
+                )
+              })}
+            </div>
+            {isUserAllowed && !isAdding && (
+              <button className="ce-add-btn" onClick={() => setIsAdding(true)}>+ Add Event</button>
+            )}
+          </div>
+        </div>
+
+        <div className="ce-body">
+          {isAdding && (
+            <form className="ce-form" onSubmit={handleSubmit}>
+              <div className="ce-form-row">
+                <div className="ce-form-field ce-form-field-wide">
+                  <label>Event Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., EYBL Session 1"
+                    required
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>Brand</label>
+                  <select
+                    value={formData.brand}
+                    onChange={e => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+                  >
+                    {Object.entries(COMPETITOR_BRANDS).map(([key, { label }]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="ce-form-row">
+                <div className="ce-form-field">
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>End Date</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={e => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>Type</label>
+                  <select
+                    value={formData.type}
+                    onChange={e => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                  >
+                    {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="ce-form-row">
+                <div className="ce-form-field">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={e => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder="Detroit"
+                    required
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>State</label>
+                  <input
+                    type="text"
+                    value={formData.state}
+                    onChange={e => setFormData(prev => ({ ...prev, state: e.target.value }))}
+                    placeholder="MI"
+                    maxLength={2}
+                    required
+                  />
+                </div>
+                <div className="ce-form-field ce-form-field-checkbox">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={formData.isLivePeriod}
+                      onChange={e => setFormData(prev => ({ ...prev, isLivePeriod: e.target.checked }))}
+                    />
+                    <span>Live Period</span>
+                  </label>
+                </div>
+              </div>
+              <div className="ce-form-row">
+                <div className="ce-form-field ce-form-field-wide">
+                  <label>Notes (optional)</label>
+                  <input
+                    type="text"
+                    value={formData.notes}
+                    onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Any additional info..."
+                  />
+                </div>
+              </div>
+              <div className="ce-form-actions">
+                <button type="button" className="ce-cancel-btn" onClick={resetForm}>Cancel</button>
+                <button type="submit" className="ce-save-btn">
+                  {editingEvent ? 'Update Event' : 'Add Event'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {upcomingEvents.length > 0 && (
+            <div className="ce-section">
+              <h3 className="ce-section-title">Upcoming</h3>
+              <div className="ce-event-list">
+                {upcomingEvents.map(renderEventRow)}
+              </div>
+            </div>
+          )}
+
+          {pastEvents.length > 0 && (
+            <div className="ce-section">
+              <h3 className="ce-section-title ce-section-title-past">Past</h3>
+              <div className="ce-event-list ce-event-list-past">
+                {pastEvents.map(renderEventRow)}
+              </div>
+            </div>
+          )}
+
+          {filteredEvents.length === 0 && !isAdding && (
+            <div className="ce-empty">
+              No competitor events {filterBrand !== 'all' ? `for ${COMPETITOR_BRANDS[filterBrand]?.label}` : 'yet'}.
+              {isUserAllowed && ' Click "Add Event" to get started.'}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
@@ -1838,6 +2151,10 @@ function App() {
   const [showContractMapLayer, setShowContractMapLayer] = useState(false)
   const [isContractDashboardOpen, setIsContractDashboardOpen] = useState(false)
 
+  // Competitor events
+  const [competitorEvents, setCompetitorEvents] = useState([])
+  const [isCompetitorEventsOpen, setIsCompetitorEventsOpen] = useState(false)
+
   // Ref for map screenshot
   const mapRef = useRef(null)
 
@@ -1902,6 +2219,12 @@ function App() {
       setEvents(data)
       setIsEventsLoading(false)
     })
+    return () => unsubscribe()
+  }, [])
+
+  // Subscribe to competitor events
+  useEffect(() => {
+    const unsubscribe = subscribeToCompetitorEvents(setCompetitorEvents)
     return () => unsubscribe()
   }, [])
 
@@ -3186,6 +3509,13 @@ function App() {
                   {calendarSelectedDate && (
                     <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
                   )}
+                  <button
+                    className="competitor-events-btn"
+                    onClick={() => setIsCompetitorEventsOpen(true)}
+                    title="Competitor Events"
+                  >
+                    Competitors
+                  </button>
                   <button className="export-btn-small"
                     onClick={() => setShowExportMenu(true)}
                     onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}
@@ -3584,6 +3914,17 @@ function App() {
         programs={programs}
         allContractDetails={allContractDetails}
         sport={activeTab}
+      />
+
+      <CompetitorEventsModal
+        isOpen={isCompetitorEventsOpen}
+        onClose={() => setIsCompetitorEventsOpen(false)}
+        events={competitorEvents}
+        onAdd={addCompetitorEvent}
+        onUpdate={updateCompetitorEvent}
+        onDelete={deleteCompetitorEvent}
+        isUserAllowed={isUserAllowed}
+        userEmail={user?.email}
       />
     </div>
   )

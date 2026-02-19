@@ -509,4 +509,45 @@ export const subscribeToAllContractDetails = (sport, callback) => {
   })
 }
 
+// Competitor Events CRUD
+export const subscribeToCompetitorEvents = (callback) => {
+  const eventsRef = ref(database, 'competitorEvents')
+  return onValue(eventsRef, (snapshot) => {
+    const data = snapshot.val()
+    const events = data ? Object.values(data).sort((a, b) => {
+      // Sort by date ascending (upcoming first)
+      return new Date(a.date) - new Date(b.date)
+    }) : []
+    callback(events)
+  }, (error) => {
+    console.error('Firebase competitor events error:', error)
+    callback([])
+  })
+}
+
+export const addCompetitorEvent = async (eventData) => {
+  const eventsRef = ref(database, 'competitorEvents')
+  const newRef = push(eventsRef)
+  await set(newRef, {
+    ...eventData,
+    id: newRef.key,
+    addedAt: Date.now()
+  })
+  return newRef.key
+}
+
+export const updateCompetitorEvent = async (eventId, eventData) => {
+  const eventRef = ref(database, `competitorEvents/${eventId}`)
+  await set(eventRef, {
+    ...eventData,
+    id: eventId,
+    updatedAt: Date.now()
+  })
+}
+
+export const deleteCompetitorEvent = async (eventId) => {
+  const eventRef = ref(database, `competitorEvents/${eventId}`)
+  await remove(eventRef)
+}
+
 export { database, auth }
