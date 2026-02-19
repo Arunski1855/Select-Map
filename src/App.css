@@ -6850,6 +6850,147 @@ textarea {
   transform: scale(1.02);
 }
 
+.ce-action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.ce-bulk-btn {
+  background: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dark .ce-bulk-btn {
+  color: #aaa;
+  border-color: #444;
+}
+
+.ce-bulk-btn:hover {
+  background: #f3f4f6;
+  border-color: #ccc;
+}
+
+.dark .ce-bulk-btn:hover {
+  background: #333;
+}
+
+.ce-bulk-form {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e5e5;
+}
+
+.dark .ce-bulk-form {
+  background: #252525;
+  border-color: #3a3a3a;
+}
+
+.ce-bulk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ce-bulk-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ce-bulk-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+  line-height: 1;
+}
+
+.ce-bulk-help {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.dark .ce-bulk-help {
+  color: #999;
+}
+
+.ce-bulk-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  resize: vertical;
+  min-height: 120px;
+  background: white;
+}
+
+.dark .ce-bulk-textarea {
+  background: #1a1a1a;
+  border-color: #444;
+  color: #eee;
+}
+
+.ce-bulk-textarea:focus {
+  outline: none;
+  border-color: #000;
+}
+
+.dark .ce-bulk-textarea:focus {
+  border-color: #888;
+}
+
+.ce-bulk-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+.ce-bulk-status-loading {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.ce-bulk-status-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ce-bulk-status-error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dark .ce-bulk-status-loading {
+  background: #1e3a5f;
+  color: #7dd3fc;
+}
+
+.dark .ce-bulk-status-success {
+  background: #14532d;
+  color: #86efac;
+}
+
+.dark .ce-bulk-status-error {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
 .ce-body {
   flex: 1;
   overflow-y: auto;

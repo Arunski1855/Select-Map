@@ -1774,6 +1774,9 @@ const EVENT_TYPES = ['Circuit', 'Camp', 'Showcase', 'Combine', 'Tournament', 'Ot
 function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDelete, isUserAllowed, userEmail }) {
   const [filterBrand, setFilterBrand] = useState('all')
   const [isAdding, setIsAdding] = useState(false)
+  const [isBulkImporting, setIsBulkImporting] = useState(false)
+  const [bulkImportText, setBulkImportText] = useState('')
+  const [bulkImportStatus, setBulkImportStatus] = useState(null)
   const [editingEvent, setEditingEvent] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -1854,6 +1857,45 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
     }
   }
 
+  const handleBulkImport = async () => {
+    setBulkImportStatus({ type: 'loading', message: 'Importing...' })
+    try {
+      const eventsToAdd = JSON.parse(bulkImportText)
+      if (!Array.isArray(eventsToAdd)) {
+        throw new Error('Input must be a JSON array')
+      }
+      let added = 0
+      for (const event of eventsToAdd) {
+        if (!event.name || !event.date) {
+          console.warn('Skipping event missing name or date:', event)
+          continue
+        }
+        await onAdd({
+          name: event.name,
+          brand: event.brand || 'general',
+          date: event.date,
+          endDate: event.endDate || '',
+          city: event.city || '',
+          state: event.state || '',
+          type: event.type || 'Circuit',
+          isLivePeriod: event.isLivePeriod || false,
+          notes: event.notes || '',
+          addedBy: userEmail
+        })
+        added++
+      }
+      setBulkImportStatus({ type: 'success', message: `Added ${added} events!` })
+      setBulkImportText('')
+      setTimeout(() => {
+        setIsBulkImporting(false)
+        setBulkImportStatus(null)
+      }, 1500)
+    } catch (err) {
+      console.error('Bulk import error:', err)
+      setBulkImportStatus({ type: 'error', message: `Error: ${err.message}` })
+    }
+  }
+
   const formatDateRange = (start, end) => {
     const startDate = new Date(start + 'T00:00:00')
     const opts = { month: 'short', day: 'numeric' }
@@ -1927,14 +1969,46 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
                 )
               })}
             </div>
-            {isUserAllowed && !isAdding && (
-              <button className="ce-add-btn" onClick={() => setIsAdding(true)}>+ Add Event</button>
+            {isUserAllowed && !isAdding && !isBulkImporting && (
+              <div className="ce-action-btns">
+                <button className="ce-add-btn" onClick={() => setIsAdding(true)}>+ Add Event</button>
+                <button className="ce-bulk-btn" onClick={() => setIsBulkImporting(true)}>Bulk Import</button>
+              </div>
             )}
           </div>
         </div>
 
         <div className="ce-body">
-          {isAdding && (
+          {isBulkImporting && (
+            <div className="ce-bulk-form">
+              <div className="ce-bulk-header">
+                <h3>Bulk Import Events</h3>
+                <button className="ce-bulk-close" onClick={() => { setIsBulkImporting(false); setBulkImportStatus(null); setBulkImportText(''); }}>×</button>
+              </div>
+              <p className="ce-bulk-help">Paste JSON array of events. Each event needs: name, brand (nike/ua/puma/general), date (YYYY-MM-DD), and optionally: endDate, city, state, type, isLivePeriod, notes.</p>
+              <textarea
+                className="ce-bulk-textarea"
+                value={bulkImportText}
+                onChange={e => setBulkImportText(e.target.value)}
+                placeholder={`[
+  {"name": "EYBL Session 1", "brand": "nike", "date": "2026-04-24", "endDate": "2026-04-26", "city": "Atlanta", "state": "GA", "type": "Circuit"},
+  {"name": "EYBL Session 2", "brand": "nike", "date": "2026-05-15", "endDate": "2026-05-17", "city": "Memphis", "state": "TN", "type": "Circuit", "isLivePeriod": true}
+]`}
+                rows={8}
+              />
+              {bulkImportStatus && (
+                <div className={`ce-bulk-status ce-bulk-status-${bulkImportStatus.type}`}>
+                  {bulkImportStatus.message}
+                </div>
+              )}
+              <div className="ce-form-actions">
+                <button type="button" className="ce-cancel-btn" onClick={() => { setIsBulkImporting(false); setBulkImportStatus(null); setBulkImportText(''); }}>Cancel</button>
+                <button type="button" className="ce-save-btn" onClick={handleBulkImport} disabled={!bulkImportText.trim()}>Import Events</button>
+              </div>
+            </div>
+          )}
+
+          {isAdding && !isBulkImporting && (
             <form className="ce-form" onSubmit={handleSubmit}>
               <div className="ce-form-row">
                 <div className="ce-form-field ce-form-field-wide">
