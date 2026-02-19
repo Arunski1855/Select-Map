@@ -1,5 +1,9 @@
 # Session Notes
 
+> **Process:** At the end of each session, Claude appends a dated entry capturing what was built, fixed, decided, and flagged. The Rolling Summary is updated as patterns emerge. This file is append-only — past entries are never deleted. Git history provides full versioning.
+
+---
+
 ## Rolling Summary
 
 ### User Preferences
