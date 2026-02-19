@@ -1910,31 +1910,19 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
   }
 
   const renderEventRow = (event) => (
-    <div key={event.id} className="ce-event-row">
-      <div className="ce-event-main">
-        <div className="ce-event-name">
-          {event.name}
-          {event.isLivePeriod && <span className="ce-live-badge">LIVE</span>}
-        </div>
-        <div className="ce-event-meta">
-          <span
-            className="ce-brand-badge"
-            style={{ background: COMPETITOR_BRANDS[event.brand]?.color || '#6b7280' }}
-          >
-            {COMPETITOR_BRANDS[event.brand]?.label || event.brand}
-          </span>
-          <span className="ce-event-type">{event.type}</span>
-        </div>
-      </div>
-      <div className="ce-event-details">
-        <span className="ce-event-date">{formatDateRange(event.date, event.endDate)}</span>
-        <span className="ce-event-location">{event.city}, {event.state}</span>
-      </div>
+    <div key={event.id} className="ce-row">
+      <span className="ce-row-date">{formatDateRange(event.date, event.endDate)}</span>
+      <span className="ce-row-name">{event.name}</span>
+      <span className="ce-row-brand" style={{ background: COMPETITOR_BRANDS[event.brand]?.color || '#6b7280' }}>
+        {COMPETITOR_BRANDS[event.brand]?.label || event.brand}
+      </span>
+      <span className="ce-row-loc">{event.city}, {event.state}</span>
+      {event.isLivePeriod && <span className="ce-row-live">LIVE</span>}
       {isUserAllowed && (
-        <div className="ce-event-actions">
-          <button className="ce-edit-btn" onClick={() => handleEdit(event)} title="Edit">✎</button>
-          <button className="ce-delete-btn" onClick={() => handleDelete(event.id)} title="Delete">×</button>
-        </div>
+        <span className="ce-row-actions">
+          <button onClick={() => handleEdit(event)} title="Edit">✎</button>
+          <button onClick={() => handleDelete(event.id)} title="Delete">×</button>
+        </span>
       )}
     </div>
   )
