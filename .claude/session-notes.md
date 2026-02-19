@@ -35,6 +35,7 @@
 - **Contract overview dashboard** — Modal with sortable table, status filter pills, summary stats, CSV export
 - **Map layer toggle** — "Contracts" button color-codes markers (orange=expiring, green=active, dim=no data)
 - **Map legend** — Shows on right side when contract layer is active
+- **Product Coverage indicator** — TEAM/SPOMA segmented toggle in contract tab, colored badges in read view
 
 ### Fixed
 - Firebase security rules syntax errors (`orderByChild` not supported in rules language; duplicate rules block causing JSON error)
@@ -55,7 +56,7 @@
 - Map zooms out to world view when editing/saving program data — investigating
 
 ### Next Up
-- TEAM/SPOMA product coverage indicator (user selected Option B: dedicated field with segmented toggle)
+- Resolve map zoom-out issue when editing/saving program data
 
 ### Session Notes
 - User prefers collaborative approach — discuss before executing
