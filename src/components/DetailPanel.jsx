@@ -115,6 +115,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     term: '',
     travelStipend: '',
     productAllotment: '',
+    productCoverage: '',
     incentiveStructure: '',
     contractExpiring2026: false
   })
@@ -159,7 +160,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     setNewFollowerCount('')
     setLinkedEvents([])
     setIsEditingContract(false)
-    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '', contractExpiring2026: false })
+    setContractForm({ term: '', travelStipend: '', productAllotment: '', productCoverage: '', incentiveStructure: '', contractExpiring2026: false })
   }, [program?.id])
 
   useEffect(() => {
@@ -280,6 +281,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       term: contractDetails?.term || '',
       travelStipend: contractDetails?.travelStipend || '',
       productAllotment: contractDetails?.productAllotment || '',
+      productCoverage: contractDetails?.productCoverage || '',
       incentiveStructure: contractDetails?.incentiveStructure || '',
       contractExpiring2026: contractDetails?.contractExpiring2026 || false
     })
@@ -288,7 +290,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
 
   const handleCancelContractEdit = () => {
     setIsEditingContract(false)
-    setContractForm({ term: '', travelStipend: '', productAllotment: '', incentiveStructure: '', contractExpiring2026: false })
+    setContractForm({ term: '', travelStipend: '', productAllotment: '', productCoverage: '', incentiveStructure: '', contractExpiring2026: false })
   }
 
   const handleSaveContract = async (e) => {
@@ -304,6 +306,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       if (contractForm.term !== (oldDetails.term || '')) changes.push(`Term: "${oldDetails.term || '(empty)'}" → "${contractForm.term || '(empty)'}"`)
       if (contractForm.travelStipend !== (oldDetails.travelStipend || '')) changes.push(`Travel Stipend: "${oldDetails.travelStipend || '(empty)'}" → "${contractForm.travelStipend || '(empty)'}"`)
       if (contractForm.productAllotment !== (oldDetails.productAllotment || '')) changes.push(`Product Allotment: "${oldDetails.productAllotment || '(empty)'}" → "${contractForm.productAllotment || '(empty)'}"`)
+      if (contractForm.productCoverage !== (oldDetails.productCoverage || '')) changes.push(`Product Coverage: "${oldDetails.productCoverage || '(none)'}" → "${contractForm.productCoverage || '(none)'}"`)
       if (contractForm.incentiveStructure !== (oldDetails.incentiveStructure || '')) changes.push(`Incentive Structure: "${oldDetails.incentiveStructure || '(empty)'}" → "${contractForm.incentiveStructure || '(empty)'}"`)
       if (contractForm.contractExpiring2026 !== (oldDetails.contractExpiring2026 || false)) changes.push(`Expiring 2026: ${oldDetails.contractExpiring2026 ? 'Yes' : 'No'} → ${contractForm.contractExpiring2026 ? 'Yes' : 'No'}`)
 
@@ -986,6 +989,25 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   />
                 </div>
                 <div className="contract-field">
+                  <label>Product Coverage</label>
+                  <div className="contract-coverage-toggle">
+                    <button
+                      type="button"
+                      className={`coverage-btn coverage-btn-team${contractForm.productCoverage === 'TEAM' ? ' active' : ''}`}
+                      onClick={() => setContractForm(prev => ({ ...prev, productCoverage: prev.productCoverage === 'TEAM' ? '' : 'TEAM' }))}
+                    >
+                      TEAM
+                    </button>
+                    <button
+                      type="button"
+                      className={`coverage-btn coverage-btn-spoma${contractForm.productCoverage === 'SPOMA' ? ' active' : ''}`}
+                      onClick={() => setContractForm(prev => ({ ...prev, productCoverage: prev.productCoverage === 'SPOMA' ? '' : 'SPOMA' }))}
+                    >
+                      SPOMA
+                    </button>
+                  </div>
+                </div>
+                <div className="contract-field">
                   <label htmlFor="contract-incentive">Incentive Structure</label>
                   <textarea
                     id="contract-incentive"
@@ -1029,6 +1051,16 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                     <div className="contract-row">
                       <span className="contract-label">Product Allotment</span>
                       <span className="contract-value">{contractDetails.productAllotment || '—'}</span>
+                    </div>
+                    <div className="contract-row">
+                      <span className="contract-label">Product Coverage</span>
+                      <span className="contract-value">
+                        {contractDetails.productCoverage ? (
+                          <span className={`coverage-badge coverage-badge-${contractDetails.productCoverage.toLowerCase()}`}>
+                            {contractDetails.productCoverage}
+                          </span>
+                        ) : '—'}
+                      </span>
                     </div>
                     <div className="contract-row">
                       <span className="contract-label">Incentive Structure</span>

@@ -6056,6 +6056,79 @@ textarea {
   text-align: left;
 }
 
+/* Product Coverage Toggle */
+.contract-coverage-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid var(--border-color);
+  width: fit-content;
+}
+
+.coverage-btn {
+  padding: 8px 18px;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-muted);
+}
+
+.coverage-btn:first-child {
+  border-right: 1px solid var(--border-color);
+}
+
+.coverage-btn:hover {
+  background: var(--hover-bg);
+}
+
+.coverage-btn-team.active {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.coverage-btn-spoma.active {
+  background: #059669;
+  color: #fff;
+}
+
+/* Product Coverage Badge (read view) */
+.coverage-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.coverage-badge-team {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.coverage-badge-spoma {
+  background: #d1fae5;
+  color: #059669;
+  border: 1px solid #6ee7b7;
+}
+
+.dark .coverage-badge-team {
+  background: rgba(29, 78, 216, 0.2);
+  color: #60a5fa;
+  border-color: rgba(29, 78, 216, 0.4);
+}
+
+.dark .coverage-badge-spoma {
+  background: rgba(5, 150, 105, 0.2);
+  color: #34d399;
+  border-color: rgba(5, 150, 105, 0.4);
+}
+
 .contract-meta {
   margin-top: 12px;
   padding-top: 12px;
