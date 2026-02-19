@@ -42,6 +42,7 @@
 - Contract details not loading — race condition where reset useEffect overwrote subscription data
 - Incentive structure text layout — changed from right-aligned to stacked column layout
 - Map legend not visible — moved to right side, raised z-index to 9999
+- Map zoom-out on save — MapViewPreserver now refuses to save zoom < 3, restores if zoom drops unexpectedly
 
 ### Removed
 - Dedicated Schedule tab — replaced with Schedule button in links row (too crowded)
@@ -52,11 +53,11 @@
 - Track contract edit history with user email and timestamp
 - Auto-detect expiry year using regex `/\b(20\d{2})\b/g` on term field, fallback to manual checkbox
 
-### Flagged (Not Yet Resolved)
-- Map zooms out to world view when editing/saving program data — investigating
+### Flagged (Resolved)
+- Map zooms out to world view when editing/saving — **fixed** (MapViewPreserver guards against invalid zoom states)
 
 ### Next Up
-- Resolve map zoom-out issue when editing/saving program data
+- Test TEAM/SPOMA toggle and map zoom fix
 
 ### Session Notes
 - User prefers collaborative approach — discuss before executing
