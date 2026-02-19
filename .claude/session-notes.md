@@ -17,6 +17,7 @@
 - Firebase Realtime Database with client-side access (no backend)
 - `allowedUsers` whitelist for authorization, `isUserAllowed` boolean gates features
 - Contract data at `contractDetails/{sport}/{programId}`, history at `contractHistory/{sport}/{programId}`
+- Competitor events at `competitorEvents/{eventId}` with brand, date range, location, type fields
 - Auth-gated features: check `isUserAllowed` before rendering sensitive UI or subscribing to data
 - Auto-detect where possible (e.g., expiry year from term field) with manual override fallback
 
@@ -36,6 +37,7 @@
 - **Map layer toggle** — "Contracts" button color-codes markers (orange=expiring, green=active, dim=no data)
 - **Map legend** — Shows on right side when contract layer is active
 - **Product Coverage indicator** — TEAM/SPOMA segmented toggle in contract tab, colored badges in read view
+- **Competitor Events tracking** — Modal to track Nike, UA, Puma, and general competitor events with brand-accurate colors, date ranges, locations, event types, and live period indicator
 
 ### Fixed
 - Firebase security rules syntax errors (`orderByChild` not supported in rules language; duplicate rules block causing JSON error)
@@ -52,12 +54,13 @@
 - All contract fields as strings (flexibility over rigid types)
 - Track contract edit history with user email and timestamp
 - Auto-detect expiry year using regex `/\b(20\d{2})\b/g` on term field, fallback to manual checkbox
+- Competitor events as simple filterable list modal (not calendar), brand colors: Nike #F35B04 (EYBL orange), UA #E03A3E, Puma #00857C
 
 ### Flagged (Resolved)
 - Map zooms out to world view when editing/saving — **fixed** (MapViewPreserver guards against invalid zoom states)
 
 ### Next Up
-- Test TEAM/SPOMA toggle and map zoom fix
+- Test competitor events feature (add/edit/delete, filtering, live period badge)
 
 ### Session Notes
 - User prefers collaborative approach — discuss before executing
