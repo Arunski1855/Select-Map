@@ -318,14 +318,19 @@ function MapViewPreserver() {
 
   useEffect(() => {
     let saveTimeout = null
+    const MIN_VALID_ZOOM = 3 // Don't save views zoomed out beyond this (prevents saving bad states)
+
     const onMoveEnd = () => {
-      // Ignore view changes triggered by container resize (e.g. form open/close)
+      // Ignore view changes triggered by container resize or restoration
       if (resizing.current || restoring.current) return
+      // Don't save extremely zoomed-out views (likely a bug, not user intent)
+      const currentZoom = map.getZoom()
+      if (currentZoom < MIN_VALID_ZOOM) return
       // Debounce saving to avoid capturing intermediate states during data updates
       clearTimeout(saveTimeout)
       saveTimeout = setTimeout(() => {
         savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
-      }, 100)
+      }, 300) // Increased debounce to 300ms
     }
     const onResize = () => {
       resizing.current = true
@@ -353,14 +358,17 @@ function MapViewPreserver() {
     }
   }, [map])
 
-  // On every render, if the map was reset, restore saved view
+  // On every render, if the map was reset or zoomed out unexpectedly, restore saved view
   useEffect(() => {
     if (savedView.current) {
       const currentCenter = map.getCenter()
       const currentZoom = map.getZoom()
       const saved = savedView.current
       const dist = Math.abs(currentCenter.lat - saved.center.lat) + Math.abs(currentCenter.lng - saved.center.lng)
-      if (dist > 0.5 || Math.abs(currentZoom - saved.zoom) > 0.5) {
+      // Restore if: view drifted significantly, OR zoom dropped below threshold (unexpected zoom-out)
+      const driftedTooFar = dist > 0.5 || Math.abs(currentZoom - saved.zoom) > 0.5
+      const zoomedOutUnexpectedly = currentZoom < 3 && saved.zoom >= 3
+      if (driftedTooFar || zoomedOutUnexpectedly) {
         restoring.current = true
         map.setView(saved.center, saved.zoom, { animate: false })
         setTimeout(() => { restoring.current = false }, 100)
