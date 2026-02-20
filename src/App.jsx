@@ -86,6 +86,47 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
   return icon
 }
 
+// Logo View marker with connector line and label
+const createLogoViewIcon = (logoUrl, name, offsetIndex = 0) => {
+  const cacheKey = `logoview|${logoUrl}|${name}|${offsetIndex}`
+  if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
+
+  // Compute offset direction based on index to spread markers out
+  const directions = [
+    { x: 0, y: -60 },    // up
+    { x: 50, y: -50 },   // up-right
+    { x: -50, y: -50 },  // up-left
+    { x: 60, y: -30 },   // right-up
+    { x: -60, y: -30 },  // left-up
+    { x: 40, y: -70 },   // more up-right
+    { x: -40, y: -70 },  // more up-left
+    { x: 70, y: -20 },   // right
+  ]
+  const dir = directions[offsetIndex % directions.length]
+
+  // Short name for label (first word or abbreviation)
+  const shortName = name.length > 15 ? name.split(' ')[0] : name
+
+  const icon = L.divIcon({
+    className: 'logo-view-marker',
+    html: `
+      <div class="lv-container" style="transform: translate(${dir.x}px, ${dir.y}px)">
+        <div class="lv-logo">
+          <img src="${logoUrl}" alt="${name}" onerror="this.parentElement.innerHTML='<span class=\\'lv-fallback\\'>${name.charAt(0)}</span>'" />
+        </div>
+        <div class="lv-label">${shortName}</div>
+        <div class="lv-line" style="height: ${Math.sqrt(dir.x*dir.x + dir.y*dir.y)}px; transform: rotate(${Math.atan2(-dir.x, -dir.y) * 180 / Math.PI}deg)"></div>
+      </div>
+      <div class="lv-dot"></div>
+    `,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+    popupAnchor: [dir.x, dir.y - 20]
+  })
+  iconCache.set(cacheKey, icon)
+  return icon
+}
+
 // Tab configuration
 const TABS = [
   { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
@@ -2213,6 +2254,9 @@ function App() {
   const [showContractMapLayer, setShowContractMapLayer] = useState(false)
   const [isContractDashboardOpen, setIsContractDashboardOpen] = useState(false)
 
+  // Logo view mode
+  const [showLogoView, setShowLogoView] = useState(false)
+
   // Competitor events
   const [competitorEvents, setCompetitorEvents] = useState([])
   const [isCompetitorEventsOpen, setIsCompetitorEventsOpen] = useState(false)
@@ -2390,25 +2434,31 @@ function App() {
   const programIcons = useMemo(() => {
     const icons = {}
     const currentYear = new Date().getFullYear()
-    filteredPrograms.forEach(program => {
+    filteredPrograms.forEach((program, index) => {
       if (program && program.id) {
-        let contractStatus = null
-        if (showContractMapLayer && isUserAllowed) {
-          const contract = allContractDetails[program.id]
-          if (contract) {
-            const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
-            const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
-            const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
-            contractStatus = isExpiring ? 'expiring' : 'active'
-          } else {
-            contractStatus = 'none'
+        if (showLogoView) {
+          // Logo View mode - show logos with connector lines
+          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name, index)
+        } else {
+          // Normal mode with optional contract status
+          let contractStatus = null
+          if (showContractMapLayer && isUserAllowed) {
+            const contract = allContractDetails[program.id]
+            if (contract) {
+              const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+              const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+              const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
+              contractStatus = isExpiring ? 'expiring' : 'active'
+            } else {
+              contractStatus = 'none'
+            }
           }
+          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus)
         }
-        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus)
       }
     })
     return icons
-  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed])
+  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed, showLogoView])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
@@ -3137,6 +3187,16 @@ function App() {
           </div>
         )}
 
+
+        {activeTab !== 'targets' && activeTab !== 'events' && (
+          <button
+            className={`logo-view-toggle-btn${showLogoView ? ' active' : ''}`}
+            onClick={() => setShowLogoView(v => !v)}
+            title="Toggle logo view"
+          >
+            {showLogoView ? 'Logo View On' : 'Logo View'}
+          </button>
+        )}
 
         {isUserAllowed && activeTab !== 'targets' && (
           <button

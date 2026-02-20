@@ -6390,6 +6390,115 @@ textarea {
 .contract-layer-dot-active   { background: #22c55e; }
 .contract-layer-dot-none     { background: #9ca3af; }
 
+/* ── Logo View Toggle ─────────────────────────────────────────────── */
+.logo-view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f3f4f6;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dark .logo-view-toggle-btn {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #ccc;
+}
+
+.logo-view-toggle-btn:hover {
+  background: #e5e5e5;
+}
+
+.logo-view-toggle-btn.active {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.dark .logo-view-toggle-btn.active {
+  background: #fff;
+  color: #000;
+}
+
+/* ── Logo View Markers ────────────────────────────────────────────── */
+.logo-view-marker {
+  overflow: visible !important;
+}
+
+.lv-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.lv-logo {
+  width: 36px;
+  height: 36px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid white;
+}
+
+.lv-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lv-fallback {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.lv-label {
+  margin-top: 2px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9);
+  white-space: nowrap;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.lv-line {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255,255,255,0.7);
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.lv-dot {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border: 2px solid #333;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
 /* ── Contract Map Legend ─────────────────────────────────────────── */
 .contract-map-legend {
   position: absolute;
