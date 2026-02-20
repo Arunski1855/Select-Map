@@ -86,42 +86,29 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
   return icon
 }
 
-// Logo View marker with connector line and label
-const createLogoViewIcon = (logoUrl, name, offsetIndex = 0) => {
-  const cacheKey = `logoview|${logoUrl}|${name}|${offsetIndex}`
+// Logo View marker with connector line and label (G League style)
+const createLogoViewIcon = (logoUrl, name) => {
+  const cacheKey = `logoview2|${logoUrl}|${name}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
 
-  // Compute offset direction based on index to spread markers out
-  const directions = [
-    { x: 0, y: -60 },    // up
-    { x: 50, y: -50 },   // up-right
-    { x: -50, y: -50 },  // up-left
-    { x: 60, y: -30 },   // right-up
-    { x: -60, y: -30 },  // left-up
-    { x: 40, y: -70 },   // more up-right
-    { x: -40, y: -70 },  // more up-left
-    { x: 70, y: -20 },   // right
-  ]
-  const dir = directions[offsetIndex % directions.length]
-
-  // Short name for label (first word or abbreviation)
-  const shortName = name.length > 15 ? name.split(' ')[0] : name
+  // Short name for label
+  const shortName = name.length > 12 ? name.split(' ')[0].substring(0, 12) + '...' : name
 
   const icon = L.divIcon({
     className: 'logo-view-marker',
     html: `
-      <div class="lv-container" style="transform: translate(${dir.x}px, ${dir.y}px)">
+      <div class="lv-wrapper">
         <div class="lv-logo">
           <img src="${logoUrl}" alt="${name}" onerror="this.parentElement.innerHTML='<span class=\\'lv-fallback\\'>${name.charAt(0)}</span>'" />
         </div>
         <div class="lv-label">${shortName}</div>
-        <div class="lv-line" style="height: ${Math.sqrt(dir.x*dir.x + dir.y*dir.y)}px; transform: rotate(${Math.atan2(-dir.x, -dir.y) * 180 / Math.PI}deg)"></div>
+        <div class="lv-line"></div>
+        <div class="lv-dot"></div>
       </div>
-      <div class="lv-dot"></div>
     `,
-    iconSize: [0, 0],
-    iconAnchor: [0, 0],
-    popupAnchor: [dir.x, dir.y - 20]
+    iconSize: [50, 85],
+    iconAnchor: [25, 85],
+    popupAnchor: [0, -85]
   })
   iconCache.set(cacheKey, icon)
   return icon
@@ -2438,7 +2425,7 @@ function App() {
       if (program && program.id) {
         if (showLogoView) {
           // Logo View mode - show logos with connector lines
-          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name, index)
+          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name)
         } else {
           // Normal mode with optional contract status
           let contractStatus = null
