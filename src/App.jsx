@@ -1497,14 +1497,17 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
 
     setSaving(true)
     try {
-      // Handle deletions first
-      for (const programId of programsToDelete) {
-        await onDelete(programId)
+      // Handle deletions first (only if there are programs to delete)
+      if (programsToDelete.size > 0 && onDelete) {
+        const deleteIds = Array.from(programsToDelete)
+        for (const programId of deleteIds) {
+          await onDelete(programId)
+        }
       }
 
       // Then handle edits (skip programs that were deleted)
       for (const [programId, changes] of Object.entries(editedPrograms)) {
-        if (!programsToDelete.has(programId)) {
+        if (programsToDelete.size === 0 || !programsToDelete.has(programId)) {
           const program = programs.find(p => p.id === programId)
           if (program) {
             await onSave({ ...program, ...changes })
