@@ -1433,17 +1433,31 @@ function ArchiveModal({ isOpen, onClose, archivedPrograms, onRestore, onDelete, 
 }
 
 // Bulk Edit Modal Component - for editing multiple programs at once
-function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
+function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
   const [editedPrograms, setEditedPrograms] = useState({})
+  const [programsToDelete, setProgramsToDelete] = useState(new Set())
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState('all') // 'all', 'missing-coach', 'missing-contact'
 
   useEffect(() => {
     if (isOpen) {
       setEditedPrograms({})
+      setProgramsToDelete(new Set())
       setFilter('all')
     }
   }, [isOpen])
+
+  const toggleDeleteProgram = (programId) => {
+    setProgramsToDelete(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(programId)) {
+        newSet.delete(programId)
+      } else {
+        newSet.add(programId)
+      }
+      return newSet
+    })
+  }
 
   if (!isOpen) return null
 
@@ -1471,18 +1485,34 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
     return program[field] || ''
   }
 
-  const hasChanges = Object.keys(editedPrograms).length > 0
+  const hasChanges = Object.keys(editedPrograms).length > 0 || programsToDelete.size > 0
 
   const handleSaveAll = async () => {
+    if (programsToDelete.size > 0) {
+      const confirmMsg = `Archive ${programsToDelete.size} program${programsToDelete.size > 1 ? 's' : ''}? They will be hidden but can be restored later.`
+      if (!window.confirm(confirmMsg)) {
+        return
+      }
+    }
+
     setSaving(true)
     try {
+      // Handle deletions first
+      for (const programId of programsToDelete) {
+        await onDelete(programId)
+      }
+
+      // Then handle edits (skip programs that were deleted)
       for (const [programId, changes] of Object.entries(editedPrograms)) {
-        const program = programs.find(p => p.id === programId)
-        if (program) {
-          await onSave({ ...program, ...changes })
+        if (!programsToDelete.has(programId)) {
+          const program = programs.find(p => p.id === programId)
+          if (program) {
+            await onSave({ ...program, ...changes })
+          }
         }
       }
       setEditedPrograms({})
+      setProgramsToDelete(new Set())
       onClose()
     } catch (err) {
       console.error('Error saving:', err)
@@ -1493,6 +1523,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
   }
 
   const changedCount = Object.keys(editedPrograms).length
+  const deleteCount = programsToDelete.size
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -1513,6 +1544,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
           <span className="bulk-edit-count">
             Showing {filteredPrograms.length} programs
             {changedCount > 0 && <span className="bulk-edit-changed"> • {changedCount} modified</span>}
+            {deleteCount > 0 && <span className="bulk-edit-delete-count"> • {deleteCount} to archive</span>}
           </span>
         </div>
 
@@ -1520,6 +1552,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
           <table className="bulk-edit-table">
             <thead>
               <tr>
+                <th className="bulk-edit-th-delete">Archive</th>
                 <th className="bulk-edit-th-name">Program</th>
                 <th>Head Coach</th>
                 <th>Contact Email</th>
@@ -1531,8 +1564,18 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
             <tbody>
               {filteredPrograms.map(program => {
                 const isModified = !!editedPrograms[program.id]
+                const isMarkedForDelete = programsToDelete.has(program.id)
                 return (
-                  <tr key={program.id} className={isModified ? 'bulk-edit-row-modified' : ''}>
+                  <tr key={program.id} className={`${isModified ? 'bulk-edit-row-modified' : ''} ${isMarkedForDelete ? 'bulk-edit-row-delete' : ''}`}>
+                    <td className="bulk-edit-td-delete">
+                      <input
+                        type="checkbox"
+                        checked={isMarkedForDelete}
+                        onChange={() => toggleDeleteProgram(program.id)}
+                        className="bulk-edit-delete-checkbox"
+                        title="Mark for archive"
+                      />
+                    </td>
                     <td className="bulk-edit-td-name">
                       <div className="bulk-edit-program-info">
                         {program.logo && <img src={program.logo} alt="" className="bulk-edit-logo" />}
@@ -1601,7 +1644,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, sport }) {
             onClick={handleSaveAll}
             disabled={!hasChanges || saving}
           >
-            {saving ? 'Saving...' : `Save All${changedCount > 0 ? ` (${changedCount})` : ''}`}
+            {saving ? 'Saving...' : `Save All${changedCount > 0 || deleteCount > 0 ? ` (${changedCount + deleteCount})` : ''}`}
           </button>
         </div>
       </div>
@@ -2688,6 +2731,19 @@ function App() {
         console.error('Error archiving program:', err)
         alert('Could not archive program. Please try again.')
       }
+    }
+  }
+
+  // Bulk delete a program (no confirm - handled by bulk edit modal)
+  const handleBulkDeleteProgram = async (programId) => {
+    try {
+      if (user) {
+        await addProgramHistory(activeTab, programId, 'archived', user.email)
+      }
+      await archiveProgram(activeTab, programId)
+    } catch (err) {
+      console.error('Error archiving program:', err)
+      throw err // Re-throw to be caught by bulk edit modal
     }
   }
 
@@ -4014,6 +4070,7 @@ function App() {
         onClose={() => setIsBulkEditOpen(false)}
         programs={programs}
         onSave={handleEditProgram}
+        onDelete={handleBulkDeleteProgram}
         sport={activeTab}
       />
 

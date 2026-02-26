@@ -5183,6 +5183,11 @@ textarea {
   font-weight: 600;
 }
 
+.bulk-edit-delete-count {
+  color: #dc3545;
+  font-weight: 600;
+}
+
 .bulk-edit-table-wrapper {
   flex: 1;
   overflow: auto;
@@ -5218,6 +5223,26 @@ textarea {
   min-width: 200px;
 }
 
+.bulk-edit-th-delete {
+  width: 60px;
+  text-align: center;
+}
+
+.bulk-edit-td-delete {
+  text-align: center;
+  background: var(--bg-secondary);
+  position: sticky;
+  left: 0;
+  z-index: 6;
+}
+
+.bulk-edit-delete-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #dc3545;
+}
+
 .bulk-edit-table td {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-color);
@@ -5227,7 +5252,7 @@ textarea {
 .bulk-edit-td-name {
   background: var(--bg-secondary);
   position: sticky;
-  left: 0;
+  left: 60px;
   z-index: 5;
 }
 
@@ -5286,6 +5311,19 @@ textarea {
 
 .bulk-edit-row-modified td {
   border-bottom-color: rgba(0, 165, 80, 0.2);
+}
+
+.bulk-edit-row-delete {
+  background: rgba(220, 53, 69, 0.08);
+}
+
+.bulk-edit-row-delete td {
+  border-bottom-color: rgba(220, 53, 69, 0.2);
+}
+
+.bulk-edit-row-delete .bulk-edit-program-name {
+  text-decoration: line-through;
+  opacity: 0.7;
 }
 
 .bulk-edit-footer {
