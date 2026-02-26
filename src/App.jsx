@@ -2732,7 +2732,7 @@ function App() {
         setSelectedProgram(null)
       } catch (err) {
         console.error('Error archiving program:', err)
-        alert('Could not archive program. Please try again.')
+        alert(`Could not archive program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
       }
     }
   }
@@ -2958,7 +2958,7 @@ function App() {
       }
     } catch (err) {
       console.error('Error editing program:', err)
-      alert('Could not update program. Please try again.')
+      alert(`Could not update program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
     }
   }
 

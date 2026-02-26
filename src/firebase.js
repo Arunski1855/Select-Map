@@ -74,7 +74,12 @@ export const deleteProgram = async (sport, programId) => {
 // Edit/Update a program in Firebase
 export const editProgram = async (sport, program) => {
   const programRef = ref(database, `programs/${sport}/${program.id}`)
-  await set(programRef, program)
+  try {
+    await set(programRef, program)
+  } catch (error) {
+    console.error('Edit program error:', error.code, error.message)
+    throw error
+  }
 }
 
 // Subscribe to programs (real-time updates)
@@ -281,12 +286,20 @@ export const archiveProgram = async (sport, programId) => {
     onValue(programRef, async (snapshot) => {
       const data = snapshot.val()
       if (data) {
-        await set(programRef, { ...data, isArchived: true, archivedAt: Date.now() })
-        resolve()
+        try {
+          await set(programRef, { ...data, isArchived: true, archivedAt: Date.now() })
+          resolve()
+        } catch (error) {
+          console.error('Archive set error:', error)
+          reject(error)
+        }
       } else {
         reject(new Error('Program not found'))
       }
-    }, { onlyOnce: true })
+    }, { onlyOnce: true }, (error) => {
+      console.error('Archive read error:', error)
+      reject(error)
+    })
   })
 }
 
