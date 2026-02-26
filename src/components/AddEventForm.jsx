@@ -167,9 +167,9 @@ function AddEventForm({ isOpen, onClose, onAdd, onEdit, editEvent, allPrograms =
       }
 
       if (isEditMode) {
-        onEdit(eventData)
+        await onEdit(eventData)
       } else {
-        onAdd(eventData)
+        await onAdd(eventData)
       }
 
       setFormData(initialFormState)

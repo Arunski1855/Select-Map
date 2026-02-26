@@ -279,9 +279,9 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
       }
 
       if (isEditMode) {
-        onEdit(programData)
+        await onEdit(programData)
       } else {
-        onAdd(programData)
+        await onAdd(programData)
       }
 
       // Reset form
