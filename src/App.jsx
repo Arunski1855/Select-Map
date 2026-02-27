@@ -2823,13 +2823,25 @@ function App() {
   }
 
   const handleUpdateTargetStatus = async (targetId, newStatus) => {
-    const target = targetPrograms.find(t => t.id === targetId)
+    // First try to find in current targetPrograms, fallback to selectedTargetProgram
+    let target = targetPrograms.find(t => t.id === targetId)
+    if (!target && selectedTargetProgram?.id === targetId) {
+      target = selectedTargetProgram
+    }
     if (target) {
       try {
         await editTargetProgram(targetsSport, { ...target, status: newStatus })
+        // Update selectedTargetProgram if it's the same one
+        if (selectedTargetProgram?.id === targetId) {
+          setSelectedTargetProgram({ ...target, status: newStatus })
+        }
       } catch (err) {
         console.error('Error updating target status:', err)
+        alert('Could not update target status. Please try again.')
       }
+    } else {
+      console.error('Target not found for status update:', targetId)
+      alert('Could not update target status. Please close and reopen the target.')
     }
   }
 
