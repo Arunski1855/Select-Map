@@ -369,6 +369,21 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
                   </select>
                 </div>
               </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Priority</label>
+                  <select
+                    name="priority"
+                    value={formData.priority}
+                    onChange={handleInputChange}
+                  >
+                    {PRIORITIES.map(p => (
+                      <option key={p.id} value={p.id}>{p.label} - {p.description}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
           )}
 
