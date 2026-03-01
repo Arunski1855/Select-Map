@@ -62,24 +62,36 @@ const STATE_RANKING_OPTIONS = [
 ]
 
 // Basic team colors
+// adidas Zone Graphic color palette
 const TEAM_COLORS = [
+  // Primary Colors
   { name: 'Black', hex: '#000000' },
   { name: 'White', hex: '#FFFFFF' },
-  { name: 'Navy', hex: '#001F5B' },
-  { name: 'Royal Blue', hex: '#0057B8' },
-  { name: 'Light Blue', hex: '#6CACE4' },
-  { name: 'Red', hex: '#C8102E' },
-  { name: 'Maroon', hex: '#6C1D45' },
-  { name: 'Orange', hex: '#FF6900' },
-  { name: 'Yellow', hex: '#FFD100' },
-  { name: 'Gold', hex: '#C9A84C' },
-  { name: 'Green', hex: '#00843D' },
-  { name: 'Dark Green', hex: '#154734' },
-  { name: 'Purple', hex: '#582C83' },
-  { name: 'Pink', hex: '#E91E8C' },
-  { name: 'Gray', hex: '#8A8D8F' },
-  { name: 'Silver', hex: '#A7A8AA' },
-  { name: 'Brown', hex: '#6F4E37' }
+  { name: 'Team Maroon', hex: '#5C1F35' },
+  { name: 'Team Power Red', hex: '#BF0D3E' },
+  { name: 'Team Orange', hex: '#E35205' },
+  { name: 'Team Collegiate Gold', hex: '#CC8A00' },
+  { name: 'Team Gold', hex: '#FFB81C' },
+  { name: 'Bright Yellow', hex: '#FFFF00' },
+  { name: 'Solar Yellow', hex: '#FFF200' },
+  { name: 'Team Solar Green', hex: '#C4D600' },
+  { name: 'Team Kelly Green', hex: '#009639' },
+  { name: 'Team Dark Green', hex: '#00573F' },
+  { name: 'Team Forest Green', hex: '#0D381E' },
+  // Secondary Colors
+  { name: 'Teal', hex: '#00857D' },
+  { name: 'Team Shock Blue', hex: '#009FDF' },
+  { name: 'Team Royal Blue', hex: '#0065BD' },
+  { name: 'Team Collegiate Royal', hex: '#002F87' },
+  { name: 'Team Navy Blue', hex: '#001F5B' },
+  { name: 'Team College Purple', hex: '#512D6D' },
+  { name: 'Team Purple', hex: '#6D2077' },
+  { name: 'Team Pink', hex: '#E31C79' },
+  { name: 'Team Light Grey', hex: '#A2AAAD' },
+  { name: 'Dark Grey Heather', hex: '#5C6670' },
+  { name: 'Orange Rush', hex: '#FF6720' },
+  { name: 'Red Rush', hex: '#ED174C' },
+  { name: 'Blue Rush', hex: '#0033A0' }
 ]
 
 const initialFormState = {

@@ -75,24 +75,36 @@ const LEVEL_COLORS = {
 }
 
 // Team colors hex mapping
+// adidas Zone Graphic color palette
 const TEAM_COLORS_HEX = {
+  // Primary Colors
   'Black': '#000000',
   'White': '#FFFFFF',
-  'Navy': '#001F5B',
-  'Royal Blue': '#0057B8',
-  'Light Blue': '#6CACE4',
-  'Red': '#C8102E',
-  'Maroon': '#6C1D45',
-  'Orange': '#FF6900',
-  'Yellow': '#FFD100',
-  'Gold': '#C9A84C',
-  'Green': '#00843D',
-  'Dark Green': '#154734',
-  'Purple': '#582C83',
-  'Pink': '#E91E8C',
-  'Gray': '#8A8D8F',
-  'Silver': '#A7A8AA',
-  'Brown': '#6F4E37'
+  'Team Maroon': '#5C1F35',
+  'Team Power Red': '#BF0D3E',
+  'Team Orange': '#E35205',
+  'Team Collegiate Gold': '#CC8A00',
+  'Team Gold': '#FFB81C',
+  'Bright Yellow': '#FFFF00',
+  'Solar Yellow': '#FFF200',
+  'Team Solar Green': '#C4D600',
+  'Team Kelly Green': '#009639',
+  'Team Dark Green': '#00573F',
+  'Team Forest Green': '#0D381E',
+  // Secondary Colors
+  'Teal': '#00857D',
+  'Team Shock Blue': '#009FDF',
+  'Team Royal Blue': '#0065BD',
+  'Team Collegiate Royal': '#002F87',
+  'Team Navy Blue': '#001F5B',
+  'Team College Purple': '#512D6D',
+  'Team Purple': '#6D2077',
+  'Team Pink': '#E31C79',
+  'Team Light Grey': '#A2AAAD',
+  'Dark Grey Heather': '#5C6670',
+  'Orange Rush': '#FF6720',
+  'Red Rush': '#ED174C',
+  'Blue Rush': '#0033A0'
 }
 
 function formatPhone(phone) {
@@ -1101,28 +1113,20 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                 {/* Add ranking snapshot form */}
                 <form className="ranking-snapshot-form" onSubmit={handleAddRankingMetric}>
                   <div className="ranking-inputs">
-                    <select
+                    <input
+                      type="text"
                       value={newNationalRank}
                       onChange={e => setNewNationalRank(e.target.value)}
-                      className="ranking-snapshot-select"
-                    >
-                      <option value="">National Rank</option>
-                      {Array.from({ length: 25 }, (_, i) => (
-                        <option key={i + 1} value={`#${i + 1}`}>#{i + 1}</option>
-                      ))}
-                      <option value="Unranked">Unranked</option>
-                    </select>
-                    <select
+                      className="ranking-snapshot-input"
+                      placeholder="National (e.g. #42)"
+                    />
+                    <input
+                      type="text"
                       value={newStateRank}
                       onChange={e => setNewStateRank(e.target.value)}
-                      className="ranking-snapshot-select"
-                    >
-                      <option value="">State Rank</option>
-                      {Array.from({ length: 25 }, (_, i) => (
-                        <option key={i + 1} value={`#${i + 1}`}>#{i + 1}</option>
-                      ))}
-                      <option value="Unranked">Unranked</option>
-                    </select>
+                      className="ranking-snapshot-input"
+                      placeholder="State (e.g. #5)"
+                    />
                   </div>
                   <button type="submit" disabled={rankingLoading || (!newNationalRank && !newStateRank)} className="ranking-snapshot-btn">
                     {rankingLoading ? '...' : 'Log'}

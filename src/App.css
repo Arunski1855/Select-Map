@@ -4891,6 +4891,22 @@ textarea {
   font-family: var(--font-body);
 }
 
+.ranking-snapshot-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+}
+
+.ranking-snapshot-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
 .ranking-snapshot-btn {
   font-family: var(--font-heading);
   padding: 6px 14px;
