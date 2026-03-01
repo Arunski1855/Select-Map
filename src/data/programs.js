@@ -147,3 +147,49 @@ export const regionColors = {
   South: '#f39c12',
   North: '#1a9fc9'
 }
+
+/**
+ * adidas Zone Graphic Primary Colors
+ */
+export const primaryColors = {
+  A000: { name: 'Black', hex: '#000000' },
+  A001: { name: 'White', hex: '#FFFFFF' },
+  A38: { name: 'Team Maroon', hex: '#5C1F35' },
+  A46: { name: 'Team Power Red', hex: '#BF0D3E' },
+  A68: { name: 'Team Orange', hex: '#E35205' },
+  A86: { name: 'Team Collegiate Gold', hex: '#CC8A00' },
+  A89: { name: 'Team Gold', hex: '#FFB81C' },
+  A104: { name: 'Bright Yellow', hex: '#FFFF00' },
+  A106: { name: 'Solar Yellow', hex: '#FFF200' },
+  A116: { name: 'Team Solar Green', hex: '#C4D600' },
+  A167: { name: 'Team Kelly Green', hex: '#009639' },
+  A186: { name: 'Team Dark Green', hex: '#00573F' },
+  A205: { name: 'Team Forest Green', hex: '#0D381E' }
+}
+
+/**
+ * adidas Zone Graphic Secondary Colors
+ */
+export const secondaryColors = {
+  A211: { name: 'Teal', hex: '#00857D' },
+  A217: { name: 'Team Shock Blue', hex: '#009FDF' },
+  A237: { name: 'Team Royal Blue', hex: '#0065BD' },
+  A263: { name: 'Team Collegiate Royal', hex: '#002F87' },
+  A268: { name: 'Team Navy Blue', hex: '#001F5B' },
+  A292: { name: 'Team College Purple', hex: '#512D6D' },
+  A296: { name: 'Team Purple', hex: '#6D2077' },
+  A318: { name: 'Team Pink', hex: '#E31C79' },
+  A348: { name: 'Team Light Grey', hex: '#A2AAAD' },
+  A355: { name: 'Dark Grey Heather', hex: '#5C6670' },
+  A432: { name: 'Orange Rush', hex: '#FF6720' },
+  A466: { name: 'Red Rush', hex: '#ED174C' },
+  A469: { name: 'Blue Rush', hex: '#0033A0' }
+}
+
+/**
+ * All adidas colors combined
+ */
+export const adidasColors = {
+  ...primaryColors,
+  ...secondaryColors
+}
