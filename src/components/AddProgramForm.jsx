@@ -43,9 +43,39 @@ const REGIONS = ['Canada', 'Mid Atlantic', 'North', 'South', 'Midwest', 'West']
 
 const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
 
+// Mahomes tier only available for football
+const FOOTBALL_PROGRAM_LEVELS = ['Mahomes', 'Gold', 'Silver', 'Bronze', 'Regional']
+
 const GENDER_OPTIONS = ['Boys', 'Girls']
 
 const TEAM_TYPE_OPTIONS = ['Prep', 'National']
+
+// Ranking options (1-25 + Unranked)
+const RANKING_OPTIONS = [
+  ...Array.from({ length: 25 }, (_, i) => `#${i + 1}`),
+  'Unranked'
+]
+
+// Basic team colors
+const TEAM_COLORS = [
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Navy', hex: '#001F5B' },
+  { name: 'Royal Blue', hex: '#0057B8' },
+  { name: 'Light Blue', hex: '#6CACE4' },
+  { name: 'Red', hex: '#C8102E' },
+  { name: 'Maroon', hex: '#6C1D45' },
+  { name: 'Orange', hex: '#FF6900' },
+  { name: 'Yellow', hex: '#FFD100' },
+  { name: 'Gold', hex: '#C9A84C' },
+  { name: 'Green', hex: '#00843D' },
+  { name: 'Dark Green', hex: '#154734' },
+  { name: 'Purple', hex: '#582C83' },
+  { name: 'Pink', hex: '#E91E8C' },
+  { name: 'Gray', hex: '#8A8D8F' },
+  { name: 'Silver', hex: '#A7A8AA' },
+  { name: 'Brown', hex: '#6F4E37' }
+]
 
 const initialFormState = {
   name: '',
@@ -56,11 +86,14 @@ const initialFormState = {
   roster: '',
   headCoach: '',
   ranking: '',
+  stateRanking: '',
   topProspects: '',
   conference: '',
   maxprepsUrl: '',
   tcaStoreUrl: '',
   level: '',
+  primaryColor: '',
+  secondaryColor: '',
   contactEmail: '',
   contactPhone: '',
   twitter: '',
@@ -94,11 +127,14 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         roster: editProgram.roster || '',
         headCoach: editProgram.headCoach || '',
         ranking: editProgram.ranking || '',
+        stateRanking: editProgram.stateRanking || '',
         topProspects: editProgram.topProspects || '',
         conference: editProgram.conference || '',
         maxprepsUrl: editProgram.maxprepsUrl || '',
         tcaStoreUrl: editProgram.tcaStoreUrl || '',
         level: editProgram.level || '',
+        primaryColor: editProgram.primaryColor || '',
+        secondaryColor: editProgram.secondaryColor || '',
         contactEmail: editProgram.contactEmail || '',
         contactPhone: editProgram.contactPhone || '',
         twitter: editProgram.twitter || '',
@@ -259,11 +295,14 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         roster: formData.roster || '',
         headCoach: formData.headCoach || '',
         ranking: formData.ranking || '',
+        stateRanking: formData.stateRanking || '',
         topProspects: formData.topProspects || '',
         conference: formData.conference || '',
         maxprepsUrl: formData.maxprepsUrl || '',
         tcaStoreUrl: formData.tcaStoreUrl || '',
         level: formData.level || '',
+        primaryColor: formData.primaryColor || '',
+        secondaryColor: formData.secondaryColor || '',
         contactEmail: formData.contactEmail || '',
         contactPhone: formData.contactPhone || '',
         twitter: formData.twitter || '',
@@ -448,28 +487,46 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="ranking">Ranking</label>
-              <input
-                type="text"
+              <label htmlFor="ranking">National Ranking</label>
+              <select
                 id="ranking"
                 name="ranking"
                 value={formData.ranking}
                 onChange={handleInputChange}
-                placeholder="e.g., #5 National"
-              />
+              >
+                <option value="">Select Ranking</option>
+                {RANKING_OPTIONS.map(rank => (
+                  <option key={rank} value={rank}>{rank}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
-              <label htmlFor="topProspects">Top Prospects</label>
-              <input
-                type="text"
-                id="topProspects"
-                name="topProspects"
-                value={formData.topProspects}
+              <label htmlFor="stateRanking">State Ranking</label>
+              <select
+                id="stateRanking"
+                name="stateRanking"
+                value={formData.stateRanking}
                 onChange={handleInputChange}
-                placeholder="e.g., 3 five-stars"
-              />
+              >
+                <option value="">Select Ranking</option>
+                {RANKING_OPTIONS.map(rank => (
+                  <option key={rank} value={rank}>{rank}</option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="topProspects">Top Prospects</label>
+            <input
+              type="text"
+              id="topProspects"
+              name="topProspects"
+              value={formData.topProspects}
+              onChange={handleInputChange}
+              placeholder="e.g., 3 five-stars"
+            />
           </div>
 
           <div className="form-group">
@@ -481,10 +538,44 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
               onChange={handleInputChange}
             >
               <option value="">Select Level</option>
-              {PROGRAM_LEVELS.map(lvl => (
+              {(sport === 'football' ? FOOTBALL_PROGRAM_LEVELS : PROGRAM_LEVELS).map(lvl => (
                 <option key={lvl} value={lvl}>{lvl}</option>
               ))}
             </select>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="primaryColor">Primary Color</label>
+              <select
+                id="primaryColor"
+                name="primaryColor"
+                value={formData.primaryColor}
+                onChange={handleInputChange}
+                style={formData.primaryColor ? { borderLeft: `4px solid ${TEAM_COLORS.find(c => c.name === formData.primaryColor)?.hex || '#ccc'}` } : {}}
+              >
+                <option value="">Select Color</option>
+                {TEAM_COLORS.map(color => (
+                  <option key={color.name} value={color.name}>{color.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="secondaryColor">Secondary Color</label>
+              <select
+                id="secondaryColor"
+                name="secondaryColor"
+                value={formData.secondaryColor}
+                onChange={handleInputChange}
+                style={formData.secondaryColor ? { borderLeft: `4px solid ${TEAM_COLORS.find(c => c.name === formData.secondaryColor)?.hex || '#ccc'}` } : {}}
+              >
+                <option value="">Select Color</option>
+                {TEAM_COLORS.map(color => (
+                  <option key={color.name} value={color.name}>{color.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="form-group form-checkbox">

@@ -783,6 +783,7 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
 
 // Level color mapping
 const LEVEL_COLORS = {
+  'Mahomes': '#e31837',
   'Gold': '#c9a84c',
   'Silver': '#8a8d8f',
   'Bronze': '#a0714f',

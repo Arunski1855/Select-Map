@@ -279,6 +279,31 @@ export const deleteSocialMetric = async (sport, programId, metricId) => {
   await remove(metricRef)
 }
 
+// Ranking metrics tracking (National & State ranking snapshots over time)
+export const addRankingMetric = async (sport, programId, metricData) => {
+  const metricsRef = ref(database, `rankingMetrics/${sport}/${programId}`)
+  const newRef = push(metricsRef)
+  await set(newRef, { ...metricData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToRankingMetrics = (sport, programId, callback) => {
+  const metricsRef = ref(database, `rankingMetrics/${sport}/${programId}`)
+  return onValue(metricsRef, (snapshot) => {
+    const data = snapshot.val()
+    const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
+    callback(metrics)
+  }, (error) => {
+    console.error('Firebase ranking metrics error:', error)
+    callback([])
+  })
+}
+
+export const deleteRankingMetric = async (sport, programId, metricId) => {
+  const metricRef = ref(database, `rankingMetrics/${sport}/${programId}/${metricId}`)
+  await remove(metricRef)
+}
+
 // Soft delete (archive) a program instead of permanent deletion
 export const archiveProgram = async (sport, programId) => {
   const programRef = ref(database, `programs/${sport}/${programId}`)

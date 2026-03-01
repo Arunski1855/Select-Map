@@ -4752,6 +4752,190 @@ textarea {
   cursor: not-allowed;
 }
 
+/* ================= */
+/* Ranking History Tracking */
+/* ================= */
+
+.ranking-growth-chart {
+  margin-bottom: 10px;
+}
+
+.ranking-growth-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ranking-growth-current {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.ranking-growth-delta {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ranking-growth-delta.positive {
+  color: #00a550;
+}
+
+.ranking-growth-delta.negative {
+  color: #d4002a;
+}
+
+.ranking-growth-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.ranking-growth-single {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ranking-growth-date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.ranking-history {
+  margin-bottom: 8px;
+}
+
+.ranking-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.78rem;
+}
+
+.ranking-history-row:last-child {
+  border-bottom: none;
+}
+
+.ranking-history-date {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  min-width: 80px;
+}
+
+.ranking-history-values {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.ranking-badge {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ranking-badge.national {
+  background: #005eb8;
+  color: white;
+}
+
+.ranking-badge.state {
+  background: #7d2d8e;
+  color: white;
+}
+
+.ranking-history-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.ranking-history-delete:hover {
+  color: #d4002a;
+}
+
+.ranking-snapshot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ranking-inputs {
+  display: flex;
+  gap: 6px;
+}
+
+.ranking-snapshot-select {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+}
+
+.ranking-snapshot-btn {
+  font-family: var(--font-heading);
+  padding: 6px 14px;
+  background: #005eb8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.ranking-snapshot-btn:hover {
+  opacity: 0.85;
+}
+
+.ranking-snapshot-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================= */
+/* Team Colors Display */
+/* ================= */
+
+.team-colors-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.team-color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  display: inline-block;
+}
+
+.team-color-names {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 /* Mentions Tab Styles */
 .detail-mentions-tab {
   padding: 0 16px 16px;

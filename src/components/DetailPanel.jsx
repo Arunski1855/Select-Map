@@ -10,6 +10,9 @@ import {
   addSocialMetric,
   subscribeToSocialMetrics,
   deleteSocialMetric,
+  addRankingMetric,
+  subscribeToRankingMetrics,
+  deleteRankingMetric,
   subscribeToLinkedEvents,
   subscribeToContractDetails,
   updateContractDetails,
@@ -64,10 +67,32 @@ const REGIONS = {
 }
 
 const LEVEL_COLORS = {
+  'Mahomes': '#e31837',
   'Gold': '#c9a84c',
   'Silver': '#8a8d8f',
   'Bronze': '#a0714f',
   'Regional': '#005eb8'
+}
+
+// Team colors hex mapping
+const TEAM_COLORS_HEX = {
+  'Black': '#000000',
+  'White': '#FFFFFF',
+  'Navy': '#001F5B',
+  'Royal Blue': '#0057B8',
+  'Light Blue': '#6CACE4',
+  'Red': '#C8102E',
+  'Maroon': '#6C1D45',
+  'Orange': '#FF6900',
+  'Yellow': '#FFD100',
+  'Gold': '#C9A84C',
+  'Green': '#00843D',
+  'Dark Green': '#154734',
+  'Purple': '#582C83',
+  'Pink': '#E91E8C',
+  'Gray': '#8A8D8F',
+  'Silver': '#A7A8AA',
+  'Brown': '#6F4E37'
 }
 
 function formatPhone(phone) {
@@ -104,6 +129,12 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   const [newFollowerCount, setNewFollowerCount] = useState('')
   const [metricLoading, setMetricLoading] = useState(false)
 
+  // Ranking metrics state (for tracking ranking changes over time)
+  const [rankingMetrics, setRankingMetrics] = useState([])
+  const [newNationalRank, setNewNationalRank] = useState('')
+  const [newStateRank, setNewStateRank] = useState('')
+  const [rankingLoading, setRankingLoading] = useState(false)
+
   // Linked events state
   const [linkedEvents, setLinkedEvents] = useState([])
 
@@ -134,7 +165,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
     const unsub3 = subscribeToSocialMetrics(sport, program.id, setSocialMetrics)
     const unsub4 = subscribeToLinkedEvents(program.id, setLinkedEvents)
-    return () => { unsub1(); unsub2(); unsub3(); unsub4() }
+    const unsub5 = subscribeToRankingMetrics(sport, program.id, setRankingMetrics)
+    return () => { unsub1(); unsub2(); unsub3(); unsub4(); unsub5() }
   }, [program?.id, sport])
 
   // Subscribe to contract details only when user is authorized
@@ -275,6 +307,36 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     }
   }
 
+  // Ranking metrics handlers
+  const handleAddRankingMetric = async (e) => {
+    e.preventDefault()
+    if ((!newNationalRank && !newStateRank) || !user) return
+    setRankingLoading(true)
+    try {
+      await addRankingMetric(sport, program.id, {
+        nationalRank: newNationalRank || null,
+        stateRank: newStateRank || null,
+        date: new Date().toISOString().split('T')[0],
+        addedBy: user.email,
+        timestamp: Date.now()
+      })
+      setNewNationalRank('')
+      setNewStateRank('')
+    } catch (err) {
+      console.error('Error adding ranking metric:', err)
+    } finally {
+      setRankingLoading(false)
+    }
+  }
+
+  const handleDeleteRankingMetric = async (metricId) => {
+    try {
+      await deleteRankingMetric(sport, program.id, metricId)
+    } catch (err) {
+      console.error('Error deleting ranking metric:', err)
+    }
+  }
+
   // Contract detail handlers
   const handleEditContract = () => {
     setContractForm({
@@ -325,6 +387,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
 
   // Compute chart data for Instagram follower growth
   const igMetrics = useMemo(() => socialMetrics.filter(m => m.platform === 'instagram'), [socialMetrics])
+
+  // Compute ranking history data (sorted by date)
+  const rankingHistory = useMemo(() => rankingMetrics.sort((a, b) => (a.date || '').localeCompare(b.date || '')), [rankingMetrics])
 
   const regionColor = REGIONS[program.region]?.color || '#333'
   const levelColor = LEVEL_COLORS[program.level] || null
@@ -425,7 +490,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
         ['Gender', program.gender],
         ['Conference', program.conference],
         ['Head Coach', program.headCoach],
-        ['Ranking', program.ranking],
+        ['National Ranking', program.ranking],
+        ['State Ranking', program.stateRanking],
+        ['Team Colors', [program.primaryColor, program.secondaryColor].filter(Boolean).join(' / ')],
         ['Team Type', program.teamType]
       ].filter(([, val]) => val)
 
@@ -635,7 +702,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       <div className="detail-panel-content">
         {activeDetailTab === 'info' && (
           <div className="detail-info-tab">
-            {(program.conference || program.headCoach || program.ranking || program.level) && (
+            {(program.conference || program.headCoach || program.ranking || program.stateRanking || program.level || program.primaryColor) && (
               <div className="detail-section">
                 {program.headCoach && (
                   <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
@@ -644,10 +711,29 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   <div className="detail-row"><span className="detail-label">Conference</span><span>{program.conference}</span></div>
                 )}
                 {program.ranking && (
-                  <div className="detail-row"><span className="detail-label">Ranking</span><span>{program.ranking}</span></div>
+                  <div className="detail-row"><span className="detail-label">National Ranking</span><span>{program.ranking}</span></div>
+                )}
+                {program.stateRanking && (
+                  <div className="detail-row"><span className="detail-label">State Ranking</span><span>{program.stateRanking}</span></div>
                 )}
                 {program.level && (
                   <div className="detail-row"><span className="detail-label">Level</span><span className="detail-level-value" style={{ color: levelColor || 'inherit' }}>{program.level}</span></div>
+                )}
+                {(program.primaryColor || program.secondaryColor) && (
+                  <div className="detail-row">
+                    <span className="detail-label">Team Colors</span>
+                    <span className="team-colors-display">
+                      {program.primaryColor && (
+                        <span className="team-color-swatch" style={{ backgroundColor: TEAM_COLORS_HEX[program.primaryColor] || '#ccc' }} title={program.primaryColor}></span>
+                      )}
+                      {program.secondaryColor && (
+                        <span className="team-color-swatch" style={{ backgroundColor: TEAM_COLORS_HEX[program.secondaryColor] || '#ccc' }} title={program.secondaryColor}></span>
+                      )}
+                      <span className="team-color-names">
+                        {[program.primaryColor, program.secondaryColor].filter(Boolean).join(' / ')}
+                      </span>
+                    </span>
+                  </div>
                 )}
               </div>
             )}
@@ -903,6 +989,145 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                     </button>
                   </form>
                 )}
+              </div>
+            )}
+
+            {/* Ranking History Tracking */}
+            {isUserAllowed && (
+              <div className="detail-social-section">
+                <h4 className="detail-section-heading">Ranking History</h4>
+
+                {rankingHistory.length >= 2 && (() => {
+                  try {
+                    // Parse rankings to numeric values for charting (lower is better)
+                    const parseRank = (r) => {
+                      if (!r || r === 'Unranked') return 26
+                      const match = r.match(/#?(\d+)/)
+                      return match ? parseInt(match[1], 10) : 26
+                    }
+
+                    const nationalData = rankingHistory.filter(m => m.nationalRank).map(m => ({ ...m, rank: parseRank(m.nationalRank) }))
+                    const stateData = rankingHistory.filter(m => m.stateRank).map(m => ({ ...m, rank: parseRank(m.stateRank) }))
+
+                    // Use national data for chart if available, otherwise state
+                    const chartData = nationalData.length >= 2 ? nationalData : stateData
+
+                    if (chartData.length >= 2) {
+                      const minR = Math.min(...chartData.map(m => m.rank))
+                      const maxR = Math.max(...chartData.map(m => m.rank))
+                      const range = maxR - minR || 1
+                      const chartW = 280
+                      const chartH = 100
+                      const padL = 0
+                      const padR = 0
+                      const padT = 8
+                      const padB = 20
+                      const plotW = chartW - padL - padR
+                      const plotH = chartH - padT - padB
+                      const points = chartData.map((m, i) => {
+                        const x = padL + (i / (chartData.length - 1)) * plotW
+                        // Invert Y because lower rank is better (should be higher on chart)
+                        const y = padT + ((m.rank - minR) / range) * plotH
+                        return { x, y, ...m }
+                      })
+                      const polyline = points.map(p => `${p.x},${p.y}`).join(' ')
+                      const areaPath = `M${points[0].x},${padT + plotH} ${points.map(p => `L${p.x},${p.y}`).join(' ')} L${points[points.length - 1].x},${padT + plotH} Z`
+                      const first = chartData[0].rank
+                      const last = chartData[chartData.length - 1].rank
+                      const improvement = first - last // positive means improved (lower rank)
+
+                      return (
+                        <div className="ranking-growth-chart">
+                          <div className="ranking-growth-summary">
+                            <span className="ranking-growth-current">{nationalData.length >= 2 ? 'National: ' : 'State: '}{last <= 25 ? `#${last}` : 'Unranked'}</span>
+                            <span className={`ranking-growth-delta ${improvement >= 0 ? 'positive' : 'negative'}`}>
+                              {improvement > 0 ? `+${improvement} spots` : improvement < 0 ? `${improvement} spots` : 'No change'}
+                            </span>
+                          </div>
+                          <svg viewBox={`0 0 ${chartW} ${chartH}`} className="ranking-growth-svg">
+                            <defs>
+                              <linearGradient id="rankGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#005eb8" stopOpacity="0.3" />
+                                <stop offset="100%" stopColor="#005eb8" stopOpacity="0.02" />
+                              </linearGradient>
+                            </defs>
+                            <path d={areaPath} fill="url(#rankGrad)" />
+                            <polyline points={polyline} fill="none" stroke="#005eb8" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                            {points.map((p, i) => (
+                              <circle key={i} cx={p.x} cy={p.y} r="3" fill="#005eb8" stroke="#fff" strokeWidth="1.5" />
+                            ))}
+                            {points.filter((_, i) => i === 0 || i === points.length - 1 || chartData.length <= 6).map((p, i) => (
+                              <text key={i} x={p.x} y={chartH - 2} textAnchor="middle" fontSize="7" fill="var(--text-muted)">{new Date(p.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>
+                            ))}
+                          </svg>
+                        </div>
+                      )
+                    }
+                    return null
+                  } catch (e) { console.error('Ranking chart render error:', e); return null }
+                })()}
+
+                {rankingHistory.length === 1 && (
+                  <div className="ranking-growth-single">
+                    <span className="ranking-growth-current">
+                      {rankingHistory[0].nationalRank && `National: ${rankingHistory[0].nationalRank}`}
+                      {rankingHistory[0].nationalRank && rankingHistory[0].stateRank && ' | '}
+                      {rankingHistory[0].stateRank && `State: ${rankingHistory[0].stateRank}`}
+                    </span>
+                    <span className="ranking-growth-date">as of {new Date(rankingHistory[0].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                )}
+
+                {rankingHistory.length === 0 && (
+                  <p className="detail-empty" style={{ marginBottom: 8 }}>No ranking history recorded yet.</p>
+                )}
+
+                {/* Ranking history list */}
+                {rankingHistory.length > 0 && (
+                  <div className="ranking-history">
+                    {rankingHistory.slice().reverse().slice(0, 5).map(m => (
+                      <div key={m.id} className="ranking-history-row">
+                        <span className="ranking-history-date">{new Date(m.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span className="ranking-history-values">
+                          {m.nationalRank && <span className="ranking-badge national">N: {m.nationalRank}</span>}
+                          {m.stateRank && <span className="ranking-badge state">S: {m.stateRank}</span>}
+                        </span>
+                        <button className="ranking-history-delete" onClick={() => handleDeleteRankingMetric(m.id)}>&times;</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add ranking snapshot form */}
+                <form className="ranking-snapshot-form" onSubmit={handleAddRankingMetric}>
+                  <div className="ranking-inputs">
+                    <select
+                      value={newNationalRank}
+                      onChange={e => setNewNationalRank(e.target.value)}
+                      className="ranking-snapshot-select"
+                    >
+                      <option value="">National Rank</option>
+                      {Array.from({ length: 25 }, (_, i) => (
+                        <option key={i + 1} value={`#${i + 1}`}>#{i + 1}</option>
+                      ))}
+                      <option value="Unranked">Unranked</option>
+                    </select>
+                    <select
+                      value={newStateRank}
+                      onChange={e => setNewStateRank(e.target.value)}
+                      className="ranking-snapshot-select"
+                    >
+                      <option value="">State Rank</option>
+                      {Array.from({ length: 25 }, (_, i) => (
+                        <option key={i + 1} value={`#${i + 1}`}>#{i + 1}</option>
+                      ))}
+                      <option value="Unranked">Unranked</option>
+                    </select>
+                  </div>
+                  <button type="submit" disabled={rankingLoading || (!newNationalRank && !newStateRank)} className="ranking-snapshot-btn">
+                    {rankingLoading ? '...' : 'Log'}
+                  </button>
+                </form>
               </div>
             )}
           </div>
