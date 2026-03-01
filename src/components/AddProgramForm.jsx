@@ -50,8 +50,13 @@ const GENDER_OPTIONS = ['Boys', 'Girls']
 
 const TEAM_TYPE_OPTIONS = ['Prep', 'National']
 
-// Ranking options (1-25 + Unranked)
-const RANKING_OPTIONS = [
+// Ranking options
+const NATIONAL_RANKING_OPTIONS = [
+  ...Array.from({ length: 100 }, (_, i) => `#${i + 1}`),
+  'Unranked'
+]
+
+const STATE_RANKING_OPTIONS = [
   ...Array.from({ length: 25 }, (_, i) => `#${i + 1}`),
   'Unranked'
 ]
@@ -495,7 +500,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                 onChange={handleInputChange}
               >
                 <option value="">Select Ranking</option>
-                {RANKING_OPTIONS.map(rank => (
+                {NATIONAL_RANKING_OPTIONS.map(rank => (
                   <option key={rank} value={rank}>{rank}</option>
                 ))}
               </select>
@@ -510,7 +515,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                 onChange={handleInputChange}
               >
                 <option value="">Select Ranking</option>
-                {RANKING_OPTIONS.map(rank => (
+                {STATE_RANKING_OPTIONS.map(rank => (
                   <option key={rank} value={rank}>{rank}</option>
                 ))}
               </select>
