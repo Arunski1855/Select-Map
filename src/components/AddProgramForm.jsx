@@ -50,17 +50,6 @@ const GENDER_OPTIONS = ['Boys', 'Girls']
 
 const TEAM_TYPE_OPTIONS = ['Prep', 'National']
 
-// Ranking options
-const NATIONAL_RANKING_OPTIONS = [
-  ...Array.from({ length: 100 }, (_, i) => `#${i + 1}`),
-  'Unranked'
-]
-
-const STATE_RANKING_OPTIONS = [
-  ...Array.from({ length: 25 }, (_, i) => `#${i + 1}`),
-  'Unranked'
-]
-
 // Basic team colors
 // adidas Zone Graphic color palette
 const TEAM_COLORS = [
@@ -505,32 +494,26 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="ranking">National Ranking</label>
-              <select
+              <input
+                type="text"
                 id="ranking"
                 name="ranking"
                 value={formData.ranking}
                 onChange={handleInputChange}
-              >
-                <option value="">Select Ranking</option>
-                {NATIONAL_RANKING_OPTIONS.map(rank => (
-                  <option key={rank} value={rank}>{rank}</option>
-                ))}
-              </select>
+                placeholder="e.g., #5, #479, Unranked"
+              />
             </div>
 
             <div className="form-group">
               <label htmlFor="stateRanking">State Ranking</label>
-              <select
+              <input
+                type="text"
                 id="stateRanking"
                 name="stateRanking"
                 value={formData.stateRanking}
                 onChange={handleInputChange}
-              >
-                <option value="">Select Ranking</option>
-                {STATE_RANKING_OPTIONS.map(rank => (
-                  <option key={rank} value={rank}>{rank}</option>
-                ))}
-              </select>
+                placeholder="e.g., #1, #50, Unranked"
+              />
             </div>
           </div>
 
