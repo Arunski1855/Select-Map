@@ -195,7 +195,7 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
   const priorityInfo = PRIORITIES[target.priority] || PRIORITIES['medium']
   const regionColor = REGIONS[target.region]?.color || '#666'
 
-  const tabs = ['info', 'contact', 'intel', 'activity']
+  const tabs = ['info', 'vitals', 'intel', 'activity']
 
   const panelStyle = sheetHeight ? { height: sheetHeight } : {}
 
@@ -345,8 +345,8 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
           </div>
         )}
 
-        {activeDetailTab === 'contact' && (
-          <div className="detail-contact-tab">
+        {activeDetailTab === 'vitals' && (
+          <div className="detail-vitals-tab">
             {target.headCoach && (
               <div className="detail-row">
                 <span className="detail-label">Head Coach</span>

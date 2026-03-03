@@ -3816,8 +3816,8 @@ textarea {
   font-weight: 700;
 }
 
-/* Contact Tab */
-.detail-contact-tab {
+/* Vitals Tab */
+.detail-vitals-tab {
   display: flex;
   flex-direction: column;
   gap: 12px;
