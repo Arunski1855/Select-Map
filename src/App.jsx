@@ -2979,12 +2979,21 @@ function App() {
     try {
       // Check if ranking changed and auto-save to history
       if (editingProgram && user) {
-        const rankingChanged = updatedProgram.ranking !== editingProgram.ranking
-        const stateRankingChanged = updatedProgram.stateRanking !== editingProgram.stateRanking
-        if ((rankingChanged && updatedProgram.ranking) || (stateRankingChanged && updatedProgram.stateRanking)) {
+        // Normalize ranking values (treat empty string, undefined, null as empty)
+        const normalizeRank = (r) => (r || '').toString().trim()
+        const oldNational = normalizeRank(editingProgram.ranking)
+        const newNational = normalizeRank(updatedProgram.ranking)
+        const oldState = normalizeRank(editingProgram.stateRanking)
+        const newState = normalizeRank(updatedProgram.stateRanking)
+
+        const nationalChanged = newNational !== oldNational
+        const stateChanged = newState !== oldState
+
+        // Save to ranking history if either ranking changed and has a new value
+        if ((nationalChanged && newNational) || (stateChanged && newState)) {
           await addRankingMetric(activeTab, updatedProgram.id, {
-            nationalRank: updatedProgram.ranking || null,
-            stateRank: updatedProgram.stateRanking || null,
+            nationalRank: newNational || null,
+            stateRank: newState || null,
             date: new Date().toISOString().split('T')[0],
             addedBy: user.email,
             timestamp: Date.now()
