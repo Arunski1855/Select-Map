@@ -6720,6 +6720,35 @@ textarea {
   opacity: 0.45;
 }
 
+/* ── Elite Tier (Non-Select) Markers ─────────────────────────────── */
+.logo-marker.elite-tier {
+  border: 2px dashed #666666;
+  background: #333333;
+}
+
+.logo-marker.elite-tier::after {
+  border-top: 5px dashed #666666;
+}
+
+.elite-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  background: #666666;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff;
+  z-index: 10;
+}
+
 /* ── Map Layer Toggle Button ─────────────────────────────────────── */
 .contract-layer-toggle-btn {
   display: flex;
@@ -6866,6 +6895,22 @@ textarea {
   border-radius: 50%;
   box-shadow: 0 0 3px rgba(0,0,0,0.5);
   flex-shrink: 0;
+}
+
+/* Logo View Elite Tier styling */
+.lv-wrapper.lv-elite-tier .lv-logo {
+  border: 2px dashed #666666;
+  background: #f5f5f5;
+}
+
+.lv-wrapper.lv-elite-tier .lv-line {
+  background: rgba(102, 102, 102, 0.6);
+  border-left: 1px dashed #666;
+  width: 0;
+}
+
+.lv-wrapper.lv-elite-tier .lv-dot {
+  background: #666666;
 }
 
 /* ── Contract Map Legend ─────────────────────────────────────────── */

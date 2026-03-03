@@ -69,15 +69,17 @@ const REGIONS = {
 
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
 const iconCache = new Map()
-const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null) => {
-  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}`
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
   const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
+  const eliteClass = isSelect === false ? ' elite-tier' : ''
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}" title="${name}">
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${eliteClass}" title="${name}${isSelect === false ? ' (Elite)' : ''}">
         <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
+        ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
       </div>
     `,
     iconSize: [28, 34],
@@ -89,21 +91,22 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
 }
 
 // Logo View marker with connector line and label (G League style)
-const createLogoViewIcon = (logoUrl, name) => {
-  const cacheKey = `logoview2|${logoUrl}|${name}`
+const createLogoViewIcon = (logoUrl, name, isSelect = true) => {
+  const cacheKey = `logoview2|${logoUrl}|${name}|${isSelect}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
 
   // Short name for label
   const shortName = name.length > 12 ? name.split(' ')[0].substring(0, 12) + '...' : name
+  const eliteClass = isSelect === false ? ' lv-elite-tier' : ''
 
   const icon = L.divIcon({
     className: 'logo-view-marker',
     html: `
-      <div class="lv-wrapper">
+      <div class="lv-wrapper${eliteClass}">
         <div class="lv-logo">
           <img src="${logoUrl}" alt="${name}" onerror="this.parentElement.innerHTML='<span class=\\'lv-fallback\\'>${name.charAt(0)}</span>'" />
         </div>
-        <div class="lv-label">${shortName}</div>
+        <div class="lv-label">${shortName}${isSelect === false ? ' (E)' : ''}</div>
         <div class="lv-line"></div>
         <div class="lv-dot"></div>
       </div>
@@ -2474,7 +2477,7 @@ function App() {
       if (program && program.id) {
         if (showLogoView) {
           // Logo View mode - show logos with connector lines
-          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name)
+          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name, program.isSelect)
         } else {
           // Normal mode with optional contract status
           let contractStatus = null
@@ -2489,7 +2492,7 @@ function App() {
               contractStatus = 'none'
             }
           }
-          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus)
+          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect)
         }
       }
     })

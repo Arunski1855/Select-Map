@@ -108,7 +108,8 @@ const initialFormState = {
   instagram: '',
   gender: 'Boys',
   teamType: '',
-  onboarding2026: false
+  onboarding2026: false,
+  isSelect: true
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
@@ -149,7 +150,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         instagram: editProgram.instagram || '',
         gender: editProgram.gender || 'Boys',
         teamType: editProgram.teamType || '',
-        onboarding2026: editProgram.onboarding2026 || false
+        onboarding2026: editProgram.onboarding2026 || false,
+        isSelect: editProgram.isSelect !== false
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -318,6 +320,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         gender: sport === 'football' ? 'Boys' : (formData.gender || 'Boys'),
         teamType: formData.name?.toLowerCase().match(/mt\.?\s*zion/) ? (formData.teamType || '') : '',
         onboarding2026: formData.onboarding2026 || false,
+        isSelect: formData.isSelect !== false,
         logo: logoData,
         gallery: gallery,
         brandGuide: brandGuide || '',
@@ -578,6 +581,19 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="form-group form-checkbox">
+            <label>
+              <input
+                type="checkbox"
+                name="isSelect"
+                checked={formData.isSelect}
+                onChange={(e) => setFormData(prev => ({ ...prev, isSelect: e.target.checked }))}
+              />
+              Adidas Select Program
+            </label>
+            <span className="checkbox-hint">Uncheck for elite tier programs that are not officially Select</span>
           </div>
 
           <div className="form-group form-checkbox">
