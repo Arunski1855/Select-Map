@@ -39,6 +39,7 @@ import {
   subscribeToTargetNotes,
   deleteTargetNote,
   addTargetRankingMetric,
+  addRankingMetric,
   subscribeToAllContractDetails,
   subscribeToCompetitorEvents,
   addCompetitorEvent,
@@ -2976,6 +2977,21 @@ function App() {
   // Edit a program
   const handleEditProgram = async (updatedProgram) => {
     try {
+      // Check if ranking changed and auto-save to history
+      if (editingProgram && user) {
+        const rankingChanged = updatedProgram.ranking !== editingProgram.ranking
+        const stateRankingChanged = updatedProgram.stateRanking !== editingProgram.stateRanking
+        if ((rankingChanged && updatedProgram.ranking) || (stateRankingChanged && updatedProgram.stateRanking)) {
+          await addRankingMetric(activeTab, updatedProgram.id, {
+            nationalRank: updatedProgram.ranking || null,
+            stateRank: updatedProgram.stateRanking || null,
+            date: new Date().toISOString().split('T')[0],
+            addedBy: user.email,
+            timestamp: Date.now()
+          })
+        }
+      }
+
       await editProgram(activeTab, updatedProgram)
       if (user) {
         await addProgramHistory(activeTab, updatedProgram.id, 'edited', user.email)
