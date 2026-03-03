@@ -273,7 +273,7 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
             className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
             onClick={() => setActiveDetailTab(tab)}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === 'info' ? 'Details' : tab === 'vitals' ? 'Vitals' : tab === 'intel' ? 'Intel' : 'Activity'}
           </button>
         ))}
       </div>
