@@ -420,8 +420,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   } : {}
 
   const tabs = isUserAllowed
-    ? ['info', 'contact', 'notes', 'contract']
-    : ['info', 'contact', 'notes']
+    ? ['info', 'vitals', 'intel', 'contract']
+    : ['info', 'vitals', 'intel']
 
   // Helper to load image and convert to data URL for PDF
   const loadImageAsDataUrl = (url) => {
@@ -836,8 +836,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
           </div>
         )}
 
-        {activeDetailTab === 'contact' && (
-          <div className="detail-contact-tab">
+        {activeDetailTab === 'vitals' && (
+          <div className="detail-vitals-tab">
             {(program.contactEmail || program.contactPhone || program.headCoach) ? (
               <div className="detail-section">
                 {program.headCoach && (
@@ -1137,8 +1137,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
           </div>
         )}
 
-        {activeDetailTab === 'notes' && (
-          <div className="detail-notes-tab">
+        {activeDetailTab === 'intel' && (
+          <div className="detail-intel-tab">
             {!isUserAllowed ? (
               <p className="detail-empty">Sign in to view internal notes.</p>
             ) : (
