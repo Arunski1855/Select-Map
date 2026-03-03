@@ -3337,7 +3337,7 @@ function App() {
       <main className="main">
         {activeTab === 'targets' ? (
           /* Targets Pipeline View */
-          <div className="targets-layout">
+          <div className="targets-layout" style={{ background: 'var(--bg-primary)' }}>
             {/* Targets Header with Sport Toggle and View Mode */}
             <div className="targets-header">
               <div className="targets-sport-toggle">
