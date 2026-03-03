@@ -38,6 +38,7 @@ import {
   addTargetNote,
   subscribeToTargetNotes,
   deleteTargetNote,
+  addTargetRankingMetric,
   subscribeToAllContractDetails,
   subscribeToCompetitorEvents,
   addCompetitorEvent,
@@ -2796,6 +2797,16 @@ function App() {
 
   const handleEditTargetProgram = async (targetData) => {
     try {
+      // Check if ranking changed and auto-save to history
+      if (editingTarget && targetData.ranking && targetData.ranking !== editingTarget.ranking) {
+        await addTargetRankingMetric(targetsSport, targetData.id, {
+          ranking: targetData.ranking,
+          date: new Date().toISOString().split('T')[0],
+          addedBy: user?.email || 'unknown',
+          timestamp: Date.now()
+        })
+      }
+
       await editTargetProgram(targetsSport, targetData)
       setIsTargetFormOpen(false)
       setEditingTarget(null)

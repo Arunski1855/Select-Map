@@ -4930,6 +4930,137 @@ textarea {
 }
 
 /* ================= */
+/* Target Ranking History */
+/* ================= */
+
+.target-ranking-history {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.ranking-history-title {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.ranking-current {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ranking-current-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.ranking-current-value {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.target-ranking-history .ranking-snapshot-form {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ranking-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+}
+
+.ranking-input::placeholder {
+  color: var(--text-muted);
+}
+
+.ranking-add-btn {
+  font-family: var(--font-heading);
+  padding: 8px 16px;
+  background: #005eb8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.ranking-add-btn:hover {
+  opacity: 0.85;
+}
+
+.ranking-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ranking-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ranking-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.ranking-history-info {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ranking-history-value {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ranking-history-item .ranking-history-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ranking-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.ranking-delete-btn:hover {
+  color: #d4002a;
+  opacity: 1;
+}
+
+/* ================= */
 /* Team Colors Display */
 /* ================= */
 

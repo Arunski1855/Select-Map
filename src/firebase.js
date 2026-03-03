@@ -489,6 +489,31 @@ export const deleteTargetNote = async (sport, targetId, noteId) => {
   await remove(noteRef)
 }
 
+// Target ranking metrics tracking (Ranking history over time)
+export const addTargetRankingMetric = async (sport, targetId, metricData) => {
+  const metricsRef = ref(database, `targetRankingMetrics/${sport}/${targetId}`)
+  const newRef = push(metricsRef)
+  await set(newRef, { ...metricData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToTargetRankingMetrics = (sport, targetId, callback) => {
+  const metricsRef = ref(database, `targetRankingMetrics/${sport}/${targetId}`)
+  return onValue(metricsRef, (snapshot) => {
+    const data = snapshot.val()
+    const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
+    callback(metrics)
+  }, (error) => {
+    console.error('Firebase target ranking metrics error:', error)
+    callback([])
+  })
+}
+
+export const deleteTargetRankingMetric = async (sport, targetId, metricId) => {
+  const metricRef = ref(database, `targetRankingMetrics/${sport}/${targetId}/${metricId}`)
+  await remove(metricRef)
+}
+
 // Contract details (private, auth-gated)
 export const subscribeToContractDetails = (sport, programId, callback) => {
   const contractRef = ref(database, `contractDetails/${sport}/${programId}`)

@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   addTargetNote,
   subscribeToTargetNotes,
-  deleteTargetNote
+  deleteTargetNote,
+  addTargetRankingMetric,
+  subscribeToTargetRankingMetrics,
+  deleteTargetRankingMetric
 } from '../firebase'
 
 // Region definitions with colors
@@ -48,6 +51,11 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
   const [newNote, setNewNote] = useState('')
   const [noteLoading, setNoteLoading] = useState(false)
 
+  // Ranking history state
+  const [rankingMetrics, setRankingMetrics] = useState([])
+  const [newRanking, setNewRanking] = useState('')
+  const [rankingLoading, setRankingLoading] = useState(false)
+
   // Bottom sheet drag state for mobile
   const [sheetHeight, setSheetHeight] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -61,11 +69,20 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
     return () => unsub()
   }, [target?.id, sport])
 
+  // Subscribe to ranking metrics
+  useEffect(() => {
+    if (!target?.id || !sport) return
+    const unsub = subscribeToTargetRankingMetrics(sport, target.id, setRankingMetrics)
+    return () => unsub()
+  }, [target?.id, sport])
+
   useEffect(() => {
     setActiveDetailTab('info')
     setSheetHeight(null)
     setNotes([])
     setNewNote('')
+    setRankingMetrics([])
+    setNewRanking('')
   }, [target?.id])
 
   useEffect(() => {
@@ -135,6 +152,42 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
       console.error('Error deleting note:', err)
     }
   }
+
+  // Handle adding ranking snapshot
+  const handleAddRanking = async () => {
+    if (!newRanking.trim() || !target?.id || !user) return
+    setRankingLoading(true)
+    try {
+      await addTargetRankingMetric(sport, target.id, {
+        ranking: newRanking.trim(),
+        date: new Date().toISOString().split('T')[0],
+        addedBy: user.email,
+        timestamp: Date.now()
+      })
+      setNewRanking('')
+    } catch (err) {
+      console.error('Error adding ranking:', err)
+    }
+    setRankingLoading(false)
+  }
+
+  // Handle deleting ranking snapshot
+  const handleDeleteRanking = async (metricId) => {
+    if (!target?.id || !window.confirm('Delete this ranking entry?')) return
+    try {
+      await deleteTargetRankingMetric(sport, target.id, metricId)
+    } catch (err) {
+      console.error('Error deleting ranking:', err)
+    }
+  }
+
+  // Compute ranking history for display
+  const rankingHistory = useMemo(() => {
+    return [...rankingMetrics].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  }, [rankingMetrics])
+
+  // Get latest ranking for display
+  const latestRanking = rankingHistory.length > 0 ? rankingHistory[0].ranking : target.ranking
 
   if (!target) return null
 
@@ -344,6 +397,64 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
             )}
             {!target.headCoach && !target.contactEmail && !target.contactPhone && !target.twitter && !target.instagram && (
               <p className="detail-empty">No contact information available.</p>
+            )}
+
+            {/* Ranking History Section */}
+            {isUserAllowed && (
+              <div className="target-ranking-history">
+                <h4 className="ranking-history-title">Ranking History</h4>
+
+                {/* Current Ranking Display */}
+                <div className="ranking-current">
+                  <span className="ranking-current-label">Current Ranking:</span>
+                  <span className="ranking-current-value">{latestRanking || 'Not set'}</span>
+                </div>
+
+                {/* Add Ranking Form */}
+                <div className="ranking-snapshot-form">
+                  <input
+                    type="text"
+                    value={newRanking}
+                    onChange={(e) => setNewRanking(e.target.value)}
+                    placeholder="Enter ranking (e.g., #5 National)"
+                    className="ranking-input"
+                  />
+                  <button
+                    onClick={handleAddRanking}
+                    disabled={rankingLoading || !newRanking.trim()}
+                    className="ranking-add-btn"
+                  >
+                    {rankingLoading ? 'Adding...' : 'Add'}
+                  </button>
+                </div>
+
+                {/* Ranking History List */}
+                {rankingHistory.length > 0 ? (
+                  <div className="ranking-history-list">
+                    {rankingHistory.slice(0, 10).map((metric) => (
+                      <div key={metric.id} className="ranking-history-item">
+                        <div className="ranking-history-info">
+                          <span className="ranking-history-value">{metric.ranking}</span>
+                          <span className="ranking-history-date">
+                            {new Date(metric.date + 'T00:00:00').toLocaleDateString('en-US', {
+                              month: 'short', day: 'numeric', year: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                        <button
+                          className="ranking-delete-btn"
+                          onClick={() => handleDeleteRanking(metric.id)}
+                          title="Delete entry"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="detail-empty">No ranking history yet. Add a ranking above to start tracking.</p>
+                )}
+              </div>
             )}
           </div>
         )}
