@@ -71,8 +71,15 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
 
   // Subscribe to ranking metrics
   useEffect(() => {
-    if (!target?.id || !sport) return
-    const unsub = subscribeToTargetRankingMetrics(sport, target.id, setRankingMetrics)
+    if (!target?.id || !sport) {
+      console.log('Ranking subscription skipped:', { targetId: target?.id, sport })
+      return
+    }
+    console.log('Setting up ranking subscription for:', { sport, targetId: target.id })
+    const unsub = subscribeToTargetRankingMetrics(sport, target.id, (metrics) => {
+      console.log('Ranking metrics received:', metrics.length, 'items')
+      setRankingMetrics(metrics)
+    })
     return () => unsub()
   }, [target?.id, sport])
 
@@ -155,18 +162,24 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
 
   // Handle adding ranking snapshot
   const handleAddRanking = async () => {
-    if (!newRanking.trim() || !target?.id || !user) return
+    if (!newRanking.trim() || !target?.id || !user) {
+      console.warn('handleAddRanking blocked:', { newRanking: newRanking.trim(), targetId: target?.id, hasUser: !!user })
+      return
+    }
     setRankingLoading(true)
     try {
+      console.log('Adding ranking metric:', { sport, targetId: target.id, ranking: newRanking.trim() })
       await addTargetRankingMetric(sport, target.id, {
         ranking: newRanking.trim(),
         date: new Date().toISOString().split('T')[0],
         addedBy: user.email,
         timestamp: Date.now()
       })
+      console.log('Ranking metric added successfully')
       setNewRanking('')
     } catch (err) {
       console.error('Error adding ranking:', err)
+      alert('Failed to add ranking. Please check console for details.')
     }
     setRankingLoading(false)
   }
