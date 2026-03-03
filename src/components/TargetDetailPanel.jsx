@@ -187,7 +187,7 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
   }, [rankingMetrics])
 
   // Get latest ranking for display
-  const latestRanking = rankingHistory.length > 0 ? rankingHistory[0].ranking : target.ranking
+  const latestRanking = rankingHistory.length > 0 ? rankingHistory[0].ranking : target?.ranking
 
   if (!target) return null
 
