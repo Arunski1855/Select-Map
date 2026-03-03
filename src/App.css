@@ -3884,6 +3884,10 @@ textarea {
   background: var(--bg-secondary);
 }
 
+.detail-social-tca {
+  background: var(--bg-secondary);
+}
+
 /* ================= */
 /* Digest Modal */
 /* ================= */
@@ -5655,6 +5659,24 @@ textarea {
 .bulk-edit-row-delete .bulk-edit-program-name {
   text-decoration: line-through;
   opacity: 0.7;
+}
+
+.bulk-edit-tca-store {
+  text-align: center;
+}
+
+.bulk-edit-tca-yes {
+  color: #00a550;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bulk-edit-tca-yes:hover {
+  text-decoration: underline;
+}
+
+.bulk-edit-tca-no {
+  color: var(--text-muted);
 }
 
 .bulk-edit-footer {

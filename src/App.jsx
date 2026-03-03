@@ -1568,6 +1568,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
                 <th>Contact Phone</th>
                 <th>Instagram</th>
                 <th>Twitter</th>
+                <th>TCA Store</th>
               </tr>
             </thead>
             <tbody>
@@ -1638,6 +1639,13 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
                         placeholder="@handle"
                         className="bulk-edit-input"
                       />
+                    </td>
+                    <td className="bulk-edit-tca-store">
+                      {program.tcaStoreUrl ? (
+                        <a href={program.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="bulk-edit-tca-yes">Yes</a>
+                      ) : (
+                        <span className="bulk-edit-tca-no">No</span>
+                      )}
                     </td>
                   </tr>
                 )
