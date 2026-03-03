@@ -706,7 +706,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
             onClick={() => setActiveDetailTab(tab)}
           >
-            {tab === 'info' ? 'Details' : tab === 'contact' ? 'Contact' : tab === 'notes' ? `Notes (${notes.length})` : 'Contract'}
+            {tab === 'info' ? 'Details' : tab === 'vitals' ? 'Vitals' : tab === 'intel' ? 'Intel' : 'Contract'}
           </button>
         ))}
       </div>
