@@ -3047,9 +3047,10 @@ function App() {
     }
   }
 
-  // Center of continental US
+  // Center of continental US - adjust zoom for mobile screens
   const mapCenter = [39.8283, -98.5795]
-  const mapZoom = 4
+  const isMobileView = typeof window !== 'undefined' && window.innerWidth <= 768
+  const mapZoom = isMobileView ? 3 : 4
 
   const activeTabInfo = TABS.find(t => t.id === activeTab)
 
