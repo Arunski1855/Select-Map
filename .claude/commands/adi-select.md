@@ -236,7 +236,7 @@ The ADI SEL3CT brand uses magenta blur textures as signature background elements
 
 We have **three approved backdrop textures**, each suited for different contexts:
 
-#### 1. Intense Backdrop (`backdrop-intense.jpg`)
+#### 1. Intense Backdrop (`backdrop-one.jpg`)
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
@@ -255,9 +255,9 @@ We have **three approved backdrop textures**, each suited for different contexts
 - **Character**: Bold, energetic, dramatic
 - **Use for**: Splash screens, launch moments, hero banners, high-impact marketing
 - **Energy level**: High
-- **File**: `/textures/backdrop-intense.jpg`
+- **File**: `/textures/backdrop-one.jpg`
 
-#### 2. Soft Backdrop (`backdrop-soft.jpg`)
+#### 2. Soft Backdrop (`backdrop-two.jpg`)
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
@@ -276,9 +276,9 @@ We have **three approved backdrop textures**, each suited for different contexts
 - **Character**: Warm, atmospheric, sophisticated
 - **Use for**: Modal backgrounds, section dividers, content overlays, dialog backdrops
 - **Energy level**: Medium
-- **File**: `/textures/backdrop-soft.jpg`
+- **File**: `/textures/backdrop-two.jpg`
 
-#### 3. Subtle Backdrop (`backdrop-subtle.jpg`)
+#### 3. Subtle Backdrop (`backdrop-three.jpg`)
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
@@ -297,7 +297,7 @@ We have **three approved backdrop textures**, each suited for different contexts
 - **Character**: Minimal, understated, elegant
 - **Use for**: App backgrounds, persistent UI elements, subtle branding, long-form content
 - **Energy level**: Low
-- **File**: `/textures/backdrop-subtle.jpg`
+- **File**: `/textures/backdrop-three.jpg`
 
 ### When to Use Each Backdrop
 
@@ -323,19 +323,19 @@ We have **three approved backdrop textures**, each suited for different contexts
   background-repeat: no-repeat;
 }
 
-/* Variant: Intense */
-.brand-backdrop--intense {
-  background-image: url('/textures/backdrop-intense.jpg');
+/* Variant: One (Intense) */
+.brand-backdrop--one {
+  background-image: url('/textures/backdrop-one.jpg');
 }
 
-/* Variant: Soft */
-.brand-backdrop--soft {
-  background-image: url('/textures/backdrop-soft.jpg');
+/* Variant: Two (Soft) */
+.brand-backdrop--two {
+  background-image: url('/textures/backdrop-two.jpg');
 }
 
-/* Variant: Subtle */
-.brand-backdrop--subtle {
-  background-image: url('/textures/backdrop-subtle.jpg');
+/* Variant: Three (Subtle) */
+.brand-backdrop--three {
+  background-image: url('/textures/backdrop-three.jpg');
 }
 
 /* Overlay version (for layering over content) */
@@ -371,7 +371,7 @@ We have **three approved backdrop textures**, each suited for different contexts
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/textures/backdrop-intense.jpg');
+  background-image: url('/textures/backdrop-one.jpg');
   background-size: cover;
   background-position: center;
   z-index: 0;
@@ -401,7 +401,7 @@ For splash screens and hero moments, backdrops can be positioned in corners rath
   left: 0;
   width: 50%;
   height: 50%;
-  background-image: url('/textures/backdrop-intense.jpg');
+  background-image: url('/textures/backdrop-one.jpg');
   background-size: 200% 200%;
   background-position: top left;
   opacity: 0.8;
@@ -415,7 +415,7 @@ For splash screens and hero moments, backdrops can be positioned in corners rath
   right: 0;
   width: 50%;
   height: 50%;
-  background-image: url('/textures/backdrop-intense.jpg');
+  background-image: url('/textures/backdrop-one.jpg');
   background-size: 200% 200%;
   background-position: bottom right;
   opacity: 0.8;

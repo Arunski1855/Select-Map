@@ -92,11 +92,11 @@ function createStreakPattern(width, height, color, intensity = 1.0) {
 }
 
 /**
- * Generate backdrop-intense.jpg
+ * Generate backdrop-one.jpg
  * Dramatic magenta waves/streaks on black with high saturation
  */
-async function generateIntense() {
-  console.log('Generating backdrop-intense.jpg...')
+async function generateOne() {
+  console.log('Generating backdrop-one.jpg...')
 
   // Create base black image
   const base = sharp({
@@ -153,17 +153,17 @@ async function generateIntense() {
       { input: blob3Layer, blend: 'screen' }
     ])
     .jpeg({ quality: 85 })
-    .toFile(join(__dirname, '../public/textures/backdrop-intense.jpg'))
+    .toFile(join(__dirname, '../public/textures/backdrop-one.jpg'))
 
-  console.log('  ✓ backdrop-intense.jpg created')
+  console.log('  ✓ backdrop-one.jpg created')
 }
 
 /**
- * Generate backdrop-soft.jpg
+ * Generate backdrop-two.jpg
  * Diffused magenta glow with smoky gradients
  */
-async function generateSoft() {
-  console.log('Generating backdrop-soft.jpg...')
+async function generateTwo() {
+  console.log('Generating backdrop-two.jpg...')
 
   // Create base black image
   const base = sharp({
@@ -210,17 +210,17 @@ async function generateSoft() {
       { input: blob3Layer, blend: 'screen' }
     ])
     .jpeg({ quality: 85 })
-    .toFile(join(__dirname, '../public/textures/backdrop-soft.jpg'))
+    .toFile(join(__dirname, '../public/textures/backdrop-two.jpg'))
 
-  console.log('  ✓ backdrop-soft.jpg created')
+  console.log('  ✓ backdrop-two.jpg created')
 }
 
 /**
- * Generate backdrop-subtle.jpg
+ * Generate backdrop-three.jpg
  * Very dark with minimal magenta accent
  */
-async function generateSubtle() {
-  console.log('Generating backdrop-subtle.jpg...')
+async function generateThree() {
+  console.log('Generating backdrop-three.jpg...')
 
   // Create base very dark image
   const base = sharp({
@@ -257,9 +257,9 @@ async function generateSubtle() {
       { input: blob2Layer, blend: 'screen' }
     ])
     .jpeg({ quality: 85 })
-    .toFile(join(__dirname, '../public/textures/backdrop-subtle.jpg'))
+    .toFile(join(__dirname, '../public/textures/backdrop-three.jpg'))
 
-  console.log('  ✓ backdrop-subtle.jpg created')
+  console.log('  ✓ backdrop-three.jpg created')
 }
 
 // Run all generators
@@ -269,9 +269,9 @@ async function main() {
   console.log(`Magenta: #${MAGENTA.r.toString(16).toUpperCase()}${MAGENTA.g.toString(16).padStart(2, '0').toUpperCase()}${MAGENTA.b.toString(16).toUpperCase()}\n`)
 
   try {
-    await generateIntense()
-    await generateSoft()
-    await generateSubtle()
+    await generateOne()
+    await generateTwo()
+    await generateThree()
     console.log('\n✅ All backdrop textures generated successfully!')
   } catch (error) {
     console.error('\n❌ Error generating textures:', error)

@@ -8,9 +8,9 @@ Place the following backdrop image files in this directory:
 
 | Filename | Description | Use Case |
 |----------|-------------|----------|
-| `backdrop-intense.jpg` | Dramatic magenta waves/streaks on black. High saturation with visible light trails. | Splash screens, launch moments, hero banners, high-impact marketing |
-| `backdrop-soft.jpg` | Diffused magenta glow with smoky gradients. Softer edges, more atmospheric. | Modal backgrounds, section dividers, content overlays, dialog backdrops |
-| `backdrop-subtle.jpg` | Very dark with minimal magenta accent. Understated, nearly black with hint of glow. | App backgrounds, persistent UI elements, subtle branding |
+| `backdrop-one.jpg` | Dramatic magenta waves/streaks on black. High saturation with visible light trails. | Splash screens, launch moments, hero banners, high-impact marketing |
+| `backdrop-two.jpg` | Diffused magenta glow with smoky gradients. Softer edges, more atmospheric. | Modal backgrounds, section dividers, content overlays, dialog backdrops |
+| `backdrop-three.jpg` | Very dark with minimal magenta accent. Understated, nearly black with hint of glow. | App backgrounds, persistent UI elements, subtle branding |
 
 ## File Specifications
 
@@ -31,16 +31,16 @@ Place the following backdrop image files in this directory:
 }
 
 /* Apply specific variant */
-.brand-backdrop--intense {
-  background-image: url('/textures/backdrop-intense.jpg');
+.brand-backdrop--one {
+  background-image: url('/textures/backdrop-one.jpg');
 }
 
-.brand-backdrop--soft {
-  background-image: url('/textures/backdrop-soft.jpg');
+.brand-backdrop--two {
+  background-image: url('/textures/backdrop-two.jpg');
 }
 
-.brand-backdrop--subtle {
-  background-image: url('/textures/backdrop-subtle.jpg');
+.brand-backdrop--three {
+  background-image: url('/textures/backdrop-three.jpg');
 }
 ```
 
