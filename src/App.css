@@ -128,6 +128,293 @@ textarea {
   font-family: inherit;
 }
 
+/* ============================================
+   ADI SEL3CT Typography Utility Classes
+   ============================================ */
+
+/* Large Headline - Bold Italic (3x ratio) */
+.type-large-headline {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.type-large-headline--alt {
+  font-family: var(--font-heading-compressed);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+/* Small Headline - Bold Italic (1.5x ratio) */
+.type-small-headline {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.type-small-headline--alt {
+  font-family: var(--font-heading-compressed);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* Ornamental Type - Regular, stacked (3x ratio) */
+.type-ornamental {
+  font-family: var(--font-heading-compressed);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: var(--letter-spacing-brand);
+  line-height: var(--line-height-body);
+  text-transform: uppercase;
+}
+
+/* Body Copy */
+.type-body {
+  font-family: var(--font-heading-compressed);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: var(--letter-spacing-brand);
+  line-height: var(--line-height-body);
+}
+
+.type-body--large {
+  font-size: 1.5rem;
+}
+
+.type-body--small {
+  font-size: 1rem;
+}
+
+/* ============================================
+   ADI SEL3CT Ticker Tape Component
+   ============================================ */
+.ticker-tape {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--adi-magenta);
+  color: var(--adi-white);
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ticker-tape--black {
+  background: var(--adi-black);
+}
+
+.ticker-tape--school {
+  background: var(--school-accent, var(--adi-magenta));
+}
+
+.ticker-tape__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ticker-tape__separator {
+  width: 2px;
+  height: 1.25rem;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+.ticker-tape__logo {
+  height: 1.25rem;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.ticker-tape__badge {
+  background: var(--adi-white);
+  color: var(--adi-black);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Scrolling ticker animation */
+.ticker-tape--scroll {
+  animation: ticker-scroll 20s linear infinite;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ============================================
+   ADI SEL3CT Branding Bar Component
+   ============================================ */
+.branding-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--adi-black);
+  padding: 0.5rem 1rem;
+  gap: 1rem;
+}
+
+.branding-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.branding-bar__logo {
+  height: 1.5rem;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.branding-bar__wordmark {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--adi-white);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
+}
+
+.branding-bar__center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.branding-bar__sport-tag {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
+  color: var(--adi-black);
+  background: var(--adi-white);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.branding-bar__sport-tag--accent {
+  background: var(--school-accent, var(--adi-magenta));
+  color: var(--adi-white);
+}
+
+.branding-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.branding-bar__school-name {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--adi-white);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
+}
+
+.branding-bar__school-logo {
+  height: 1.5rem;
+  width: auto;
+}
+
+/* ============================================
+   ADI SEL3CT Image Treatments
+   ============================================ */
+
+/* Treatment 1: Clipping (Cutout) */
+.athlete-cutout {
+  background: var(--adi-black);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.athlete-cutout img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Treatment 2: Container Shape (Circle) */
+.athlete-circle {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: var(--school-accent, var(--adi-magenta));
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.athlete-circle--lg {
+  width: 300px;
+  height: 300px;
+}
+
+.athlete-circle--sm {
+  width: 120px;
+  height: 120px;
+}
+
+.athlete-circle img {
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* Treatment 3: Color Overlay */
+.color-overlay {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  min-height: 200px;
+}
+
+.color-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--school-accent, var(--adi-magenta));
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+}
+
+.color-overlay__content {
+  position: relative;
+  z-index: 1;
+  color: var(--adi-white);
+  padding: 2rem;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
@@ -1344,17 +1631,23 @@ textarea {
   color: white;
 }
 
-/* Auth Modal */
+/* Auth Modal - ADI SEL3CT styled */
 .auth-modal {
   background: var(--bg-primary);
-  border-radius: 12px;
   padding: 2rem;
   width: 90%;
   max-width: 400px;
   position: relative;
+  border: 2px solid var(--adi-black);
 }
 
 .auth-modal h2 {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 1.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
   margin: 0 0 1.5rem 0;
   text-align: center;
   color: var(--text-primary);
@@ -1367,41 +1660,50 @@ textarea {
 .auth-modal .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
   color: var(--text-primary);
 }
 
 .auth-modal .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border: 2px solid var(--border-color);
+  font-family: var(--font-heading-compressed);
   font-size: 1rem;
   background: var(--bg-primary);
   color: var(--text-primary);
   box-sizing: border-box;
+  transition: border-color var(--transition-fast);
 }
 
 .auth-modal .form-group input:focus {
   outline: none;
-  border-color: var(--accent-color);
+  border-color: var(--adi-magenta);
 }
 
 .auth-modal .submit-btn {
   width: 100%;
   padding: 0.85rem;
-  background: var(--text-primary);
-  color: var(--bg-primary);
+  background: var(--adi-magenta);
+  color: var(--adi-white);
   border: none;
-  border-radius: 6px;
+  font-family: var(--font-heading-compressed);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
   cursor: pointer;
   margin-top: 0.5rem;
+  transition: background var(--transition-fast);
 }
 
 .auth-modal .submit-btn:hover {
-  opacity: 0.9;
+  background: var(--adi-magenta-light);
 }
 
 .auth-modal .submit-btn:disabled {
@@ -1549,38 +1851,40 @@ textarea {
   color: var(--text-muted);
 }
 
-/* Modal Overlay and Close Button */
+/* Modal Overlay and Close Button - ADI SEL3CT styled */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
   padding: 1rem;
+  backdrop-filter: blur(4px);
 }
 
 .modal-close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-muted);
+  top: 0.75rem;
+  right: 0.75rem;
+  background: var(--adi-black);
+  border: 2px solid var(--adi-white);
+  font-size: 1.25rem;
+  color: var(--adi-white);
   cursor: pointer;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  transition: all var(--transition-fast);
 }
 
 .modal-close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--adi-magenta);
+  border-color: var(--adi-magenta);
+  color: var(--adi-white);
 }
 
 /* Error Message */
@@ -2073,13 +2377,13 @@ textarea {
 .detail-region-badge {
   font-family: var(--font-heading-compressed);
   display: inline-block;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   color: white;
-  padding: 2px 8px;
-  border-radius: 3px;
+  padding: 3px 8px;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: var(--letter-spacing-brand);
   font-weight: 700;
+  font-style: italic;
   margin-top: 4px;
 }
 
@@ -2116,14 +2420,15 @@ textarea {
 }
 
 .detail-panel-title h2 {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-style: italic;
   color: var(--text-primary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  line-height: 1.25;
+  letter-spacing: var(--letter-spacing-brand);
+  line-height: 1.1;
 }
 
 .detail-panel-title p {
@@ -2175,7 +2480,7 @@ textarea {
 }
 
 .detail-tab {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   flex: 1;
   padding: 10px 0;
   background: none;
@@ -2183,11 +2488,11 @@ textarea {
   border-bottom: 2px solid transparent;
   color: var(--text-muted);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: var(--letter-spacing-brand);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .detail-tab:hover {
@@ -2197,8 +2502,8 @@ textarea {
 
 .detail-tab.active {
   color: var(--text-primary);
-  border-bottom-color: var(--text-primary);
-  font-weight: 600;
+  border-bottom-color: var(--adi-magenta);
+  font-weight: 700;
 }
 
 .detail-panel-content {
