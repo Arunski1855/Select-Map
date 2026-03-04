@@ -115,28 +115,116 @@ Neon Magenta was chosen specifically because it won't conflict with any school's
 
 ## Typography
 
-### Primary Typefaces
+We only use adidas core brand font: **adidasFG**. All type sizes are proportional, allowing easy folding into ticker tape or conventional layouts.
 
-**Headlines & Display**
-- Font: `adidas FG Compressed Bold Italic`
-- Use for: Main headlines, hero text, impact statements
-- Style: ALL CAPS, tight letter-spacing
+### Type Scale
 
-**Subheadlines & Labels**
-- Font: `adidas FG Compressed`
-- Use for: Secondary headlines, navigation, labels
-- Style: ALL CAPS or Title Case
+| Level | Font | Style | Spacing | Line Height | Case | Ratio |
+|-------|------|-------|---------|-------------|------|-------|
+| **Large Headline** | ADI FG Compressed Bold Italic | Bold Italic | 10% | — | ALL CAPS | 3x |
+| **Large Headline Alt** | ADI FG Compressed Italic | Italic | 10% | — | ALL CAPS | 3x |
+| **Small Headline** | ADI FG Compressed Bold Italic | Bold Italic | 10% | — | ALL CAPS | 1.5x |
+| **Small Headline Alt** | ADI FG Compressed Italic | Italic | 10% | — | ALL CAPS | 1.5x |
+| **Ornamental Type** | ADI FG Compressed | Regular | 10% | 110% | ALL CAPS | 3x |
+| **Body Copy (Large)** | ADI FG Compressed | Regular | 10% | 110% | Sentence | 1.5x |
+| **Body Copy (Small)** | ADI FG Compressed | Regular | 10% | 110% | Sentence | 1x |
 
-**Body Text**
-- Font: `Denton Light` or system sans-serif fallback
-- Use for: Paragraphs, descriptions, form content
-- Style: Sentence case
+### Type Hierarchy Examples
 
-### CSS Font Stacks
-```css
---font-heading: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
---font-body: 'Denton', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  𝗟𝗔𝗥𝗚𝗘 𝗛𝗘𝗔𝗗𝗟𝗜𝗡𝗘 𝗢𝗡𝗘          ← Bold Italic, 3x, ALL CAPS      │
+│  𝘓𝘈𝘙𝘎𝘌 𝘏𝘌𝘈𝘋𝘓𝘐𝘕𝘌 𝘛𝘞𝘖          ← Italic, 3x, ALL CAPS           │
+│                                                                 │
+│  𝗦𝗠𝗔𝗟𝗟 𝗛𝗘𝗔𝗗𝗟𝗜𝗡𝗘 𝗢𝗡𝗘          ← Bold Italic, 1.5x              │
+│  𝘚𝘔𝘈𝘓𝘓 𝘏𝘌𝘈𝘋𝘓𝘐𝘕𝘌 𝘛𝘞𝘖          ← Italic, 1.5x                   │
+│                                                                 │
+│  ORNAMENTAL TYPE               ← Regular, 10% spacing, stacked │
+│  TWO LINES STACKED                                              │
+│                                                                 │
+│  Large copy                    ← Sentence case, 1.5x           │
+│  Small Copy                    ← Sentence case, 1x             │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### CSS Implementation
+
+```css
+/* Typography Variables */
+:root {
+  --font-adi: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --letter-spacing-brand: 0.1em; /* 10% */
+  --line-height-body: 1.1; /* 110% */
+}
+
+/* Large Headline - Bold Italic */
+.type-large-headline {
+  font-family: var(--font-adi);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  font-size: 3rem; /* 3x base */
+}
+
+/* Large Headline - Italic (alternate) */
+.type-large-headline--alt {
+  font-family: var(--font-adi);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  font-size: 3rem;
+}
+
+/* Small Headline - Bold Italic */
+.type-small-headline {
+  font-family: var(--font-adi);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  font-size: 1.5rem; /* 1.5x base */
+}
+
+/* Ornamental Type - Stacked text blocks */
+.type-ornamental {
+  font-family: var(--font-adi);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: var(--letter-spacing-brand);
+  line-height: var(--line-height-body);
+  text-transform: uppercase;
+}
+
+/* Body Copy */
+.type-body {
+  font-family: var(--font-adi);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: var(--letter-spacing-brand);
+  line-height: var(--line-height-body);
+  text-transform: none; /* Sentence case */
+}
+
+.type-body--large {
+  font-size: 1.5rem;
+}
+
+.type-body--small {
+  font-size: 1rem;
+}
+```
+
+### Typography Rules
+- **Only adidasFG** - No other typefaces
+- **10% letter-spacing** on all type
+- **110% line-height** for body and ornamental
+- **ALL CAPS** for headlines and ornamental
+- **Sentence case** for body copy only
+- Proportional sizing enables seamless ticker tape integration
 
 ---
 
