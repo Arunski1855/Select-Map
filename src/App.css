@@ -1870,8 +1870,8 @@ textarea {
   position: absolute;
   inset: 0;
   background-image: url('/textures/backdrop-two.jpg');
-  background-size: cover;
-  background-position: center;
+  background-size: 250%;
+  background-position: 30% 60%;
   opacity: 0.4;
   pointer-events: none;
 }
@@ -2421,8 +2421,8 @@ textarea {
   position: absolute;
   inset: 0;
   background-image: url('/textures/backdrop-two.jpg');
-  background-size: cover;
-  background-position: center;
+  background-size: 400%;
+  background-position: 30% 60%;
   opacity: 0.5;
   pointer-events: none;
 }
