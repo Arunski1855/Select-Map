@@ -26,10 +26,34 @@ import {
   subscribeToNotes,
   addScheduleEntry,
   deleteScheduleEntry,
-  subscribeToSchedule
+  subscribeToSchedule,
+  archiveProgram,
+  restoreProgram,
+  subscribeToArchivedPrograms,
+  linkEventToPrograms,
+  addTargetProgram,
+  subscribeToTargetPrograms,
+  editTargetProgram,
+  deleteTargetProgram,
+  addTargetNote,
+  subscribeToTargetNotes,
+  deleteTargetNote,
+  addTargetRankingMetric,
+  addRankingMetric,
+  subscribeToAllContractDetails,
+  subscribeToCompetitorEvents,
+  addCompetitorEvent,
+  updateCompetitorEvent,
+  deleteCompetitorEvent
 } from './firebase'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import AddProgramForm from './components/AddProgramForm'
 import AddEventForm from './components/AddEventForm'
+import AddTargetForm from './components/AddTargetForm'
+import SplashScreen from './components/SplashScreen'
+import DetailPanel from './components/DetailPanel'
+import TargetDetailPanel from './components/TargetDetailPanel'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 
@@ -39,29 +63,86 @@ const REGIONS = {
   'Mid Atlantic': { color: '#005eb8', states: ['NY', 'NJ', 'PA', 'DE', 'MD', 'DC', 'VA', 'WV'] },
   'South': { color: '#ff6b00', states: ['FL', 'GA', 'SC', 'NC', 'TN', 'AL', 'MS', 'LA', 'AR', 'KY', 'TX', 'OK'] },
   'Midwest': { color: '#7d2d8e', states: ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'] },
+  'North': { color: '#1a9fc9', states: ['ME', 'NH', 'VT', 'MA', 'CT', 'RI'] },
   'West': { color: '#00a550', states: ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI'] }
 }
 
-// Create custom icon for each program logo
-const createLogoIcon = (logoUrl, name, useContain = false) => {
-  return L.divIcon({
+// Create custom icon for each program logo (cached to prevent unnecessary re-renders)
+const iconCache = new Map()
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}`
+  if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
+  const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
+  const eliteClass = isSelect === false ? ' elite-tier' : ''
+  const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}" title="${name}">
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${eliteClass}" title="${name}${isSelect === false ? ' (Elite)' : ''}">
         <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
+        ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
       </div>
     `,
     iconSize: [28, 34],
     iconAnchor: [14, 34],
     popupAnchor: [0, -34]
   })
+  iconCache.set(cacheKey, icon)
+  return icon
+}
+
+// Logo View marker with connector line and label (G League style)
+const createLogoViewIcon = (logoUrl, name, isSelect = true) => {
+  const cacheKey = `logoview2|${logoUrl}|${name}|${isSelect}`
+  if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
+
+  // Short name for label
+  const shortName = name.length > 12 ? name.split(' ')[0].substring(0, 12) + '...' : name
+  const eliteClass = isSelect === false ? ' lv-elite-tier' : ''
+
+  const icon = L.divIcon({
+    className: 'logo-view-marker',
+    html: `
+      <div class="lv-wrapper${eliteClass}">
+        <div class="lv-logo">
+          <img src="${logoUrl}" alt="${name}" onerror="this.parentElement.innerHTML='<span class=\\'lv-fallback\\'>${name.charAt(0)}</span>'" />
+        </div>
+        <div class="lv-label">${shortName}${isSelect === false ? ' (E)' : ''}</div>
+        <div class="lv-line"></div>
+        <div class="lv-dot"></div>
+      </div>
+    `,
+    iconSize: [50, 85],
+    iconAnchor: [25, 85],
+    popupAnchor: [0, -85]
+  })
+  iconCache.set(cacheKey, icon)
+  return icon
 }
 
 // Tab configuration
 const TABS = [
   { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
   { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' },
-  { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' }
+  { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' },
+  { id: 'targets', name: 'Target Programs', icon: '/logos/adidas-logo.png' }
+]
+
+// Pipeline status configuration
+const PIPELINE_STATUSES = [
+  { id: 'identified', label: 'Identified', description: 'On our radar', color: '#6b7280' },
+  { id: 'contacted', label: 'Contacted', description: 'Initial outreach made', color: '#3b82f6' },
+  { id: 'in_discussion', label: 'In Discussion', description: 'Active conversations', color: '#8b5cf6' },
+  { id: 'proposal_sent', label: 'Proposal Sent', description: 'Offer extended', color: '#f59e0b' },
+  { id: 'negotiating', label: 'Negotiating', description: 'Working terms', color: '#ec4899' },
+  { id: 'signed', label: 'Signed', description: 'Won', color: '#10b981' },
+  { id: 'lost', label: 'Lost', description: 'Went elsewhere', color: '#ef4444' }
+]
+
+// Priority configuration
+const PRIORITIES = [
+  { id: 'high', label: 'High', description: 'Must-have programs', color: '#ef4444' },
+  { id: 'medium', label: 'Medium', description: 'Strong targets', color: '#f59e0b' },
+  { id: 'low', label: 'Low', description: 'Nice to have', color: '#6b7280' }
 ]
 
 // Auth Modal Component
@@ -265,6 +346,76 @@ function StateLabels() {
   return null
 }
 
+// Preserve map view (center + zoom) across re-renders / data refreshes
+function MapViewPreserver() {
+  const map = useMap()
+  const savedView = useRef(null)
+  const resizing = useRef(false)
+  const restoring = useRef(false)
+
+  useEffect(() => {
+    let saveTimeout = null
+    const MIN_VALID_ZOOM = 3 // Don't save views zoomed out beyond this (prevents saving bad states)
+
+    const onMoveEnd = () => {
+      // Ignore view changes triggered by container resize or restoration
+      if (resizing.current || restoring.current) return
+      // Don't save extremely zoomed-out views (likely a bug, not user intent)
+      const currentZoom = map.getZoom()
+      if (currentZoom < MIN_VALID_ZOOM) return
+      // Debounce saving to avoid capturing intermediate states during data updates
+      clearTimeout(saveTimeout)
+      saveTimeout = setTimeout(() => {
+        savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
+      }, 300) // Increased debounce to 300ms
+    }
+    const onResize = () => {
+      resizing.current = true
+      // After Leaflet finishes adjusting for the resize, restore our saved view
+      setTimeout(() => {
+        if (savedView.current) {
+          restoring.current = true
+          map.setView(savedView.current.center, savedView.current.zoom, { animate: false })
+          setTimeout(() => { restoring.current = false }, 100)
+        }
+        resizing.current = false
+      }, 50)
+    }
+    map.on('moveend', onMoveEnd)
+    map.on('zoomend', onMoveEnd)
+    map.on('resize', onResize)
+    // Capture initial view
+    savedView.current = { center: map.getCenter(), zoom: map.getZoom() }
+
+    return () => {
+      clearTimeout(saveTimeout)
+      map.off('moveend', onMoveEnd)
+      map.off('zoomend', onMoveEnd)
+      map.off('resize', onResize)
+    }
+  }, [map])
+
+  // On every render, if the map was reset or zoomed out unexpectedly, restore saved view
+  useEffect(() => {
+    if (savedView.current) {
+      const currentCenter = map.getCenter()
+      const currentZoom = map.getZoom()
+      const saved = savedView.current
+      const dist = Math.abs(currentCenter.lat - saved.center.lat) + Math.abs(currentCenter.lng - saved.center.lng)
+      // Restore if: view drifted significantly, OR zoom dropped below threshold (unexpected zoom-out)
+      const driftedTooFar = dist > 0.5 || Math.abs(currentZoom - saved.zoom) > 0.5
+      const zoomedOutUnexpectedly = currentZoom < 3 && saved.zoom >= 3
+      if (driftedTooFar || zoomedOutUnexpectedly) {
+        restoring.current = true
+        map.setView(saved.center, saved.zoom, { animate: false })
+        setTimeout(() => { restoring.current = false }, 100)
+      }
+    }
+  })
+
+  return null
+}
+
 // Map click handler to center on marker
 function FlyToMarker({ position }) {
   const map = useMap()
@@ -276,234 +427,7 @@ function FlyToMarker({ position }) {
   return null
 }
 
-// Detail Panel Component (slide-out drawer)
-function DetailPanel({ program, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete }) {
-  const [activeDetailTab, setActiveDetailTab] = useState('info')
-  const [notes, setNotes] = useState([])
-  const [schedule, setSchedule] = useState([])
-  const [newNote, setNewNote] = useState('')
-  const [newGame, setNewGame] = useState({ date: '', opponent: '', result: '', score: '' })
-  const [noteLoading, setNoteLoading] = useState(false)
-
-  useEffect(() => {
-    if (!program || !sport) return
-    const unsub1 = subscribeToNotes(sport, program.id, setNotes)
-    const unsub2 = subscribeToSchedule(sport, program.id, setSchedule)
-    return () => { unsub1(); unsub2() }
-  }, [program, sport])
-
-  useEffect(() => {
-    setActiveDetailTab('info')
-  }, [program?.id])
-
-  if (!isOpen || !program) return null
-
-  const handleAddNote = async (e) => {
-    e.preventDefault()
-    if (!newNote.trim() || !user) return
-    setNoteLoading(true)
-    try {
-      await addNote(sport, program.id, {
-        text: newNote.trim(),
-        author: user.email,
-        timestamp: Date.now()
-      })
-      setNewNote('')
-    } catch (err) {
-      console.error('Error adding note:', err)
-    } finally {
-      setNoteLoading(false)
-    }
-  }
-
-  const handleDeleteNote = async (noteId) => {
-    try {
-      await deleteNote(sport, program.id, noteId)
-    } catch (err) {
-      console.error('Error deleting note:', err)
-    }
-  }
-
-  const handleAddGame = async (e) => {
-    e.preventDefault()
-    if (!newGame.date || !newGame.opponent) return
-    try {
-      await addScheduleEntry(sport, program.id, {
-        date: newGame.date,
-        opponent: newGame.opponent,
-        result: newGame.result || '',
-        score: newGame.score || '',
-        addedBy: user?.email || '',
-        timestamp: Date.now()
-      })
-      setNewGame({ date: '', opponent: '', result: '', score: '' })
-    } catch (err) {
-      console.error('Error adding game:', err)
-    }
-  }
-
-  const handleDeleteGame = async (entryId) => {
-    try {
-      await deleteScheduleEntry(sport, program.id, entryId)
-    } catch (err) {
-      console.error('Error deleting game:', err)
-    }
-  }
-
-  const regionColor = REGIONS[program.region]?.color || '#333'
-
-  return (
-    <div className={`detail-panel ${isOpen ? 'open' : ''}`}>
-      <div className="detail-panel-profile">
-        <div className="detail-panel-logo">
-          <img src={program.logo} alt={program.name} />
-        </div>
-        <div className="detail-panel-title">
-          <h2>{program.name}</h2>
-          <p>{program.city}, {program.state}</p>
-          <span className="detail-region-badge" style={{ background: regionColor }}>{program.region}</span>
-        </div>
-        <button className="detail-panel-close" onClick={onClose}>&times;</button>
-      </div>
-
-      <div className="detail-panel-tabs">
-        {['info', 'schedule', 'notes'].map(tab => (
-          <button
-            key={tab}
-            className={`detail-tab ${activeDetailTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveDetailTab(tab)}
-          >
-            {tab === 'info' ? 'Details' : tab === 'schedule' ? 'Schedule' : `Notes (${notes.length})`}
-          </button>
-        ))}
-      </div>
-
-      <div className="detail-panel-content">
-        {activeDetailTab === 'info' && (
-          <div className="detail-info-tab">
-            {(program.conference || program.headCoach || program.ranking) && (
-              <div className="detail-section">
-                {program.conference && (
-                  <div className="detail-row"><span className="detail-label">Conference</span><span>{program.conference}</span></div>
-                )}
-                {program.headCoach && (
-                  <div className="detail-row"><span className="detail-label">Head Coach</span><span>{program.headCoach}</span></div>
-                )}
-                {program.ranking && (
-                  <div className="detail-row"><span className="detail-label">Ranking</span><span>{program.ranking}</span></div>
-                )}
-              </div>
-            )}
-
-            <div className="detail-links-section">
-              {program.website && (
-                <a href={program.website} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
-                  Website
-                </a>
-              )}
-              {program.roster && (
-                <a href={program.roster} target="_blank" rel="noopener noreferrer" className="detail-link-btn">
-                  Roster
-                </a>
-              )}
-              {program.maxprepsUrl && (
-                <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-maxpreps">
-                  MaxPreps
-                </a>
-              )}
-              {program.tcaStoreUrl && (
-                <a href={program.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-tca">
-                  TCA Store
-                </a>
-              )}
-              {program.brandGuide && (
-                <a href={program.brandGuide} download={program.brandGuideName || 'brand-guidelines.pdf'} className="detail-link-btn detail-link-brand">
-                  Brand Guidelines
-                </a>
-              )}
-            </div>
-
-            {program.gallery && program.gallery.length > 0 && (
-              <div className="detail-gallery">
-                <h4>Gallery</h4>
-                <div className="detail-gallery-grid">
-                  {program.gallery.map((img, idx) => (
-                    <img key={idx} src={img} alt={`Gallery ${idx + 1}`} className="detail-gallery-img" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {program.topProspects && (
-              <div className="detail-prospects">
-                <span className="detail-label">Top Prospects</span>
-                <p className="detail-prospects-text">{program.topProspects}</p>
-              </div>
-            )}
-
-            {isUserAllowed && (
-              <div className="detail-actions">
-                <button className="detail-edit-btn" onClick={() => onEdit(program)}>Edit Program</button>
-                <button className="detail-delete-btn" onClick={() => onDelete(program.id)}>Remove</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeDetailTab === 'schedule' && (
-          <div className="detail-schedule-tab">
-            {program.maxprepsUrl ? (
-              <a href={program.maxprepsUrl} target="_blank" rel="noopener noreferrer" className="maxpreps-banner">
-                View full schedule & results on MaxPreps &rarr;
-              </a>
-            ) : (
-              <p className="detail-empty">No MaxPreps link added yet.</p>
-            )}
-          </div>
-        )}
-
-        {activeDetailTab === 'notes' && (
-          <div className="detail-notes-tab">
-            {!isUserAllowed ? (
-              <p className="detail-empty">Sign in to view internal notes.</p>
-            ) : (
-              <>
-                <form className="add-note-form" onSubmit={handleAddNote}>
-                  <textarea
-                    value={newNote}
-                    onChange={e => setNewNote(e.target.value)}
-                    placeholder="Add an internal note..."
-                    rows={3}
-                  />
-                  <button type="submit" disabled={noteLoading || !newNote.trim()}>
-                    {noteLoading ? 'Adding...' : 'Add Note'}
-                  </button>
-                </form>
-
-                {notes.length === 0 ? (
-                  <p className="detail-empty">No notes yet.</p>
-                ) : (
-                  <div className="notes-list">
-                    {notes.map(note => (
-                      <div key={note.id} className="note-item">
-                        <div className="note-header">
-                          <span className="note-author">{note.author}</span>
-                          <span className="note-time">{new Date(note.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                        </div>
-                        <p className="note-text">{note.text}</p>
-                        <button className="note-delete" onClick={() => handleDeleteNote(note.id)}>&times;</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+// DetailPanel is now imported from ./components/DetailPanel
 
 // Admin Panel Component for managing allowed users
 function AdminPanel({ isOpen, onClose, allowedUsers }) {
@@ -862,7 +786,1442 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
   )
 }
 
+// Level color mapping
+const LEVEL_COLORS = {
+  'Mahomes': '#e31837',
+  'Gold': '#c9a84c',
+  'Silver': '#8a8d8f',
+  'Bronze': '#a0714f',
+  'Regional': '#005eb8'
+}
+
+// Digest Modal Component
+function DigestModal({ isOpen, onClose, programs, events, sport }) {
+  const [digestRange, setDigestRange] = useState('week')
+
+  if (!isOpen) return null
+
+  const now = new Date()
+  const rangeMs = digestRange === 'week' ? 7 * 86400000 : digestRange === 'month' ? 30 * 86400000 : 90 * 86400000
+  const rangeStart = new Date(now.getTime() - rangeMs)
+  const rangeEnd = new Date(now.getTime() + rangeMs)
+  const rangeStartStr = rangeStart.toISOString().split('T')[0]
+  const nowStr = now.toISOString().split('T')[0]
+  const rangeEndStr = rangeEnd.toISOString().split('T')[0]
+
+  const upcomingEvents = events.filter(e => e.date >= nowStr && e.date <= rangeEndStr)
+    .sort((a, b) => a.date.localeCompare(b.date))
+  const pastEvents = events.filter(e => e.date >= rangeStartStr && e.date < nowStr)
+    .sort((a, b) => b.date.localeCompare(a.date))
+
+  // Programs by level
+  const byLevel = {}
+  programs.forEach(p => {
+    const lvl = p.level || 'Unclassified'
+    if (!byLevel[lvl]) byLevel[lvl] = []
+    byLevel[lvl].push(p)
+  })
+
+  // Programs by region
+  const byRegion = {}
+  programs.forEach(p => {
+    const r = p.region || 'Unknown'
+    if (!byRegion[r]) byRegion[r] = []
+    byRegion[r].push(p)
+  })
+
+  const rangeLabel = digestRange === 'week' ? 'Weekly' : digestRange === 'month' ? 'Monthly' : 'Quarterly'
+
+  const handleCopyDigest = () => {
+    const lines = []
+    lines.push(`ADIDAS SELECT ${rangeLabel.toUpperCase()} DIGEST`)
+    lines.push(`Generated: ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`)
+    lines.push(`Sport: ${sport === 'football' ? 'Football' : 'Basketball'}`)
+    lines.push('')
+    lines.push(`PROGRAMS OVERVIEW (${programs.length} total)`)
+    Object.entries(byLevel).forEach(([level, progs]) => {
+      lines.push(`  ${level}: ${progs.length} programs`)
+    })
+    lines.push('')
+    lines.push('REGIONAL BREAKDOWN')
+    Object.entries(byRegion).forEach(([region, progs]) => {
+      lines.push(`  ${region}: ${progs.length} programs`)
+      progs.forEach(p => lines.push(`    - ${p.name} (${p.city}, ${p.state})`))
+    })
+    lines.push('')
+    if (upcomingEvents.length > 0) {
+      lines.push(`UPCOMING EVENTS (${upcomingEvents.length})`)
+      upcomingEvents.forEach(e => {
+        lines.push(`  - ${e.name} | ${e.date} | ${e.city}, ${e.state}${e.proposed ? ' [PROPOSED]' : ''}`)
+      })
+    }
+    if (pastEvents.length > 0) {
+      lines.push('')
+      lines.push(`RECENT EVENTS (${pastEvents.length})`)
+      pastEvents.forEach(e => {
+        lines.push(`  - ${e.name} | ${e.date} | ${e.city}, ${e.state}`)
+      })
+    }
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      alert('Digest copied to clipboard!')
+    }).catch(() => {
+      // Fallback: select text
+      const ta = document.createElement('textarea')
+      ta.value = lines.join('\n')
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      alert('Digest copied to clipboard!')
+    })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="digest-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Program Digest</h2>
+        <p className="digest-subtitle">{sport === 'football' ? 'Select Football' : 'Select Basketball'} Summary</p>
+
+        <div className="digest-range-picker">
+          {['week', 'month', 'quarter'].map(r => (
+            <button key={r} className={`digest-range-btn ${digestRange === r ? 'active' : ''}`} onClick={() => setDigestRange(r)}>
+              {r === 'week' ? 'Weekly' : r === 'month' ? 'Monthly' : 'Quarterly'}
+            </button>
+          ))}
+        </div>
+
+        <div className="digest-body">
+          <div className="digest-section">
+            <h3>Programs Overview</h3>
+            <div className="digest-stat-row">
+              <span className="digest-stat-big">{programs.length}</span>
+              <span className="digest-stat-label">Total Programs</span>
+            </div>
+            {Object.entries(byLevel).map(([level, progs]) => (
+              <div key={level} className="digest-level-row">
+                <span className="digest-level-badge" style={{ background: LEVEL_COLORS[level] || '#666' }}>{level}</span>
+                <span className="digest-level-count">{progs.length}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="digest-section">
+            <h3>Regional Breakdown</h3>
+            {Object.entries(byRegion).map(([region, progs]) => (
+              <div key={region} className="digest-region-group">
+                <div className="digest-region-header">
+                  <span className="digest-region-dot" style={{ background: REGIONS[region]?.color || '#999' }} />
+                  <span className="digest-region-name">{region}</span>
+                  <span className="digest-region-count">{progs.length}</span>
+                </div>
+                <div className="digest-region-programs">
+                  {progs.map(p => (
+                    <span key={p.id} className="digest-program-chip">{p.name}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {upcomingEvents.length > 0 && (
+            <div className="digest-section">
+              <h3>Upcoming Events ({upcomingEvents.length})</h3>
+              {upcomingEvents.map(e => (
+                <div key={e.id} className="digest-event-item">
+                  <span className="digest-event-date">{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <div className="digest-event-info">
+                    <span className="digest-event-name">{e.name}</span>
+                    <span className="digest-event-loc">{e.city}, {e.state}</span>
+                  </div>
+                  {e.proposed && <span className="digest-event-proposed">Proposed</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {pastEvents.length > 0 && (
+            <div className="digest-section">
+              <h3>Recent Events ({pastEvents.length})</h3>
+              {pastEvents.slice(0, 5).map(e => (
+                <div key={e.id} className="digest-event-item digest-event-past">
+                  <span className="digest-event-date">{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <div className="digest-event-info">
+                    <span className="digest-event-name">{e.name}</span>
+                    <span className="digest-event-loc">{e.city}, {e.state}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="digest-actions">
+          <button className="digest-copy-btn" onClick={handleCopyDigest}>Copy Digest to Clipboard</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Reports Modal Component
+function ReportsModal({ isOpen, onClose, programs, events, sport }) {
+  const [reportType, setReportType] = useState('overview')
+  const [filterGender, setFilterGender] = useState('all')
+  const [filterLevel, setFilterLevel] = useState('all')
+  const [filterRegion, setFilterRegion] = useState('all')
+  const [filterConf, setFilterConf] = useState('all')
+  const [sortCols, setSortCols] = useState([{ col: 'name', dir: 'asc' }])
+
+  if (!isOpen) return null
+
+  const filtered = programs.filter(p => {
+    if (filterGender !== 'all') {
+      const programGender = p.gender || 'Boys'
+      if (programGender !== filterGender) return false
+    }
+    if (filterLevel !== 'all' && (p.level || '') !== filterLevel) return false
+    if (filterRegion !== 'all' && p.region !== filterRegion) return false
+    if (filterConf !== 'all' && (p.conference || '') !== filterConf) return false
+    return true
+  })
+
+  const uniqueLevels = [...new Set(programs.map(p => p.level).filter(Boolean))]
+  const uniqueConfs = [...new Set(programs.map(p => p.conference).filter(Boolean))].sort()
+
+  const handleSort = (col, e) => {
+    const existingIndex = sortCols.findIndex(s => s.col === col)
+
+    if (e && e.shiftKey) {
+      // Shift+click: add to multi-sort or toggle direction if already exists
+      if (existingIndex >= 0) {
+        setSortCols(prev => prev.map((s, i) =>
+          i === existingIndex ? { ...s, dir: s.dir === 'asc' ? 'desc' : 'asc' } : s
+        ))
+      } else {
+        setSortCols(prev => [...prev, { col, dir: 'asc' }])
+      }
+    } else {
+      // Regular click: single column sort (toggle direction if same column)
+      if (existingIndex === 0 && sortCols.length === 1) {
+        setSortCols([{ col, dir: sortCols[0].dir === 'asc' ? 'desc' : 'asc' }])
+      } else {
+        setSortCols([{ col, dir: 'asc' }])
+      }
+    }
+  }
+
+  const getColValue = (item, col) => {
+    switch (col) {
+      case 'name': return item.name || ''
+      case 'gender': return item.gender || 'Boys'
+      case 'location': return `${item.state || ''},${item.city || ''}`
+      case 'region': return item.region || ''
+      case 'level': {
+        const levelOrder = { 'Gold': 0, 'Silver': 1, 'Bronze': 2, 'Regional': 3 }
+        return levelOrder[item.level] ?? 4
+      }
+      case 'conference': return item.conference || ''
+      case 'coach': return item.headCoach || ''
+      case 'contact': return item.contactEmail || item.contactPhone || ''
+      default: return item.name || ''
+    }
+  }
+
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    for (const { col, dir } of sortCols) {
+      const aVal = getColValue(a, col)
+      const bVal = getColValue(b, col)
+      const cmp = col === 'level' ? aVal - bVal : String(aVal).localeCompare(String(bVal))
+      if (cmp !== 0) return dir === 'asc' ? cmp : -cmp
+    }
+    return 0
+  })
+
+  const SortTh = ({ col, children }) => {
+    const sortIndex = sortCols.findIndex(s => s.col === col)
+    const isActive = sortIndex >= 0
+    const sortInfo = isActive ? sortCols[sortIndex] : null
+    const showPriority = sortCols.length > 1 && isActive
+
+    return (
+      <th
+        className={`report-sortable-th ${isActive ? 'active' : ''}`}
+        onClick={(e) => handleSort(col, e)}
+        title="Click to sort, Shift+click to add secondary sort"
+      >
+        {children}
+        {showPriority && <span className="report-sort-priority">{sortIndex + 1}</span>}
+        <span className="report-sort-arrow">
+          {isActive ? (sortInfo.dir === 'asc' ? '\u25B2' : '\u25BC') : '\u25B4'}
+        </span>
+      </th>
+    )
+  }
+
+  const handlePrint = () => {
+    document.body.classList.add('printing-report')
+    window.print()
+    document.body.classList.remove('printing-report')
+  }
+
+  const handleExportReport = () => {
+    const today = new Date().toISOString().split('T')[0]
+    let csv = ''
+
+    if (reportType === 'overview' || reportType === 'programs') {
+      const headers = ['Name', 'Gender', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach', 'Ranking', 'Contact Email', 'Contact Phone', 'Twitter', 'Instagram']
+      const rows = filtered.map(p => [
+        p.name || '', p.gender || 'Boys', p.city || '', p.state || '', p.region || '', p.level || '',
+        p.conference || '', p.headCoach || '', p.ranking || '',
+        p.contactEmail || '', p.contactPhone || '', p.twitter || '', p.instagram || ''
+      ])
+      csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    } else {
+      const headers = ['Name', 'Date', 'End Date', 'City', 'State', 'Host/Partner', 'Proposed', 'Description']
+      const rows = events.map(e => [
+        e.name || '', e.date || '', e.endDate || '', e.city || '', e.state || '',
+        e.hostPartner || '', e.proposed ? 'Yes' : 'No', e.description || ''
+      ])
+      csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const link = document.createElement('a')
+    link.download = `adidas-select-${reportType}-report-${today}.csv`
+    link.href = URL.createObjectURL(blob)
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  const nowStr = new Date().toISOString().split('T')[0]
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="reports-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Reports</h2>
+
+        <div className="reports-tabs">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'programs', label: 'Programs' },
+            { id: 'events', label: 'Events' }
+          ].map(t => (
+            <button key={t.id} className={`reports-tab ${reportType === t.id ? 'active' : ''}`} onClick={() => setReportType(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {(reportType === 'overview' || reportType === 'programs') && (
+          <div className="reports-filters">
+            <select value={filterGender} onChange={e => setFilterGender(e.target.value)}>
+              <option value="all">All Genders</option>
+              <option value="Boys">Boys</option>
+              <option value="Girls">Girls</option>
+            </select>
+            <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}>
+              <option value="all">All Levels</option>
+              {uniqueLevels.map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+            <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
+              <option value="all">All Regions</option>
+              {Object.keys(REGIONS).map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <select value={filterConf} onChange={e => setFilterConf(e.target.value)}>
+              <option value="all">All Conferences</option>
+              {uniqueConfs.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div className="reports-body printable-report">
+          {reportType === 'overview' && (
+            <div className="report-overview">
+              <div className="report-summary-grid">
+                <div className="report-summary-card">
+                  <span className="report-card-value">{filtered.length}</span>
+                  <span className="report-card-label">Programs</span>
+                </div>
+                <div className="report-summary-card">
+                  <span className="report-card-value">{new Set(filtered.map(p => p.state).filter(Boolean)).size}</span>
+                  <span className="report-card-label">States</span>
+                </div>
+                <div className="report-summary-card">
+                  <span className="report-card-value">{new Set(filtered.map(p => p.region).filter(Boolean)).size}</span>
+                  <span className="report-card-label">Regions</span>
+                </div>
+                <div className="report-summary-card">
+                  <span className="report-card-value">{events.filter(e => e.date >= nowStr).length}</span>
+                  <span className="report-card-label">Upcoming Events</span>
+                </div>
+              </div>
+
+              <h3>Programs by Level</h3>
+              <div className="report-level-breakdown">
+                {['Gold', 'Silver', 'Bronze', 'Regional'].map(level => {
+                  const count = filtered.filter(p => p.level === level).length
+                  if (count === 0) return null
+                  return (
+                    <div key={level} className="report-level-row">
+                      <span className="report-level-badge" style={{ background: LEVEL_COLORS[level] }}>{level}</span>
+                      <div className="report-level-bar-track">
+                        <div className="report-level-bar-fill" style={{ width: `${(count / Math.max(filtered.length, 1)) * 100}%`, background: LEVEL_COLORS[level] }} />
+                      </div>
+                      <span className="report-level-count">{count}</span>
+                    </div>
+                  )
+                })}
+                {filtered.filter(p => !p.level).length > 0 && (
+                  <div className="report-level-row">
+                    <span className="report-level-badge" style={{ background: '#666' }}>Unclassified</span>
+                    <div className="report-level-bar-track">
+                      <div className="report-level-bar-fill" style={{ width: `${(filtered.filter(p => !p.level).length / Math.max(filtered.length, 1)) * 100}%`, background: '#666' }} />
+                    </div>
+                    <span className="report-level-count">{filtered.filter(p => !p.level).length}</span>
+                  </div>
+                )}
+              </div>
+
+              <h3>Programs by Region</h3>
+              {Object.keys(REGIONS).map(region => {
+                const regionProgs = filtered.filter(p => p.region === region)
+                if (regionProgs.length === 0) return null
+                return (
+                  <div key={region} className="report-region-group">
+                    <div className="report-region-header">
+                      <span className="report-region-dot" style={{ background: REGIONS[region].color }} />
+                      <span>{region}</span>
+                      <span className="report-region-count">{regionProgs.length}</span>
+                    </div>
+                    <table className="report-table">
+                      <thead>
+                        <tr><th>Program</th><th>Gender</th><th>City</th><th>Level</th><th>Coach</th></tr>
+                      </thead>
+                      <tbody>
+                        {regionProgs.map(p => (
+                          <tr key={p.id}>
+                            <td>{p.name}</td>
+                            <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
+                            <td>{p.city}, {p.state}</td>
+                            <td>{p.level || '-'}</td>
+                            <td>{p.headCoach || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {reportType === 'programs' && (
+            <div className="report-programs">
+              <p className="report-count">{filtered.length} programs</p>
+              <table className="report-table report-table-full">
+                <thead>
+                  <tr>
+                    <SortTh col="name">Program</SortTh>
+                    <SortTh col="gender">Gender</SortTh>
+                    <SortTh col="location">Location</SortTh>
+                    <SortTh col="region">Region</SortTh>
+                    <SortTh col="level">Level</SortTh>
+                    <SortTh col="conference">Conference</SortTh>
+                    <SortTh col="coach">Coach</SortTh>
+                    <SortTh col="contact">Contact</SortTh>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedFiltered.map(p => (
+                    <tr key={p.id}>
+                      <td className="report-program-name">{p.logo && <img src={p.logo} alt="" className="report-program-logo" />}{p.name}</td>
+                      <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
+                      <td>{p.city}, {p.state}</td>
+                      <td><span className="report-region-chip" style={{ background: REGIONS[p.region]?.color || '#666' }}>{p.region}</span></td>
+                      <td>{p.level ? <span className="report-level-chip" style={{ background: LEVEL_COLORS[p.level] || '#666' }}>{p.level}</span> : '-'}</td>
+                      <td>{p.conference || '-'}</td>
+                      <td>{p.headCoach || '-'}</td>
+                      <td>{p.contactEmail || p.contactPhone || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {reportType === 'events' && (
+            <div className="report-events">
+              <h3>Upcoming Events ({events.filter(e => e.date >= nowStr).length})</h3>
+              <table className="report-table report-table-full">
+                <thead>
+                  <tr><th>Event</th><th>Date</th><th>Location</th><th>Host</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  {events.filter(e => e.date >= nowStr).sort((a, b) => a.date.localeCompare(b.date)).map(e => (
+                    <tr key={e.id}>
+                      <td className="report-program-name">{e.name}</td>
+                      <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                      <td>{e.city}, {e.state}</td>
+                      <td>{e.hostPartner || '-'}</td>
+                      <td>{e.proposed ? <span className="report-status-proposed">Proposed</span> : <span className="report-status-confirmed">Confirmed</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 style={{ marginTop: 20 }}>Past Events ({events.filter(e => e.date < nowStr).length})</h3>
+              <table className="report-table report-table-full">
+                <thead>
+                  <tr><th>Event</th><th>Date</th><th>Location</th><th>Host</th></tr>
+                </thead>
+                <tbody>
+                  {events.filter(e => e.date < nowStr).sort((a, b) => b.date.localeCompare(a.date)).map(e => (
+                    <tr key={e.id}>
+                      <td>{e.name}</td>
+                      <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                      <td>{e.city}, {e.state}</td>
+                      <td>{e.hostPartner || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="reports-actions">
+          <button className="reports-export-btn" onClick={handleExportReport}>Export CSV</button>
+          <button className="reports-print-btn" onClick={handlePrint}>Print Report</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Program Comparison Modal Component
+function ComparisonModal({ isOpen, onClose, programs }) {
+  const [program1Id, setProgram1Id] = useState('')
+  const [program2Id, setProgram2Id] = useState('')
+
+  if (!isOpen) return null
+
+  const program1 = programs.find(p => p.id === program1Id)
+  const program2 = programs.find(p => p.id === program2Id)
+
+  const ComparisonField = ({ label, value1, value2 }) => (
+    <div className="comparison-row">
+      <span className="comparison-label">{label}</span>
+      <span className="comparison-value">{value1 || '-'}</span>
+      <span className="comparison-value">{value2 || '-'}</span>
+    </div>
+  )
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="comparison-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Compare Programs</h2>
+
+        <div className="comparison-selector">
+          <select value={program1Id} onChange={e => setProgram1Id(e.target.value)}>
+            <option value="">Select first program</option>
+            {programs.filter(p => !p.isArchived).map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <select value={program2Id} onChange={e => setProgram2Id(e.target.value)}>
+            <option value="">Select second program</option>
+            {programs.filter(p => !p.isArchived).map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {program1 && program2 && (
+          <div className="comparison-grid">
+            <div className="comparison-card">
+              <div className="comparison-card-header">
+                {program1.logo && <img src={program1.logo} alt="" className="comparison-card-logo" />}
+                <div className="comparison-card-title">
+                  <h3>{program1.name}</h3>
+                  <p>{program1.city}, {program1.state}</p>
+                </div>
+              </div>
+            </div>
+            <div className="comparison-card">
+              <div className="comparison-card-header">
+                {program2.logo && <img src={program2.logo} alt="" className="comparison-card-logo" />}
+                <div className="comparison-card-title">
+                  <h3>{program2.name}</h3>
+                  <p>{program2.city}, {program2.state}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {program1 && program2 && (
+          <table className="report-table report-table-full" style={{ marginTop: 20 }}>
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>{program1.name}</th>
+                <th>{program2.name}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Region</td><td>{program1.region || '-'}</td><td>{program2.region || '-'}</td></tr>
+              <tr><td>Level</td><td>{program1.level || '-'}</td><td>{program2.level || '-'}</td></tr>
+              <tr><td>Conference</td><td>{program1.conference || '-'}</td><td>{program2.conference || '-'}</td></tr>
+              <tr><td>Head Coach</td><td>{program1.headCoach || '-'}</td><td>{program2.headCoach || '-'}</td></tr>
+              <tr><td>Gender</td><td>{program1.gender || 'Boys'}</td><td>{program2.gender || 'Boys'}</td></tr>
+              <tr><td>Ranking</td><td>{program1.ranking || '-'}</td><td>{program2.ranking || '-'}</td></tr>
+              <tr><td>Instagram</td><td>{program1.instagram || '-'}</td><td>{program2.instagram || '-'}</td></tr>
+              <tr><td>Twitter</td><td>{program1.twitter || '-'}</td><td>{program2.twitter || '-'}</td></tr>
+            </tbody>
+          </table>
+        )}
+
+        {(!program1 || !program2) && (
+          <p className="detail-empty" style={{ textAlign: 'center', marginTop: 40 }}>
+            Select two programs to compare their details side by side.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Archive Modal Component
+function ArchiveModal({ isOpen, onClose, archivedPrograms, onRestore, onDelete, sport }) {
+  if (!isOpen) return null
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="archive-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Archived Programs</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 16 }}>
+          Archived programs are hidden from the map but can be restored at any time.
+        </p>
+
+        {archivedPrograms.length === 0 ? (
+          <p className="detail-empty">No archived programs.</p>
+        ) : (
+          <div className="archive-list">
+            {archivedPrograms.map(program => (
+              <div key={program.id} className="archive-item">
+                {program.logo && <img src={program.logo} alt="" className="archive-item-logo" />}
+                <div className="archive-item-info">
+                  <div className="archive-item-name">{program.name}</div>
+                  <div className="archive-item-location">{program.city}, {program.state}</div>
+                  {program.archivedAt && (
+                    <div className="archive-item-date">
+                      Archived {new Date(program.archivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  )}
+                </div>
+                <button className="archive-restore-btn" onClick={() => onRestore(sport, program.id)}>
+                  Restore
+                </button>
+                <button className="archive-delete-btn" onClick={() => onDelete(sport, program.id)}>
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Bulk Edit Modal Component - for editing multiple programs at once
+function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
+  const [editedPrograms, setEditedPrograms] = useState({})
+  const [programsToDelete, setProgramsToDelete] = useState(new Set())
+  const [saving, setSaving] = useState(false)
+  const [filter, setFilter] = useState('all') // 'all', 'missing-coach', 'missing-contact'
+
+  useEffect(() => {
+    if (isOpen) {
+      setEditedPrograms({})
+      setProgramsToDelete(new Set())
+      setFilter('all')
+    }
+  }, [isOpen])
+
+  const toggleDeleteProgram = (programId) => {
+    setProgramsToDelete(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(programId)) {
+        newSet.delete(programId)
+      } else {
+        newSet.add(programId)
+      }
+      return newSet
+    })
+  }
+
+  if (!isOpen) return null
+
+  const filteredPrograms = programs.filter(p => {
+    if (filter === 'missing-coach') return !p.headCoach
+    if (filter === 'missing-contact') return !p.contactEmail && !p.contactPhone
+    if (filter === 'missing-instagram') return !p.instagram
+    return true
+  })
+
+  const handleFieldChange = (programId, field, value) => {
+    setEditedPrograms(prev => ({
+      ...prev,
+      [programId]: {
+        ...(prev[programId] || {}),
+        [field]: value
+      }
+    }))
+  }
+
+  const getFieldValue = (program, field) => {
+    if (editedPrograms[program.id] && editedPrograms[program.id][field] !== undefined) {
+      return editedPrograms[program.id][field]
+    }
+    return program[field] || ''
+  }
+
+  const hasChanges = Object.keys(editedPrograms).length > 0 || programsToDelete.size > 0
+
+  const handleSaveAll = async () => {
+    if (programsToDelete.size > 0) {
+      const confirmMsg = `Archive ${programsToDelete.size} program${programsToDelete.size > 1 ? 's' : ''}? They will be hidden but can be restored later.`
+      if (!window.confirm(confirmMsg)) {
+        return
+      }
+    }
+
+    setSaving(true)
+    try {
+      // Handle deletions first (only if there are programs to delete)
+      if (programsToDelete.size > 0 && onDelete) {
+        const deleteIds = Array.from(programsToDelete)
+        for (const programId of deleteIds) {
+          await onDelete(programId)
+        }
+      }
+
+      // Then handle edits (skip programs that were deleted)
+      for (const [programId, changes] of Object.entries(editedPrograms)) {
+        if (programsToDelete.size === 0 || !programsToDelete.has(programId)) {
+          const program = programs.find(p => p.id === programId)
+          if (program) {
+            await onSave({ ...program, ...changes })
+          }
+        }
+      }
+      setEditedPrograms({})
+      setProgramsToDelete(new Set())
+      onClose()
+    } catch (err) {
+      console.error('Error saving:', err)
+      alert('Error saving changes. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const changedCount = Object.keys(editedPrograms).length
+  const deleteCount = programsToDelete.size
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="bulk-edit-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <div className="bulk-edit-header">
+          <h2>Bulk Edit Programs</h2>
+          <p className="bulk-edit-subtitle">Edit multiple programs at once. Changes save when you click "Save All".</p>
+        </div>
+
+        <div className="bulk-edit-toolbar">
+          <select value={filter} onChange={e => setFilter(e.target.value)} className="bulk-edit-filter">
+            <option value="all">All Programs ({programs.length})</option>
+            <option value="missing-coach">Missing Coach ({programs.filter(p => !p.headCoach).length})</option>
+            <option value="missing-contact">Missing Contact ({programs.filter(p => !p.contactEmail && !p.contactPhone).length})</option>
+            <option value="missing-instagram">Missing Instagram ({programs.filter(p => !p.instagram).length})</option>
+          </select>
+          <span className="bulk-edit-count">
+            Showing {filteredPrograms.length} programs
+            {changedCount > 0 && <span className="bulk-edit-changed"> • {changedCount} modified</span>}
+            {deleteCount > 0 && <span className="bulk-edit-delete-count"> • {deleteCount} to archive</span>}
+          </span>
+        </div>
+
+        <div className="bulk-edit-table-wrapper">
+          <table className="bulk-edit-table">
+            <thead>
+              <tr>
+                <th className="bulk-edit-th-delete">Archive</th>
+                <th className="bulk-edit-th-name">Program</th>
+                <th>Head Coach</th>
+                <th>Contact Email</th>
+                <th>Contact Phone</th>
+                <th>Instagram</th>
+                <th>Twitter</th>
+                <th>TCA Store</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPrograms.map(program => {
+                const isModified = !!editedPrograms[program.id]
+                const isMarkedForDelete = programsToDelete.has(program.id)
+                return (
+                  <tr key={program.id} className={`${isModified ? 'bulk-edit-row-modified' : ''} ${isMarkedForDelete ? 'bulk-edit-row-delete' : ''}`}>
+                    <td className="bulk-edit-td-delete">
+                      <input
+                        type="checkbox"
+                        checked={isMarkedForDelete}
+                        onChange={() => toggleDeleteProgram(program.id)}
+                        className="bulk-edit-delete-checkbox"
+                        title="Mark for archive"
+                      />
+                    </td>
+                    <td className="bulk-edit-td-name">
+                      <div className="bulk-edit-program-info">
+                        {program.logo && <img src={program.logo} alt="" className="bulk-edit-logo" />}
+                        <div>
+                          <div className="bulk-edit-program-name">{program.name}</div>
+                          <div className="bulk-edit-program-location">{program.city}, {program.state}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={getFieldValue(program, 'headCoach')}
+                        onChange={e => handleFieldChange(program.id, 'headCoach', e.target.value)}
+                        placeholder="Coach name"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="email"
+                        value={getFieldValue(program, 'contactEmail')}
+                        onChange={e => handleFieldChange(program.id, 'contactEmail', e.target.value)}
+                        placeholder="email@example.com"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="tel"
+                        value={getFieldValue(program, 'contactPhone')}
+                        onChange={e => handleFieldChange(program.id, 'contactPhone', e.target.value)}
+                        placeholder="555-123-4567"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={getFieldValue(program, 'instagram')}
+                        onChange={e => handleFieldChange(program.id, 'instagram', e.target.value)}
+                        placeholder="@handle"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={getFieldValue(program, 'twitter')}
+                        onChange={e => handleFieldChange(program.id, 'twitter', e.target.value)}
+                        placeholder="@handle"
+                        className="bulk-edit-input"
+                      />
+                    </td>
+                    <td className="bulk-edit-tca-store">
+                      {program.tcaStoreUrl ? (
+                        <a href={program.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="bulk-edit-tca-yes">Yes</a>
+                      ) : (
+                        <span className="bulk-edit-tca-no">No</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="bulk-edit-footer">
+          <button className="bulk-edit-cancel" onClick={onClose}>Cancel</button>
+          <button
+            className="bulk-edit-save"
+            onClick={handleSaveAll}
+            disabled={!hasChanges || saving}
+          >
+            {saving ? 'Saving...' : `Save All${changedCount > 0 || deleteCount > 0 ? ` (${changedCount + deleteCount})` : ''}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Contract Dashboard Modal Component
+function ContractDashboard({ isOpen, onClose, programs, allContractDetails, sport }) {
+  const [sortCol, setSortCol] = useState('name')
+  const [sortDir, setSortDir] = useState('asc')
+  const [filterStatus, setFilterStatus] = useState('all') // 'all', 'expiring', 'active', 'none'
+
+  if (!isOpen) return null
+
+  const currentYear = new Date().getFullYear()
+
+  const getContractStatus = (contract) => {
+    if (!contract) return 'none'
+    const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+    const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+    const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
+    return isExpiring ? 'expiring' : 'active'
+  }
+
+  const rows = programs
+    .filter(p => p && p.id)
+    .map(p => {
+      const contract = allContractDetails[p.id] || null
+      const status = getContractStatus(contract)
+      return { program: p, contract, status }
+    })
+    .filter(r => filterStatus === 'all' || r.status === filterStatus)
+
+  rows.sort((a, b) => {
+    let aVal, bVal
+    switch (sortCol) {
+      case 'name': aVal = a.program.name || ''; bVal = b.program.name || ''; break
+      case 'region': aVal = a.program.region || ''; bVal = b.program.region || ''; break
+      case 'term': aVal = a.contract?.term || ''; bVal = b.contract?.term || ''; break
+      case 'travel': aVal = a.contract?.travelStipend || ''; bVal = b.contract?.travelStipend || ''; break
+      case 'product': aVal = a.contract?.productAllotment || ''; bVal = b.contract?.productAllotment || ''; break
+      case 'status': aVal = a.status; bVal = b.status; break
+      default: aVal = ''; bVal = ''
+    }
+    const cmp = aVal.localeCompare(bVal)
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  const handleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
+  }
+
+  const totalContracts = programs.filter(p => allContractDetails[p.id]).length
+  const expiringCount = programs.filter(p => getContractStatus(allContractDetails[p.id]) === 'expiring').length
+  const activeCount = programs.filter(p => getContractStatus(allContractDetails[p.id]) === 'active').length
+  const noContractCount = programs.length - totalContracts
+
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <span className="sort-icon sort-icon-neutral">⇅</span>
+    return <span className="sort-icon">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
+
+  const statusLabel = (status) => {
+    if (status === 'expiring') return <span className="cd-status cd-status-expiring">Expiring {currentYear}</span>
+    if (status === 'active') return <span className="cd-status cd-status-active">Active</span>
+    return <span className="cd-status cd-status-none">No Contract</span>
+  }
+
+  const handleExportCSV = () => {
+    const headers = ['School', 'Region', 'State', 'Term', 'Travel Stipend', 'Product Allotment', 'Incentive Structure', 'Status', 'Last Updated']
+    const csvRows = rows.map(r => [
+      r.program.name || '',
+      r.program.region || '',
+      r.program.state || '',
+      r.contract?.term || '',
+      r.contract?.travelStipend || '',
+      r.contract?.productAllotment || '',
+      r.contract?.incentiveStructure || '',
+      r.status,
+      r.contract?.lastUpdated ? new Date(r.contract.lastUpdated).toLocaleDateString() : ''
+    ])
+    const csv = [headers, ...csvRows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const link = document.createElement('a')
+    link.download = `adidas-select-contracts-${sport}-${new Date().toISOString().split('T')[0]}.csv`
+    link.href = URL.createObjectURL(blob)
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="contract-dashboard-modal" onClick={e => e.stopPropagation()}>
+        <div className="cd-header">
+          <div className="cd-title-row">
+            <h2 className="cd-title">Contract Overview — {sport === 'basketball' ? 'Select Basketball' : 'Select Football'}</h2>
+            <button className="modal-close" onClick={onClose}>&times;</button>
+          </div>
+          <div className="cd-summary">
+            <div className="cd-summary-item">
+              <span className="cd-summary-value">{programs.length}</span>
+              <span className="cd-summary-label">Total Programs</span>
+            </div>
+            <div className="cd-summary-item">
+              <span className="cd-summary-value">{totalContracts}</span>
+              <span className="cd-summary-label">Under Contract</span>
+            </div>
+            <div className="cd-summary-item cd-summary-expiring">
+              <span className="cd-summary-value">{expiringCount}</span>
+              <span className="cd-summary-label">Expiring {currentYear}</span>
+            </div>
+            <div className="cd-summary-item cd-summary-active">
+              <span className="cd-summary-value">{activeCount}</span>
+              <span className="cd-summary-label">Active</span>
+            </div>
+            <div className="cd-summary-item cd-summary-none">
+              <span className="cd-summary-value">{noContractCount}</span>
+              <span className="cd-summary-label">No Data</span>
+            </div>
+          </div>
+          <div className="cd-controls">
+            <div className="cd-filter-pills">
+              {['all', 'expiring', 'active', 'none'].map(s => (
+                <button
+                  key={s}
+                  className={`cd-filter-pill ${filterStatus === s ? 'active' : ''} ${s !== 'all' ? `cd-pill-${s}` : ''}`}
+                  onClick={() => setFilterStatus(s)}
+                >
+                  {s === 'all' ? 'All' : s === 'none' ? 'No Contract' : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button className="cd-export-btn" onClick={handleExportCSV}>Export CSV</button>
+          </div>
+        </div>
+
+        <div className="cd-table-wrap">
+          <table className="cd-table">
+            <thead>
+              <tr>
+                <th className="cd-th sortable" onClick={() => handleSort('name')}>School <SortIcon col="name" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('region')}>Region <SortIcon col="region" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('term')}>Term <SortIcon col="term" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('travel')}>Travel Stipend <SortIcon col="travel" /></th>
+                <th className="cd-th sortable" onClick={() => handleSort('product')}>Product Allotment <SortIcon col="product" /></th>
+                <th className="cd-th">Incentive Structure</th>
+                <th className="cd-th sortable" onClick={() => handleSort('status')}>Status <SortIcon col="status" /></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ program, contract, status }) => (
+                <tr key={program.id} className={`cd-row cd-row-${status}`}>
+                  <td className="cd-td cd-td-name">
+                    {program.logo && <img src={program.logo} alt="" className="cd-logo" />}
+                    <span>{program.name}</span>
+                  </td>
+                  <td className="cd-td">{program.region || '—'}</td>
+                  <td className="cd-td">{contract?.term || '—'}</td>
+                  <td className="cd-td">{contract?.travelStipend || '—'}</td>
+                  <td className="cd-td">{contract?.productAllotment || '—'}</td>
+                  <td className="cd-td cd-td-incentive">{contract?.incentiveStructure || '—'}</td>
+                  <td className="cd-td">{statusLabel(status)}</td>
+                </tr>
+              ))}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="cd-empty">No programs match the selected filter.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="cd-footer">
+          <span>{rows.length} program{rows.length !== 1 ? 's' : ''} shown</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Competitor Events Modal Component
+const COMPETITOR_BRANDS = {
+  nike: { label: 'Nike', color: '#F35B04' },
+  ua: { label: 'Under Armour', color: '#E03A3E' },
+  puma: { label: 'Puma', color: '#00857C' },
+  general: { label: 'General', color: '#6b7280' }
+}
+
+const EVENT_TYPES = ['Circuit', 'Camp', 'Showcase', 'Combine', 'Tournament', 'Other']
+
+function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDelete, isUserAllowed, userEmail }) {
+  const [filterBrand, setFilterBrand] = useState('all')
+  const [isAdding, setIsAdding] = useState(false)
+  const [isBulkImporting, setIsBulkImporting] = useState(false)
+  const [bulkImportText, setBulkImportText] = useState('')
+  const [bulkImportStatus, setBulkImportStatus] = useState(null)
+  const [editingEvent, setEditingEvent] = useState(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    brand: 'nike',
+    date: '',
+    endDate: '',
+    city: '',
+    state: '',
+    type: 'Circuit',
+    isLivePeriod: false,
+    notes: ''
+  })
+
+  if (!isOpen) return null
+
+  const filteredEvents = filterBrand === 'all'
+    ? events
+    : events.filter(e => e.brand === filterBrand)
+
+  // Split into upcoming and past
+  const today = new Date().toISOString().split('T')[0]
+  const upcomingEvents = filteredEvents.filter(e => e.date >= today)
+  const pastEvents = filteredEvents.filter(e => e.date < today).reverse()
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      brand: 'nike',
+      date: '',
+      endDate: '',
+      city: '',
+      state: '',
+      type: 'Circuit',
+      isLivePeriod: false,
+      notes: ''
+    })
+    setIsAdding(false)
+    setEditingEvent(null)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      if (editingEvent) {
+        await onUpdate(editingEvent.id, { ...formData, addedBy: editingEvent.addedBy })
+      } else {
+        await onAdd({ ...formData, addedBy: userEmail })
+      }
+      resetForm()
+    } catch (err) {
+      console.error('Error saving competitor event:', err)
+      alert('Failed to save event. Please try again.')
+    }
+  }
+
+  const handleEdit = (event) => {
+    setFormData({
+      name: event.name || '',
+      brand: event.brand || 'nike',
+      date: event.date || '',
+      endDate: event.endDate || '',
+      city: event.city || '',
+      state: event.state || '',
+      type: event.type || 'Circuit',
+      isLivePeriod: event.isLivePeriod || false,
+      notes: event.notes || ''
+    })
+    setEditingEvent(event)
+    setIsAdding(true)
+  }
+
+  const handleDelete = async (eventId) => {
+    if (!confirm('Delete this competitor event?')) return
+    try {
+      await onDelete(eventId)
+    } catch (err) {
+      console.error('Error deleting competitor event:', err)
+    }
+  }
+
+  const handleBulkImport = async () => {
+    setBulkImportStatus({ type: 'loading', message: 'Importing...' })
+    try {
+      const eventsToAdd = JSON.parse(bulkImportText)
+      if (!Array.isArray(eventsToAdd)) {
+        throw new Error('Input must be a JSON array')
+      }
+      let added = 0
+      for (const event of eventsToAdd) {
+        if (!event.name || !event.date) {
+          console.warn('Skipping event missing name or date:', event)
+          continue
+        }
+        await onAdd({
+          name: event.name,
+          brand: event.brand || 'general',
+          date: event.date,
+          endDate: event.endDate || '',
+          city: event.city || '',
+          state: event.state || '',
+          type: event.type || 'Circuit',
+          isLivePeriod: event.isLivePeriod || false,
+          notes: event.notes || '',
+          addedBy: userEmail
+        })
+        added++
+      }
+      setBulkImportStatus({ type: 'success', message: `Added ${added} events!` })
+      setBulkImportText('')
+      setTimeout(() => {
+        setIsBulkImporting(false)
+        setBulkImportStatus(null)
+      }, 1500)
+    } catch (err) {
+      console.error('Bulk import error:', err)
+      setBulkImportStatus({ type: 'error', message: `Error: ${err.message}` })
+    }
+  }
+
+  const formatDateRange = (start, end) => {
+    const startDate = new Date(start + 'T00:00:00')
+    const opts = { month: 'short', day: 'numeric' }
+    if (!end || start === end) {
+      return startDate.toLocaleDateString('en-US', opts)
+    }
+    const endDate = new Date(end + 'T00:00:00')
+    if (startDate.getMonth() === endDate.getMonth()) {
+      return `${startDate.toLocaleDateString('en-US', opts)}-${endDate.getDate()}`
+    }
+    return `${startDate.toLocaleDateString('en-US', opts)} - ${endDate.toLocaleDateString('en-US', opts)}`
+  }
+
+  const renderEventRow = (event) => (
+    <div key={event.id} className="ce-row">
+      <span className="ce-row-date">{formatDateRange(event.date, event.endDate)}</span>
+      <span className="ce-row-name">{event.name}</span>
+      <span className="ce-row-brand" style={{ background: COMPETITOR_BRANDS[event.brand]?.color || '#6b7280' }}>
+        {COMPETITOR_BRANDS[event.brand]?.label || event.brand}
+      </span>
+      <span className="ce-row-loc">{event.city}, {event.state}</span>
+      {event.isLivePeriod && <span className="ce-row-live">LIVE</span>}
+      {isUserAllowed && (
+        <span className="ce-row-actions">
+          <button onClick={() => handleEdit(event)} title="Edit">✎</button>
+          <button onClick={() => handleDelete(event.id)} title="Delete">×</button>
+        </span>
+      )}
+    </div>
+  )
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="ce-modal" onClick={e => e.stopPropagation()}>
+        <div className="ce-header">
+          <div className="ce-title-row">
+            <h2 className="ce-title">Competitor Events</h2>
+            <button className="modal-close" onClick={onClose}>&times;</button>
+          </div>
+          <div className="ce-controls">
+            <div className="ce-filter-pills">
+              <button
+                className={`ce-filter-pill ${filterBrand === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterBrand('all')}
+              >
+                All ({events.length})
+              </button>
+              {Object.entries(COMPETITOR_BRANDS).map(([key, { label, color }]) => {
+                const count = events.filter(e => e.brand === key).length
+                return (
+                  <button
+                    key={key}
+                    className={`ce-filter-pill ${filterBrand === key ? 'active' : ''}`}
+                    style={filterBrand === key ? { background: color, borderColor: color } : {}}
+                    onClick={() => setFilterBrand(key)}
+                  >
+                    {label} ({count})
+                  </button>
+                )
+              })}
+            </div>
+            {isUserAllowed && !isAdding && !isBulkImporting && (
+              <div className="ce-action-btns">
+                <button className="ce-add-btn" onClick={() => setIsAdding(true)}>+ Add Event</button>
+                <button className="ce-bulk-btn" onClick={() => setIsBulkImporting(true)}>Bulk Import</button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="ce-body">
+          {isBulkImporting && (
+            <div className="ce-bulk-form">
+              <div className="ce-bulk-header">
+                <h3>Bulk Import Events</h3>
+                <button className="ce-bulk-close" onClick={() => { setIsBulkImporting(false); setBulkImportStatus(null); setBulkImportText(''); }}>×</button>
+              </div>
+              <p className="ce-bulk-help">Paste JSON array of events. Each event needs: name, brand (nike/ua/puma/general), date (YYYY-MM-DD), and optionally: endDate, city, state, type, isLivePeriod, notes.</p>
+              <textarea
+                className="ce-bulk-textarea"
+                value={bulkImportText}
+                onChange={e => setBulkImportText(e.target.value)}
+                placeholder={`[
+  {"name": "EYBL Session 1", "brand": "nike", "date": "2026-04-24", "endDate": "2026-04-26", "city": "Atlanta", "state": "GA", "type": "Circuit"},
+  {"name": "EYBL Session 2", "brand": "nike", "date": "2026-05-15", "endDate": "2026-05-17", "city": "Memphis", "state": "TN", "type": "Circuit", "isLivePeriod": true}
+]`}
+                rows={8}
+              />
+              {bulkImportStatus && (
+                <div className={`ce-bulk-status ce-bulk-status-${bulkImportStatus.type}`}>
+                  {bulkImportStatus.message}
+                </div>
+              )}
+              <div className="ce-form-actions">
+                <button type="button" className="ce-cancel-btn" onClick={() => { setIsBulkImporting(false); setBulkImportStatus(null); setBulkImportText(''); }}>Cancel</button>
+                <button type="button" className="ce-save-btn" onClick={handleBulkImport} disabled={!bulkImportText.trim()}>Import Events</button>
+              </div>
+            </div>
+          )}
+
+          {isAdding && !isBulkImporting && (
+            <form className="ce-form" onSubmit={handleSubmit}>
+              <div className="ce-form-row">
+                <div className="ce-form-field ce-form-field-wide">
+                  <label>Event Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., EYBL Session 1"
+                    required
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>Brand</label>
+                  <select
+                    value={formData.brand}
+                    onChange={e => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+                  >
+                    {Object.entries(COMPETITOR_BRANDS).map(([key, { label }]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="ce-form-row">
+                <div className="ce-form-field">
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>End Date</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={e => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>Type</label>
+                  <select
+                    value={formData.type}
+                    onChange={e => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                  >
+                    {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="ce-form-row">
+                <div className="ce-form-field">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={e => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder="Detroit"
+                    required
+                  />
+                </div>
+                <div className="ce-form-field">
+                  <label>State</label>
+                  <input
+                    type="text"
+                    value={formData.state}
+                    onChange={e => setFormData(prev => ({ ...prev, state: e.target.value }))}
+                    placeholder="MI"
+                    maxLength={2}
+                    required
+                  />
+                </div>
+                <div className="ce-form-field ce-form-field-checkbox">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={formData.isLivePeriod}
+                      onChange={e => setFormData(prev => ({ ...prev, isLivePeriod: e.target.checked }))}
+                    />
+                    <span>Live Period</span>
+                  </label>
+                </div>
+              </div>
+              <div className="ce-form-row">
+                <div className="ce-form-field ce-form-field-wide">
+                  <label>Notes (optional)</label>
+                  <input
+                    type="text"
+                    value={formData.notes}
+                    onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Any additional info..."
+                  />
+                </div>
+              </div>
+              <div className="ce-form-actions">
+                <button type="button" className="ce-cancel-btn" onClick={resetForm}>Cancel</button>
+                <button type="submit" className="ce-save-btn">
+                  {editingEvent ? 'Update Event' : 'Add Event'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {upcomingEvents.length > 0 && (
+            <div className="ce-section">
+              <h3 className="ce-section-title">Upcoming</h3>
+              <div className="ce-event-list">
+                {upcomingEvents.map(renderEventRow)}
+              </div>
+            </div>
+          )}
+
+          {pastEvents.length > 0 && (
+            <div className="ce-section">
+              <h3 className="ce-section-title ce-section-title-past">Past</h3>
+              <div className="ce-event-list ce-event-list-past">
+                {pastEvents.map(renderEventRow)}
+              </div>
+            </div>
+          )}
+
+          {filteredEvents.length === 0 && !isAdding && (
+            <div className="ce-empty">
+              No competitor events {filterBrand !== 'all' ? `for ${COMPETITOR_BRANDS[filterBrand]?.label}` : 'yet'}.
+              {isUserAllowed && ' Click "Add Event" to get started.'}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
+  const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
   const [programs, setPrograms] = useState([])
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -879,6 +2238,7 @@ function App() {
   const [allowedUsers, setAllowedUsers] = useState([])
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false)
   const [selectedProgram, setSelectedProgram] = useState(null)
+  const [selectedMtZionGroup, setSelectedMtZionGroup] = useState(null)
 
   // Events state
   const [events, setEvents] = useState([])
@@ -896,11 +2256,57 @@ function App() {
   const [filterConference, setFilterConference] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
 
+  // Gender filter
+  const [filterGender, setFilterGender] = useState('Boys') // 'Boys', 'Girls', 'all'
+
+  // Mt Zion team type filter
+  const [filterTeamType, setFilterTeamType] = useState('all') // 'Prep', 'National', 'all'
+
+  // Mobile region popup
+  const [showRegionPopup, setShowRegionPopup] = useState(false)
+
   // Analytics
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showSubscribeMenu, setShowSubscribeMenu] = useState(false)
+
+  // Digest & Reports
+  const [isDigestOpen, setIsDigestOpen] = useState(false)
+  const [isReportsOpen, setIsReportsOpen] = useState(false)
+
+  // Program comparison modal
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false)
+
+  // Archive modal and state
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
+  const [archivedPrograms, setArchivedPrograms] = useState([])
+
+  // Bulk edit modal
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false)
+
+  // Target Programs state
+  const [targetPrograms, setTargetPrograms] = useState([])
+  const [isTargetsLoading, setIsTargetsLoading] = useState(true)
+  const [selectedTargetProgram, setSelectedTargetProgram] = useState(null)
+  const [isTargetFormOpen, setIsTargetFormOpen] = useState(false)
+  const [editingTarget, setEditingTarget] = useState(null)
+  const [targetsSport, setTargetsSport] = useState('basketball') // which sport we're viewing targets for
+  const [targetsViewMode, setTargetsViewMode] = useState('kanban') // 'kanban' or 'list' or 'map'
+  const [targetStatusFilter, setTargetStatusFilter] = useState('all')
+  const [targetPriorityFilter, setTargetPriorityFilter] = useState('all')
+
+  // Contract dashboard and map layer
+  const [allContractDetails, setAllContractDetails] = useState({})
+  const [showContractMapLayer, setShowContractMapLayer] = useState(false)
+  const [isContractDashboardOpen, setIsContractDashboardOpen] = useState(false)
+
+  // Logo view mode
+  const [showLogoView, setShowLogoView] = useState(false)
+
+  // Competitor events
+  const [competitorEvents, setCompetitorEvents] = useState([])
+  const [isCompetitorEventsOpen, setIsCompetitorEventsOpen] = useState(false)
 
   // Ref for map screenshot
   const mapRef = useRef(null)
@@ -948,7 +2354,11 @@ function App() {
     setIsLoading(true)
 
     const unsubscribe = subscribeToPrograms(activeTab, (data) => {
-      setPrograms(data)
+      // Filter out archived programs for the main view
+      setPrograms(data.filter(p => !p.isArchived).map(p => ({
+        ...p,
+        name: p.name?.replace(/\bMt\.?\s*Zion(?:\s+Prep)?\b/gi, 'Mt. Zion Prep')
+      })))
       setIsLoading(false)
     })
 
@@ -965,11 +2375,62 @@ function App() {
     return () => unsubscribe()
   }, [])
 
+  // Subscribe to competitor events
+  useEffect(() => {
+    const unsubscribe = subscribeToCompetitorEvents(setCompetitorEvents)
+    return () => unsubscribe()
+  }, [])
+
+  // Subscribe to archived programs
+  useEffect(() => {
+    if (activeTab === 'events' || activeTab === 'targets') return
+    const unsubscribe = subscribeToArchivedPrograms(activeTab, setArchivedPrograms)
+    return () => unsubscribe()
+  }, [activeTab])
+
+  // Subscribe to target programs
+  useEffect(() => {
+    if (activeTab !== 'targets') return
+    setIsTargetsLoading(true)
+    const unsubscribe = subscribeToTargetPrograms(targetsSport, (data) => {
+      setTargetPrograms(data)
+      setIsTargetsLoading(false)
+    })
+    return () => unsubscribe()
+  }, [activeTab, targetsSport])
+
+  // Subscribe to all contract details for the current sport (auth-gated)
+  useEffect(() => {
+    if (!isUserAllowed || activeTab === 'events' || activeTab === 'targets') {
+      setAllContractDetails({})
+      return
+    }
+    const unsubscribe = subscribeToAllContractDetails(activeTab, setAllContractDetails)
+    return () => unsubscribe()
+  }, [isUserAllowed, activeTab])
+
   // Apply dark mode to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
     localStorage.setItem('darkMode', darkMode)
   }, [darkMode])
+
+  // Reset filters when switching tabs
+  useEffect(() => {
+    setSearchQuery('')
+    setSelectedRegion('all')
+    setFilterConference('all')
+    setFilterGender('Boys')
+    setFilterTeamType('all')
+    setSortBy('name')
+    setSelectedProgram(null)
+    setSelectedMtZionGroup(null)
+  }, [activeTab])
+
+  // Check if any Mt Zion programs exist (to show team type filter)
+  const hasMtZionPrograms = useMemo(() => {
+    return programs.some(p => p.name?.toLowerCase().includes('mt. zion prep'))
+  }, [programs])
 
   // Unique conferences for filter dropdown
   const uniqueConferences = useMemo(() => {
@@ -991,8 +2452,15 @@ function App() {
 
       const matchesRegion = selectedRegion === 'all' || program.region === selectedRegion
       const matchesConference = filterConference === 'all' || program.conference === filterConference
+      const matchesGender = filterGender === 'all' ||
+        program.gender === filterGender ||
+        (!program.gender && filterGender === 'Boys') // default unset programs to Boys
 
-      return matchesSearch && matchesRegion && matchesConference
+      const matchesTeamType = filterTeamType === 'all' ||
+        program.teamType === filterTeamType ||
+        (!program.name?.toLowerCase().includes('mt. zion prep')) // non-Mt. Zion Prep programs always match
+
+      return matchesSearch && matchesRegion && matchesConference && matchesGender && matchesTeamType
     })
 
     // Sort
@@ -1007,29 +2475,58 @@ function App() {
     })
 
     return result
-  }, [programs, searchQuery, selectedRegion, filterConference, sortBy])
+  }, [programs, searchQuery, selectedRegion, filterConference, filterGender, filterTeamType, sortBy])
 
   // Create icons for all programs (memoized to prevent re-renders)
   const programIcons = useMemo(() => {
     const icons = {}
-    filteredPrograms.forEach(program => {
+    const currentYear = new Date().getFullYear()
+    filteredPrograms.forEach((program, index) => {
       if (program && program.id) {
-        icons[program.id] = createLogoIcon(program.logo, program.name)
+        if (showLogoView) {
+          // Logo View mode - show logos with connector lines
+          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name, program.isSelect)
+        } else {
+          // Normal mode with optional contract status
+          let contractStatus = null
+          if (showContractMapLayer && isUserAllowed) {
+            const contract = allContractDetails[program.id]
+            if (contract) {
+              const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+              const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+              const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
+              contractStatus = isExpiring ? 'expiring' : 'active'
+            } else {
+              contractStatus = 'none'
+            }
+          }
+          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect)
+        }
       }
     })
     return icons
-  }, [filteredPrograms])
+  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed, showLogoView])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
     const progs = filteredPrograms.filter(p => p && p.coordinates)
     const pos = {}
-    progs.forEach(p => { pos[p.id] = [p.coordinates[0], p.coordinates[1]] })
+    const orig = {}
+    progs.forEach(p => {
+      pos[p.id] = [p.coordinates[0], p.coordinates[1]]
+      orig[p.id] = [p.coordinates[0], p.coordinates[1]]
+    })
 
-    // Force-directed repulsion: push nearby markers apart so logos breathe
     if (progs.length <= 1) return pos
-    const MIN_DIST = 1.8
-    const ITERATIONS = 6
+
+    // Repulsion to prevent overlap, but capped so markers stay near their real location
+    const MIN_DIST = 1.2
+    const MAX_DRIFT = 1.5 // never move more than 1.5 degrees from original
+    const ITERATIONS = 8
+
+    // East-coast states: prefer pushing toward ocean (east/southeast)
+    const coastalEastStates = new Set(['FL', 'GA', 'SC', 'NC', 'VA', 'MD', 'DE', 'NJ', 'CT', 'RI', 'MA', 'NH', 'ME', 'NY'])
+
     for (let iter = 0; iter < ITERATIONS; iter++) {
       for (let i = 0; i < progs.length; i++) {
         for (let j = i + 1; j < progs.length; j++) {
@@ -1039,45 +2536,67 @@ function App() {
           const dist = Math.sqrt(dLat * dLat + dLng * dLng)
           if (dist < MIN_DIST && dist > 0) {
             const push = (MIN_DIST - dist) / 2
-            const nLat = dLat / dist
-            const nLng = dLng / dist
+            let nLat = dLat / dist
+            let nLng = dLng / dist
+
+            // For east-coast programs, bias push eastward (positive lng direction is... wait, US lng is negative, so "east" = less negative = +lng)
+            const aCoastal = coastalEastStates.has(a.state)
+            const bCoastal = coastalEastStates.has(b.state)
+            if (aCoastal || bCoastal) {
+              // Add eastward bias to longitude push
+              nLng = nLng > 0 ? nLng : nLng * 0.3
+            }
+
             pos[a.id] = [pos[a.id][0] - nLat * push, pos[a.id][1] - nLng * push]
             pos[b.id] = [pos[b.id][0] + nLat * push, pos[b.id][1] + nLng * push]
           } else if (dist === 0) {
-            const angle = (2 * Math.PI * i) / progs.length
-            pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5 * Math.cos(angle), pos[a.id][1] - MIN_DIST * 0.5 * Math.sin(angle)]
-            pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5 * Math.cos(angle), pos[b.id][1] + MIN_DIST * 0.5 * Math.sin(angle)]
+            // Spread exactly overlapping markers vertically
+            pos[a.id] = [pos[a.id][0] - MIN_DIST * 0.5, pos[a.id][1]]
+            pos[b.id] = [pos[b.id][0] + MIN_DIST * 0.5, pos[b.id][1]]
           }
         }
       }
-    }
 
-    // Manual position overrides (relative to other programs' adjusted positions)
-    const byName = {}
-    progs.forEach(p => { byName[p.name.toLowerCase()] = p.id })
-
-    // Central Senior High → to the left of Northwestern Senior High
-    const centralId = Object.keys(byName).find(n => n.includes('central senior'))
-    const nwId = Object.keys(byName).find(n => n.includes('northwestern senior'))
-    if (centralId && nwId) {
-      const nwPos = pos[byName[nwId]]
-      pos[byName[centralId]] = [nwPos[0], nwPos[1] - MIN_DIST]
-    }
-
-    // Orange Lutheran → below Centennial, between Centennial and Lincoln
-    const orangeId = Object.keys(byName).find(n => n.includes('orange lutheran'))
-    const centennialId = Object.keys(byName).find(n => n.includes('centennial'))
-    const lincolnId = Object.keys(byName).find(n => n.includes('lincoln'))
-    if (orangeId && centennialId && lincolnId) {
-      const cPos = pos[byName[centennialId]]
-      const lPos = pos[byName[lincolnId]]
-      pos[byName[orangeId]] = [(cPos[0] + lPos[0]) / 2, (cPos[1] + lPos[1]) / 2]
-    } else if (orangeId && centennialId) {
-      const cPos = pos[byName[centennialId]]
-      pos[byName[orangeId]] = [cPos[0] - MIN_DIST, cPos[1]]
+      // Clamp: don't let any marker drift more than MAX_DRIFT from its original position
+      progs.forEach(p => {
+        const dLat = pos[p.id][0] - orig[p.id][0]
+        const dLng = pos[p.id][1] - orig[p.id][1]
+        const drift = Math.sqrt(dLat * dLat + dLng * dLng)
+        if (drift > MAX_DRIFT) {
+          const scale = MAX_DRIFT / drift
+          pos[p.id] = [orig[p.id][0] + dLat * scale, orig[p.id][1] + dLng * scale]
+        }
+      })
     }
 
     return pos
+  }, [filteredPrograms])
+
+  // Group Mt. Zion programs by coordinates so they share a single marker
+  const { displayPrograms, mtZionGroupMap } = useMemo(() => {
+    const isMtZion = (p) => p.name?.toLowerCase().includes('mt. zion prep')
+    const mtZion = filteredPrograms.filter(isMtZion)
+    const others = filteredPrograms.filter(p => !isMtZion(p))
+
+    // Group Mt. Zion programs by their coordinates (rounded to avoid float mismatch)
+    const groups = {}
+    mtZion.forEach(p => {
+      if (!p.coordinates) return
+      const key = `${p.coordinates[0].toFixed(3)},${p.coordinates[1].toFixed(3)}`
+      if (!groups[key]) groups[key] = []
+      groups[key].push(p)
+    })
+
+    // Use the first program in each group as the display marker, store mapping
+    const groupMap = {} // displayProgramId -> [all programs in group]
+    const reps = []
+    Object.values(groups).forEach(group => {
+      const rep = group[0]
+      reps.push(rep)
+      groupMap[rep.id] = group
+    })
+
+    return { displayPrograms: [...others, ...reps], mtZionGroupMap: groupMap }
   }, [filteredPrograms])
 
   // Count programs by region
@@ -1216,31 +2735,290 @@ function App() {
     }
   }
 
-  // Delete a program
+  // Delete a program (soft delete - archive instead)
   const handleDeleteProgram = async (programId) => {
-    if (window.confirm('Are you sure you want to remove this program?')) {
+    if (window.confirm('Archive this program? It will be hidden but can be restored later.')) {
       try {
         if (user) {
-          await addProgramHistory(activeTab, programId, 'deleted', user.email)
+          await addProgramHistory(activeTab, programId, 'archived', user.email)
         }
-        await deleteProgram(activeTab, programId)
+        await archiveProgram(activeTab, programId)
+        setSelectedProgram(null)
       } catch (err) {
-        console.error('Error deleting program:', err)
-        alert('Could not remove program. Please try again.')
+        console.error('Error archiving program:', err)
+        alert(`Could not archive program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
       }
     }
   }
 
+  // Bulk delete a program (no confirm - handled by bulk edit modal)
+  const handleBulkDeleteProgram = async (programId) => {
+    try {
+      if (user) {
+        await addProgramHistory(activeTab, programId, 'archived', user.email)
+      }
+      await archiveProgram(activeTab, programId)
+    } catch (err) {
+      console.error('Error archiving program:', err)
+      throw err // Re-throw to be caught by bulk edit modal
+    }
+  }
+
+  // Restore an archived program
+  const handleRestoreProgram = async (sport, programId) => {
+    try {
+      await restoreProgram(sport, programId)
+      if (user) {
+        await addProgramHistory(sport, programId, 'restored', user.email)
+      }
+    } catch (err) {
+      console.error('Error restoring program:', err)
+      alert('Could not restore program. Please try again.')
+    }
+  }
+
+  // Permanently delete a program
+  const handlePermanentDelete = async (sport, programId) => {
+    if (window.confirm('Permanently delete this program? This cannot be undone.')) {
+      try {
+        if (user) {
+          await addProgramHistory(sport, programId, 'deleted', user.email)
+        }
+        await deleteProgram(sport, programId)
+      } catch (err) {
+        console.error('Error deleting program:', err)
+        alert('Could not delete program. Please try again.')
+      }
+    }
+  }
+
+  // Target Program handlers
+  const handleAddTargetProgram = async (targetData) => {
+    try {
+      await addTargetProgram(targetsSport, {
+        ...targetData,
+        addedBy: user?.email || 'unknown',
+        timestamp: Date.now()
+      })
+      setIsTargetFormOpen(false)
+    } catch (err) {
+      console.error('Error adding target program:', err)
+      alert('Could not add target program. Please try again.')
+    }
+  }
+
+  const handleEditTargetProgram = async (targetData) => {
+    try {
+      // Check if ranking changed and auto-save to history
+      if (editingTarget && targetData.ranking && targetData.ranking !== editingTarget.ranking) {
+        await addTargetRankingMetric(targetsSport, targetData.id, {
+          ranking: targetData.ranking,
+          date: new Date().toISOString().split('T')[0],
+          addedBy: user?.email || 'unknown',
+          timestamp: Date.now()
+        })
+      }
+
+      await editTargetProgram(targetsSport, targetData)
+      setIsTargetFormOpen(false)
+      setEditingTarget(null)
+      // Update selected if it's the same one
+      if (selectedTargetProgram?.id === targetData.id) {
+        setSelectedTargetProgram(targetData)
+      }
+    } catch (err) {
+      console.error('Error editing target program:', err)
+      alert('Could not update target program. Please try again.')
+    }
+  }
+
+  const handleDeleteTargetProgram = async (targetId) => {
+    if (window.confirm('Delete this target program? This cannot be undone.')) {
+      try {
+        await deleteTargetProgram(targetsSport, targetId)
+        if (selectedTargetProgram?.id === targetId) {
+          setSelectedTargetProgram(null)
+        }
+      } catch (err) {
+        console.error('Error deleting target program:', err)
+        alert('Could not delete target program. Please try again.')
+      }
+    }
+  }
+
+  const handleUpdateTargetStatus = async (targetId, newStatus) => {
+    // First try to find in current targetPrograms, fallback to selectedTargetProgram
+    let target = targetPrograms.find(t => t.id === targetId)
+    if (!target && selectedTargetProgram?.id === targetId) {
+      target = selectedTargetProgram
+    }
+    if (target) {
+      try {
+        await editTargetProgram(targetsSport, { ...target, status: newStatus })
+        // Update selectedTargetProgram if it's the same one
+        if (selectedTargetProgram?.id === targetId) {
+          setSelectedTargetProgram({ ...target, status: newStatus })
+        }
+      } catch (err) {
+        console.error('Error updating target status:', err)
+        alert('Could not update target status. Please try again.')
+      }
+    } else {
+      console.error('Target not found for status update:', targetId)
+      alert('Could not update target status. Please close and reopen the target.')
+    }
+  }
+
+  const openEditTargetForm = (target) => {
+    setEditingTarget(target)
+    setIsTargetFormOpen(true)
+  }
+
+  const closeTargetForm = () => {
+    setIsTargetFormOpen(false)
+    setEditingTarget(null)
+  }
+
+  // Filtered target programs
+  const filteredTargetPrograms = useMemo(() => {
+    return targetPrograms.filter(target => {
+      const matchesStatus = targetStatusFilter === 'all' || target.status === targetStatusFilter
+      const matchesPriority = targetPriorityFilter === 'all' || target.priority === targetPriorityFilter
+      return matchesStatus && matchesPriority
+    })
+  }, [targetPrograms, targetStatusFilter, targetPriorityFilter])
+
+  // Group targets by status for kanban view
+  const targetsByStatus = useMemo(() => {
+    const groups = {}
+    PIPELINE_STATUSES.forEach(status => {
+      groups[status.id] = filteredTargetPrograms.filter(t => t.status === status.id)
+    })
+    return groups
+  }, [filteredTargetPrograms])
+
+  // PDF Export function
+  const handleExportPDF = useCallback(() => {
+    try {
+      const doc = new jsPDF()
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+      // Header
+      doc.setFontSize(20)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`adidas ${tabName} Programs`, 14, 20)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Generated: ${today}`, 14, 28)
+      doc.text(`Total Programs: ${filteredPrograms.length}`, 14, 34)
+
+      if (isMobile) {
+        // Simpler text-based list for mobile (autoTable can crash on mobile Safari)
+        let yPos = 46
+        const lineHeight = 6
+        const pageHeight = doc.internal.pageSize.height - 20
+
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Program | City | State | Level | Coach', 14, yPos)
+        yPos += lineHeight + 2
+
+        doc.setFont('helvetica', 'normal')
+        filteredPrograms.forEach((p) => {
+          if (yPos > pageHeight) {
+            doc.addPage()
+            yPos = 20
+          }
+          const line = `${p.name || '-'} | ${p.city || '-'}, ${p.state || '-'} | ${p.level || '-'} | ${p.headCoach || '-'}`
+          doc.text(line.substring(0, 100), 14, yPos)
+          yPos += lineHeight
+        })
+      } else {
+        // Full table for desktop
+        const tableData = filteredPrograms.map(p => [
+          p.name || '',
+          p.city || '',
+          p.state || '',
+          p.region || '',
+          p.level || '',
+          p.conference || '',
+          p.headCoach || ''
+        ])
+
+        doc.autoTable({
+          startY: 42,
+          head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
+          body: tableData,
+          styles: { fontSize: 8, cellPadding: 2 },
+          headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { left: 14, right: 14 }
+        })
+      }
+
+      const filename = `adidas-select-${activeTab}-programs-${new Date().toISOString().split('T')[0]}.pdf`
+
+      // Mobile-friendly download approach
+      if (isMobile) {
+        // Use blob URL for better mobile support
+        const pdfBlob = doc.output('blob')
+        const blobUrl = URL.createObjectURL(pdfBlob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
+        alert('PDF ready! Check your Downloads or tap the download icon in your browser.')
+      } else {
+        doc.save(filename)
+      }
+
+      setShowExportMenu(false)
+    } catch (err) {
+      console.error('PDF export error:', err)
+      alert(`Could not generate PDF: ${err.message || 'Unknown error'}. Try exporting CSV instead.`)
+    }
+  }, [activeTab, filteredPrograms])
+
   // Edit a program
   const handleEditProgram = async (updatedProgram) => {
     try {
+      // Check if ranking changed and auto-save to history
+      if (editingProgram && user) {
+        // Normalize ranking values (treat empty string, undefined, null as empty)
+        const normalizeRank = (r) => (r || '').toString().trim()
+        const oldNational = normalizeRank(editingProgram.ranking)
+        const newNational = normalizeRank(updatedProgram.ranking)
+        const oldState = normalizeRank(editingProgram.stateRanking)
+        const newState = normalizeRank(updatedProgram.stateRanking)
+
+        const nationalChanged = newNational !== oldNational
+        const stateChanged = newState !== oldState
+
+        // Save to ranking history if either ranking changed and has a new value
+        if ((nationalChanged && newNational) || (stateChanged && newState)) {
+          await addRankingMetric(activeTab, updatedProgram.id, {
+            nationalRank: newNational || null,
+            stateRank: newState || null,
+            date: new Date().toISOString().split('T')[0],
+            addedBy: user.email,
+            timestamp: Date.now()
+          })
+        }
+      }
+
       await editProgram(activeTab, updatedProgram)
       if (user) {
         await addProgramHistory(activeTab, updatedProgram.id, 'edited', user.email)
       }
     } catch (err) {
       console.error('Error editing program:', err)
-      alert('Could not update program. Please try again.')
+      alert(`Could not update program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
     }
   }
 
@@ -1269,11 +3047,16 @@ function App() {
     }
   }
 
-  // Center of continental US
+  // Center of continental US - adjust zoom for mobile screens
   const mapCenter = [39.8283, -98.5795]
-  const mapZoom = 4
+  const isMobileView = typeof window !== 'undefined' && window.innerWidth <= 768
+  const mapZoom = isMobileView ? 3 : 4
 
   const activeTabInfo = TABS.find(t => t.id === activeTab)
+
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />
+  }
 
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
@@ -1281,7 +3064,7 @@ function App() {
         <div className="header-content">
           <div className="title-row">
             <img src="/logos/adidas-logo.png" alt="adidas" className="header-logo" />
-            <h1 className="title">Select Map</h1>
+            <h1 className="title">ADI SEL3CT</h1>
           </div>
         </div>
 
@@ -1321,29 +3104,145 @@ function App() {
       {activeTab !== 'events' && (
         <div className="dashboard">
           <div className="dashboard-stats">
-            <div className="stat-item stat-total">
+            <div className="stat-item stat-total" onClick={() => setShowRegionPopup(!showRegionPopup)}>
               <span className="stat-value">{regionCounts.total}</span>
-              <span className="stat-label">Total Programs</span>
+              <span className="stat-label">Total Programs {selectedRegion !== 'all' ? `(${selectedRegion})` : ''}</span>
             </div>
-            {Object.keys(REGIONS).map(region => (
-              <div
-                key={region}
-                className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
-                style={{ '--region-color': REGIONS[region].color }}
-                onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
-              >
-                <span className="stat-value">{regionCounts[region] || 0}</span>
-                <span className="stat-label">{region}</span>
-              </div>
-            ))}
+            <div className="region-stats-desktop">
+              {Object.keys(REGIONS).map(region => (
+                <div
+                  key={region}
+                  className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
+                  style={{ '--region-color': REGIONS[region].color }}
+                  onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
+                >
+                  <span className="stat-value">{regionCounts[region] || 0}</span>
+                  <span className="stat-label">{region}</span>
+                </div>
+              ))}
+            </div>
+            {showRegionPopup && (
+              <>
+                <div className="region-popup-overlay" onClick={() => setShowRegionPopup(false)} />
+                <div className="region-popup">
+                  {Object.keys(REGIONS).map(region => (
+                    <div
+                      key={region}
+                      className={`region-popup-item ${selectedRegion === region ? 'active' : ''}`}
+                      style={{ '--region-color': REGIONS[region].color }}
+                      onClick={() => { setSelectedRegion(selectedRegion === region ? 'all' : region); setShowRegionPopup(false) }}
+                    >
+                      <span className="region-popup-color" style={{ background: REGIONS[region].color }} />
+                      <span className="region-popup-name">{region}</span>
+                      <span className="region-popup-count">{regionCounts[region] || 0}</span>
+                    </div>
+                  ))}
+                  {selectedRegion !== 'all' && (
+                    <div className="region-popup-item region-popup-clear" onClick={() => { setSelectedRegion('all'); setShowRegionPopup(false) }}>
+                      <span className="region-popup-name">Clear filter</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
             <div className="stat-item stat-analytics" onClick={() => setIsAnalyticsOpen(true)}>
-              <span className="stat-value">&#9776;</span>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="10" width="4" height="8" rx="1"/>
+                  <rect x="8" y="6" width="4" height="12" rx="1"/>
+                  <rect x="14" y="2" width="4" height="16" rx="1"/>
+                </svg>
+              </span>
               <span className="stat-label">Analytics</span>
             </div>
+            <div className="stat-item stat-digest" onClick={() => setIsDigestOpen(true)}>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="3" y="2" width="14" height="16" rx="2"/>
+                  <line x1="6" y1="6" x2="14" y2="6"/>
+                  <line x1="6" y1="10" x2="14" y2="10"/>
+                  <line x1="6" y1="14" x2="10" y2="14"/>
+                </svg>
+              </span>
+              <span className="stat-label">Digest</span>
+            </div>
+            <div className="stat-item stat-reports" onClick={() => setIsReportsOpen(true)}>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="2" width="6" height="6" rx="1"/>
+                  <rect x="12" y="2" width="6" height="6" rx="1"/>
+                  <rect x="2" y="12" width="6" height="6" rx="1"/>
+                  <rect x="12" y="12" width="6" height="6" rx="1"/>
+                </svg>
+              </span>
+              <span className="stat-label">Reports</span>
+            </div>
+            <div className="stat-item stat-compare" onClick={() => setIsComparisonOpen(true)}>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="4" width="6" height="12" rx="1"/>
+                  <rect x="12" y="4" width="6" height="12" rx="1"/>
+                  <line x1="10" y1="8" x2="10" y2="12"/>
+                  <polyline points="8,10 10,8 12,10"/>
+                  <polyline points="8,10 10,12 12,10"/>
+                </svg>
+              </span>
+              <span className="stat-label">Compare</span>
+            </div>
+            {isUserAllowed && (
+              <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="16" height="4" rx="1"/>
+                    <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
+                    <line x1="8" y1="11" x2="12" y2="11"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Archive ({archivedPrograms.length})</span>
+              </div>
+            )}
+            {isUserAllowed && (
+              <div className="stat-item stat-bulk-edit" onClick={() => setIsBulkEditOpen(true)} title="Bulk edit programs">
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <rect x="2" y="2" width="16" height="16" rx="2"/>
+                    <line x1="2" y1="7" x2="18" y2="7"/>
+                    <line x1="2" y1="12" x2="18" y2="12"/>
+                    <line x1="7" y1="2" x2="7" y2="18"/>
+                    <line x1="13" y1="2" x2="13" y2="18"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Bulk Edit</span>
+              </div>
+            )}
+            {isUserAllowed && activeTab !== 'events' && activeTab !== 'targets' && (
+              <div className="stat-item stat-contracts" onClick={() => setIsContractDashboardOpen(true)} title="Contract overview">
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="2" width="14" height="16" rx="2"/>
+                    <line x1="6" y1="6" x2="14" y2="6"/>
+                    <line x1="6" y1="10" x2="14" y2="10"/>
+                    <line x1="6" y1="14" x2="10" y2="14"/>
+                    <circle cx="14" cy="14" r="3" fill="none"/>
+                    <line x1="12.5" y1="14" x2="15.5" y2="14"/>
+                    <line x1="14" y1="12.5" x2="14" y2="15.5"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Contracts</span>
+              </div>
+            )}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
-              <span className="stat-value">{isExporting ? '...' : '\u21E9'}</span>
+              <span className="stat-icon">
+                {isExporting ? '...' : (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 3v10"/>
+                    <polyline points="6,9 10,13 14,9"/>
+                    <path d="M3 14v3a1 1 0 001 1h12a1 1 0 001-1v-3"/>
+                  </svg>
+                )}
+              </span>
               <span className="stat-label">Export</span>
             </div>
           </div>
@@ -1381,6 +3280,44 @@ function App() {
           )}
         </div>
 
+        {activeTab !== 'football' && (
+          <div className="gender-filter-pills">
+            {['Boys', 'Girls', 'all'].map(g => (
+              <button
+                key={g}
+                className={`gender-pill ${filterGender === g ? 'active' : ''}`}
+                onClick={() => setFilterGender(g)}
+              >
+                {g === 'all' ? 'All' : g}
+              </button>
+            ))}
+          </div>
+        )}
+
+
+        {activeTab !== 'targets' && activeTab !== 'events' && (
+          <button
+            className={`logo-view-toggle-btn${showLogoView ? ' active' : ''}`}
+            onClick={() => setShowLogoView(v => !v)}
+            title="Toggle logo view"
+          >
+            {showLogoView ? 'Logo View On' : 'Logo View'}
+          </button>
+        )}
+
+        {isUserAllowed && activeTab !== 'targets' && (
+          <button
+            className={`contract-layer-toggle-btn${showContractMapLayer ? ' active' : ''}`}
+            onClick={() => setShowContractMapLayer(v => !v)}
+            title="Toggle contract status map layer"
+          >
+            <span className="contract-layer-dot contract-layer-dot-expiring" />
+            <span className="contract-layer-dot contract-layer-dot-active" />
+            <span className="contract-layer-dot contract-layer-dot-none" />
+            {showContractMapLayer ? 'Contracts On' : 'Contracts'}
+          </button>
+        )}
+
         <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
           {showFilters ? 'Less Filters' : 'More Filters'}
         </button>
@@ -1415,13 +3352,17 @@ function App() {
           </div>
         )}
 
-        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all') && (
+        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys' || filterTeamType !== 'all') && (
           <div className="filter-info">
             Showing {filteredPrograms.length} of {programs.length} programs
+            {filterGender !== 'Boys' && <span className="filter-tag">{filterGender === 'all' ? 'All' : filterGender}</span>}
+            {filterTeamType !== 'all' && <span className="filter-tag">{filterTeamType}</span>}
             <button className="clear-filters" onClick={() => {
               setSearchQuery('')
               setSelectedRegion('all')
               setFilterConference('all')
+              setFilterGender('Boys')
+              setFilterTeamType('all')
               setSortBy('name')
             }}>
               Clear filters
@@ -1431,12 +3372,281 @@ function App() {
       </div>}
 
       <main className="main">
-        {activeTab === 'events' ? (
+        {activeTab === 'targets' ? (
+          /* Targets Pipeline View */
+          <div className="targets-layout" style={{ background: 'var(--bg-primary)' }}>
+            {/* Targets Header with Sport Toggle and View Mode */}
+            <div className="targets-header">
+              <div className="targets-sport-toggle">
+                <button
+                  className={`targets-sport-btn ${targetsSport === 'basketball' ? 'active' : ''}`}
+                  onClick={() => setTargetsSport('basketball')}
+                >
+                  Basketball
+                </button>
+                <button
+                  className={`targets-sport-btn ${targetsSport === 'football' ? 'active' : ''}`}
+                  onClick={() => setTargetsSport('football')}
+                >
+                  Football
+                </button>
+              </div>
+
+              <div className="targets-view-toggle">
+                <button
+                  className={`targets-view-btn ${targetsViewMode === 'kanban' ? 'active' : ''}`}
+                  onClick={() => setTargetsViewMode('kanban')}
+                >
+                  Pipeline
+                </button>
+                <button
+                  className={`targets-view-btn ${targetsViewMode === 'list' ? 'active' : ''}`}
+                  onClick={() => setTargetsViewMode('list')}
+                >
+                  List
+                </button>
+                <button
+                  className={`targets-view-btn ${targetsViewMode === 'map' ? 'active' : ''}`}
+                  onClick={() => setTargetsViewMode('map')}
+                >
+                  Map
+                </button>
+              </div>
+
+              <div className="targets-filters">
+                <select
+                  value={targetPriorityFilter}
+                  onChange={(e) => setTargetPriorityFilter(e.target.value)}
+                  className="targets-filter-select"
+                >
+                  <option value="all">All Priorities</option>
+                  {PRIORITIES.map(p => (
+                    <option key={p.id} value={p.id}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {isUserAllowed && (
+                <button
+                  className="targets-add-btn"
+                  onClick={() => setIsTargetFormOpen(true)}
+                >
+                  + Add Target
+                </button>
+              )}
+            </div>
+
+            {/* Main Content */}
+            {isTargetsLoading ? (
+              <div className="targets-loading">Loading targets...</div>
+            ) : targetsViewMode === 'kanban' ? (
+              /* Kanban Pipeline View */
+              <div className="targets-kanban">
+                {PIPELINE_STATUSES.filter(s => s.id !== 'signed' && s.id !== 'lost').map(status => (
+                  <div key={status.id} className="targets-kanban-column">
+                    <div className="targets-kanban-header" style={{ borderTopColor: status.color }}>
+                      <h4>{status.label}</h4>
+                      <span className="targets-kanban-count">{targetsByStatus[status.id]?.length || 0}</span>
+                    </div>
+                    <div className="targets-kanban-cards">
+                      {targetsByStatus[status.id]?.map(target => (
+                        <div
+                          key={target.id}
+                          className={`targets-kanban-card priority-${target.priority}`}
+                          onClick={() => setSelectedTargetProgram(target)}
+                        >
+                          <div className="targets-card-header">
+                            {target.logo && <img src={target.logo} alt="" className="targets-card-logo" />}
+                            <div className="targets-card-info">
+                              <h5>{target.name}</h5>
+                              <p>{target.city}, {target.state}</p>
+                            </div>
+                          </div>
+                          {target.competition && (
+                            <div className="targets-card-competition">
+                              Currently: {target.competition}
+                            </div>
+                          )}
+                          <div className="targets-card-footer">
+                            <span
+                              className="targets-card-priority"
+                              style={{ backgroundColor: PRIORITIES.find(p => p.id === target.priority)?.color || '#6b7280' }}
+                            >
+                              {target.priority}
+                            </span>
+                            {target.targetSignDate && (
+                              <span className="targets-card-date">
+                                Target: {new Date(target.targetSignDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(!targetsByStatus[status.id] || targetsByStatus[status.id].length === 0) && (
+                        <div className="targets-kanban-empty">No targets</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Closed columns (Signed/Lost) */}
+                <div className="targets-kanban-closed">
+                  <div className="targets-kanban-column targets-kanban-signed">
+                    <div className="targets-kanban-header" style={{ borderTopColor: '#10b981' }}>
+                      <h4>Signed</h4>
+                      <span className="targets-kanban-count">{targetsByStatus['signed']?.length || 0}</span>
+                    </div>
+                    <div className="targets-kanban-cards">
+                      {targetsByStatus['signed']?.map(target => (
+                        <div
+                          key={target.id}
+                          className="targets-kanban-card closed"
+                          onClick={() => setSelectedTargetProgram(target)}
+                        >
+                          <span>{target.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="targets-kanban-column targets-kanban-lost">
+                    <div className="targets-kanban-header" style={{ borderTopColor: '#ef4444' }}>
+                      <h4>Lost</h4>
+                      <span className="targets-kanban-count">{targetsByStatus['lost']?.length || 0}</span>
+                    </div>
+                    <div className="targets-kanban-cards">
+                      {targetsByStatus['lost']?.map(target => (
+                        <div
+                          key={target.id}
+                          className="targets-kanban-card closed"
+                          onClick={() => setSelectedTargetProgram(target)}
+                        >
+                          <span>{target.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : targetsViewMode === 'list' ? (
+              /* List View */
+              <div className="targets-list">
+                <table className="targets-table">
+                  <thead>
+                    <tr>
+                      <th>Program</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Priority</th>
+                      <th>Competition</th>
+                      <th>Target Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTargetPrograms.map(target => (
+                      <tr
+                        key={target.id}
+                        onClick={() => setSelectedTargetProgram(target)}
+                        className="targets-table-row"
+                      >
+                        <td className="targets-table-name">
+                          {target.logo && <img src={target.logo} alt="" className="targets-table-logo" />}
+                          <span>{target.name}</span>
+                        </td>
+                        <td>{target.city}, {target.state}</td>
+                        <td>
+                          <span
+                            className="targets-status-badge"
+                            style={{ backgroundColor: PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280' }}
+                          >
+                            {PIPELINE_STATUSES.find(s => s.id === target.status)?.label || target.status}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className="targets-priority-badge"
+                            style={{ backgroundColor: PRIORITIES.find(p => p.id === target.priority)?.color || '#6b7280' }}
+                          >
+                            {target.priority}
+                          </span>
+                        </td>
+                        <td>{target.competition || '-'}</td>
+                        <td>
+                          {target.targetSignDate
+                            ? new Date(target.targetSignDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredTargetPrograms.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="targets-table-empty">
+                          No target programs found.
+                          {isUserAllowed && <button onClick={() => setIsTargetFormOpen(true)}>Add your first target</button>}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Map View */
+              <div className="targets-map-layout">
+                <MapContainer
+                  key="targets"
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  className="map-container"
+                  zoomControl={true}
+                  scrollWheelZoom={true}
+                >
+                  <DynamicTileLayer darkMode={darkMode} />
+                  <MapViewPreserver />
+                  <StateLabels />
+                  {filteredTargetPrograms.map(target => (
+                    target && target.coordinates && (
+                      <Marker
+                        key={target.id}
+                        position={target.coordinates}
+                        icon={L.divIcon({
+                          className: 'target-marker',
+                          html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
+                            ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
+                          </div>`,
+                          iconSize: [32, 32],
+                          iconAnchor: [16, 32],
+                          popupAnchor: [0, -32]
+                        })}
+                        eventHandlers={{
+                          click: () => setSelectedTargetProgram(target)
+                        }}
+                      />
+                    )
+                  ))}
+                </MapContainer>
+              </div>
+            )}
+
+            {/* Target Detail Panel */}
+            <TargetDetailPanel
+              target={selectedTargetProgram}
+              sport={targetsSport}
+              isOpen={!!selectedTargetProgram}
+              onClose={() => setSelectedTargetProgram(null)}
+              isUserAllowed={isUserAllowed}
+              user={user}
+              onEdit={(t) => { setSelectedTargetProgram(null); openEditTargetForm(t) }}
+              onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
+              onStatusChange={handleUpdateTargetStatus}
+            />
+          </div>
+        ) : activeTab === 'events' ? (
           /* Events Split Layout */
           <div className="events-split-layout" ref={mapRef}>
             <div className="events-map-panel">
               {isEventsLoading ? (
-                <div className="loading">Loading events...</div>
+                <div className="skeleton-map">
+                  <span className="skeleton-map-label">Loading map...</span>
+                </div>
               ) : (
                 <MapContainer
                   key="events"
@@ -1447,6 +3657,7 @@ function App() {
                   scrollWheelZoom={true}
                 >
                   <DynamicTileLayer darkMode={darkMode} />
+                  <MapViewPreserver />
                   <StateLabels />
                   {events.map(event => (
                     event && event.coordinates && (
@@ -1527,6 +3738,13 @@ function App() {
                   {calendarSelectedDate && (
                     <button className="cal-clear-btn" onClick={() => setCalendarSelectedDate(null)}>All</button>
                   )}
+                  <button
+                    className="competitor-events-btn"
+                    onClick={() => setIsCompetitorEventsOpen(true)}
+                    title="Competitor Events"
+                  >
+                    Competitors
+                  </button>
                   <button className="export-btn-small"
                     onClick={() => setShowExportMenu(true)}
                     onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}
@@ -1709,7 +3927,9 @@ function App() {
           /* Programs Map + Detail Panel */
           <div className="programs-layout" ref={mapRef}>
             {isLoading ? (
-              <div className="loading">Loading programs...</div>
+              <div className="skeleton-map">
+                  <span className="skeleton-map-label">Loading map...</span>
+                </div>
             ) : (
               <MapContainer
                 key={activeTab}
@@ -1720,19 +3940,23 @@ function App() {
                 scrollWheelZoom={true}
               >
                 <DynamicTileLayer darkMode={darkMode} />
+                <MapViewPreserver />
                 <StateLabels />
                 {selectedProgram && (
                   <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
                 )}
 
-                {filteredPrograms.map(program => (
+                {displayPrograms.map(program => (
                   program && program.coordinates && (
                     <Marker
                       key={program.id}
                       position={adjustedPositions[program.id] || program.coordinates}
                       icon={programIcons[program.id]}
                       eventHandlers={{
-                        click: () => setSelectedProgram(program)
+                        click: () => {
+                          setSelectedProgram(program)
+                          setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
+                        }
                       }}
                     />
                   )
@@ -1740,15 +3964,24 @@ function App() {
               </MapContainer>
             )}
 
+            {showContractMapLayer && isUserAllowed && (
+              <div className="contract-map-legend">
+                <div className="cml-item"><span className="cml-dot cml-dot-expiring" /> Expiring {new Date().getFullYear()}</div>
+                <div className="cml-item"><span className="cml-dot cml-dot-active" /> Active</div>
+                <div className="cml-item"><span className="cml-dot cml-dot-none" /> No Data</div>
+              </div>
+            )}
+
             <DetailPanel
               program={selectedProgram}
+              mtZionPrograms={selectedMtZionGroup}
               sport={activeTab}
               isOpen={!!selectedProgram}
-              onClose={() => setSelectedProgram(null)}
+              onClose={() => { setSelectedProgram(null); setSelectedMtZionGroup(null) }}
               isUserAllowed={isUserAllowed}
               user={user}
-              onEdit={(p) => { setSelectedProgram(null); openEditForm(p) }}
-              onDelete={(id) => { setSelectedProgram(null); handleDeleteProgram(id) }}
+              onEdit={(p) => { setSelectedProgram(null); setSelectedMtZionGroup(null); openEditForm(p) }}
+              onDelete={(id) => { setSelectedProgram(null); setSelectedMtZionGroup(null); handleDeleteProgram(id) }}
             />
           </div>
         )}
@@ -1758,6 +3991,8 @@ function App() {
         <p>
           {activeTab === 'events'
             ? `${events.length} events`
+            : activeTab === 'targets'
+            ? `${filteredTargetPrograms.length} target programs`
             : `${filteredPrograms.length} programs displayed`}
           {user && ` | Signed in as ${user.email}`}
         </p>
@@ -1797,6 +4032,16 @@ function App() {
         onAdd={handleAddEvent}
         onEdit={handleEditEvent}
         editEvent={editingEvent}
+        allPrograms={programs}
+      />
+
+      <AddTargetForm
+        isOpen={isTargetFormOpen}
+        onClose={closeTargetForm}
+        onAdd={handleAddTargetProgram}
+        onEdit={handleEditTargetProgram}
+        sport={targetsSport}
+        editTarget={editingTarget}
       />
 
       {showExportMenu && (
@@ -1807,13 +4052,39 @@ function App() {
             <p className="export-modal-sub">Choose an export format</p>
             <div className="export-modal-options">
               <button className="export-modal-btn" onClick={() => { handleExportMap(); setShowExportMenu(false) }}>
-                <span className="export-modal-icon">&#8599;</span>
+                <span className="export-modal-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="16" height="14" rx="2"/>
+                    <circle cx="6" cy="14" r="1" fill="currentColor"/>
+                    <path d="M10 6l4 4-4 4"/>
+                  </svg>
+                </span>
                 <span>Export Map (PNG)</span>
               </button>
               <button className="export-modal-btn" onClick={() => { handleExportCSV(); }}>
-                <span className="export-modal-icon">&#8615;</span>
+                <span className="export-modal-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <rect x="2" y="2" width="16" height="16" rx="2"/>
+                    <line x1="2" y1="7" x2="18" y2="7"/>
+                    <line x1="2" y1="12" x2="18" y2="12"/>
+                    <line x1="7" y1="2" x2="7" y2="18"/>
+                  </svg>
+                </span>
                 <span>Export List (CSV)</span>
               </button>
+              {activeTab !== 'events' && (
+                <button className="export-modal-btn" onClick={handleExportPDF}>
+                  <span className="export-modal-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+                      <polyline points="12,2 12,6 16,6"/>
+                      <line x1="6" y1="11" x2="14" y2="11"/>
+                      <line x1="6" y1="15" x2="14" y2="15"/>
+                    </svg>
+                  </span>
+                  <span>Export Report (PDF)</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1825,6 +4096,65 @@ function App() {
         programs={programs}
         events={events}
         sport={activeTab}
+      />
+
+      <DigestModal
+        isOpen={isDigestOpen}
+        onClose={() => setIsDigestOpen(false)}
+        programs={programs}
+        events={events}
+        sport={activeTab}
+      />
+
+      <ReportsModal
+        isOpen={isReportsOpen}
+        onClose={() => setIsReportsOpen(false)}
+        programs={programs}
+        events={events}
+        sport={activeTab}
+      />
+
+      <ComparisonModal
+        isOpen={isComparisonOpen}
+        onClose={() => setIsComparisonOpen(false)}
+        programs={programs}
+      />
+
+      <ArchiveModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        archivedPrograms={archivedPrograms}
+        onRestore={handleRestoreProgram}
+        onDelete={handlePermanentDelete}
+        sport={activeTab}
+      />
+
+      <BulkEditModal
+        isOpen={isBulkEditOpen}
+        onClose={() => setIsBulkEditOpen(false)}
+        programs={programs}
+        onSave={handleEditProgram}
+        onDelete={handleBulkDeleteProgram}
+        sport={activeTab}
+      />
+
+      <ContractDashboard
+        isOpen={isContractDashboardOpen}
+        onClose={() => setIsContractDashboardOpen(false)}
+        programs={programs}
+        allContractDetails={allContractDetails}
+        sport={activeTab}
+      />
+
+      <CompetitorEventsModal
+        isOpen={isCompetitorEventsOpen}
+        onClose={() => setIsCompetitorEventsOpen(false)}
+        events={competitorEvents}
+        onAdd={addCompetitorEvent}
+        onUpdate={updateCompetitorEvent}
+        onDelete={deleteCompetitorEvent}
+        isUserAllowed={isUserAllowed}
+        userEmail={user?.email}
       />
     </div>
   )

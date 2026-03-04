@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <!-- Magenta blur filters for brand texture -->
+    <filter id="blur1" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="60"/>
+    </filter>
+    <filter id="blur2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="80"/>
+    </filter>
+    <!-- adidas FG Compressed Bold Italic approximation -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700&amp;display=swap');
+      .wordmark {
+        font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+        font-weight: 700;
+        font-style: italic;
+        letter-spacing: 0.1em;
+      }
+    </style>
+  </defs>
+
+  <!-- Black background -->
+  <rect width="1200" height="630" fill="#000000"/>
+
+  <!-- Magenta blur texture - top left -->
+  <circle cx="100" cy="80" r="200" fill="#E500A4" opacity="0.35" filter="url(#blur1)"/>
+
+  <!-- Magenta blur texture - bottom right -->
+  <circle cx="1100" cy="550" r="250" fill="#E500A4" opacity="0.3" filter="url(#blur2)"/>
+
+  <!-- BOS (Badge of Sport) - adidas trefoil approximation -->
+  <g transform="translate(540, 180)">
+    <!-- Three stripes forming trefoil shape -->
+    <path d="M60 0 L60 80 L45 80 L45 25 L30 80 L15 80 L15 35 L0 80 L-15 80 L30 0 Z" fill="white"/>
+    <path d="M75 0 L120 80 L105 80 L75 35 L75 80 L60 80 L60 0 Z" fill="white"/>
+    <path d="M90 35 L90 80 L105 80 L105 25 L120 80 L135 80 L90 0 Z" fill="white" transform="translate(30, 0)"/>
+  </g>
+
+  <!-- ADI SEL3CT Wordmark -->
+  <text x="600" y="400" text-anchor="middle" class="wordmark" fill="white" font-size="72">
+    ADI SEL3CT
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="460" text-anchor="middle" font-family="'Barlow Condensed', sans-serif" font-weight="400" font-size="24" fill="white" opacity="0.7" letter-spacing="0.15em">
+    WELCOME TO THE S-TIER
+  </text>
+
+  <!-- Magenta accent line -->
+  <rect x="450" y="490" width="300" height="4" fill="#E500A4"/>
+</svg>

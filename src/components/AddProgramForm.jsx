@@ -39,7 +39,51 @@ const BS_ISLANDS = [
   { abbr: 'BS-BI', name: 'Bimini' }, { abbr: 'BS-LI', name: 'Long Island' }
 ]
 
-const REGIONS = ['Canada', 'Mid Atlantic', 'South', 'Midwest', 'West']
+const REGIONS = ['Canada', 'Mid Atlantic', 'North', 'South', 'Midwest', 'West']
+
+const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
+
+// Mahomes tier only available for football
+const FOOTBALL_PROGRAM_LEVELS = ['Mahomes', 'Gold', 'Silver', 'Bronze', 'Regional']
+
+const GENDER_OPTIONS = ['Boys', 'Girls']
+
+const TEAM_TYPE_OPTIONS = ['Prep', 'National']
+
+// Basic team colors
+// adidas Zone Graphic color palette
+const TEAM_COLORS = [
+  // Primary Colors
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Team Maroon', hex: '#5C1F35' },
+  { name: 'Team Burgundy', hex: '#6D2C3B' },
+  { name: 'Team Power Red', hex: '#BF0D3E' },
+  { name: 'Team Orange', hex: '#E35205' },
+  { name: 'Team Collegiate Gold', hex: '#CC8A00' },
+  { name: 'Team Gold', hex: '#FFB81C' },
+  { name: 'Bright Yellow', hex: '#FFFF00' },
+  { name: 'Solar Yellow', hex: '#FFF200' },
+  { name: 'Team Solar Green', hex: '#C4D600' },
+  { name: 'Team Kelly Green', hex: '#009639' },
+  { name: 'Team Dark Green', hex: '#00573F' },
+  { name: 'Team Forest Green', hex: '#0D381E' },
+  // Secondary Colors
+  { name: 'Teal', hex: '#00857D' },
+  { name: 'Team Shock Blue', hex: '#009FDF' },
+  { name: 'Team Royal Blue', hex: '#0065BD' },
+  { name: 'Team Collegiate Royal', hex: '#002F87' },
+  { name: 'Team Navy Blue', hex: '#001F5B' },
+  { name: 'Team College Purple', hex: '#512D6D' },
+  { name: 'Team Purple', hex: '#6D2077' },
+  { name: 'Team Pink', hex: '#E31C79' },
+  { name: 'Team Light Grey', hex: '#A2AAAD' },
+  { name: 'Team Sand', hex: '#C5B9A0' },
+  { name: 'Dark Grey Heather', hex: '#5C6670' },
+  { name: 'Orange Rush', hex: '#FF6720' },
+  { name: 'Red Rush', hex: '#ED174C' },
+  { name: 'Blue Rush', hex: '#0033A0' }
+]
 
 const initialFormState = {
   name: '',
@@ -50,10 +94,22 @@ const initialFormState = {
   roster: '',
   headCoach: '',
   ranking: '',
+  stateRanking: '',
   topProspects: '',
   conference: '',
   maxprepsUrl: '',
-  tcaStoreUrl: ''
+  tcaStoreUrl: '',
+  level: '',
+  primaryColor: '',
+  secondaryColor: '',
+  contactEmail: '',
+  contactPhone: '',
+  twitter: '',
+  instagram: '',
+  gender: 'Boys',
+  teamType: '',
+  onboarding2026: false,
+  isSelect: true
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
@@ -80,10 +136,22 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         roster: editProgram.roster || '',
         headCoach: editProgram.headCoach || '',
         ranking: editProgram.ranking || '',
+        stateRanking: editProgram.stateRanking || '',
         topProspects: editProgram.topProspects || '',
         conference: editProgram.conference || '',
         maxprepsUrl: editProgram.maxprepsUrl || '',
-        tcaStoreUrl: editProgram.tcaStoreUrl || ''
+        tcaStoreUrl: editProgram.tcaStoreUrl || '',
+        level: editProgram.level || '',
+        primaryColor: editProgram.primaryColor || '',
+        secondaryColor: editProgram.secondaryColor || '',
+        contactEmail: editProgram.contactEmail || '',
+        contactPhone: editProgram.contactPhone || '',
+        twitter: editProgram.twitter || '',
+        instagram: editProgram.instagram || '',
+        gender: editProgram.gender || 'Boys',
+        teamType: editProgram.teamType || '',
+        onboarding2026: editProgram.onboarding2026 || false,
+        isSelect: editProgram.isSelect !== false
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -237,10 +305,22 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         roster: formData.roster || '',
         headCoach: formData.headCoach || '',
         ranking: formData.ranking || '',
+        stateRanking: formData.stateRanking || '',
         topProspects: formData.topProspects || '',
         conference: formData.conference || '',
         maxprepsUrl: formData.maxprepsUrl || '',
         tcaStoreUrl: formData.tcaStoreUrl || '',
+        level: formData.level || '',
+        primaryColor: formData.primaryColor || '',
+        secondaryColor: formData.secondaryColor || '',
+        contactEmail: formData.contactEmail || '',
+        contactPhone: formData.contactPhone || '',
+        twitter: formData.twitter || '',
+        instagram: formData.instagram || '',
+        gender: sport === 'football' ? 'Boys' : (formData.gender || 'Boys'),
+        teamType: formData.name?.toLowerCase().match(/mt\.?\s*zion/) ? (formData.teamType || '') : '',
+        onboarding2026: formData.onboarding2026 || false,
+        isSelect: formData.isSelect !== false,
         logo: logoData,
         gallery: gallery,
         brandGuide: brandGuide || '',
@@ -249,9 +329,9 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
       }
 
       if (isEditMode) {
-        onEdit(programData)
+        await onEdit(programData)
       } else {
-        onAdd(programData)
+        await onAdd(programData)
       }
 
       // Reset form
@@ -283,6 +363,37 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={handleClose}>&times;</button>
         <h2>{isEditMode ? 'Edit Program' : 'Add New Program'}</h2>
+
+        {sport !== 'football' && (
+          <div className="gender-selector">
+            {GENDER_OPTIONS.map(g => (
+              <button
+                key={g}
+                type="button"
+                className={`gender-selector-btn ${formData.gender === g ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, gender: g }))}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {formData.name?.toLowerCase().match(/mt\.?\s*zion/) && (
+          <div className="gender-selector" style={{ marginTop: '8px' }}>
+            <label style={{ width: '100%', marginBottom: '4px', fontSize: '13px', fontWeight: 600 }}>Team Type</label>
+            {TEAM_TYPE_OPTIONS.map(t => (
+              <button
+                key={t}
+                type="button"
+                className={`gender-selector-btn ${formData.teamType === t ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, teamType: t }))}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -387,26 +498,165 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="ranking">Ranking</label>
+              <label htmlFor="ranking">National Ranking</label>
               <input
                 type="text"
                 id="ranking"
                 name="ranking"
                 value={formData.ranking}
                 onChange={handleInputChange}
-                placeholder="e.g., #5 National"
+                placeholder="e.g., #5, #479, Unranked"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="topProspects">Top Prospects</label>
+              <label htmlFor="stateRanking">State Ranking</label>
               <input
                 type="text"
-                id="topProspects"
-                name="topProspects"
-                value={formData.topProspects}
+                id="stateRanking"
+                name="stateRanking"
+                value={formData.stateRanking}
                 onChange={handleInputChange}
-                placeholder="e.g., 3 five-stars"
+                placeholder="e.g., #1, #50, Unranked"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="topProspects">Top Prospects</label>
+            <input
+              type="text"
+              id="topProspects"
+              name="topProspects"
+              value={formData.topProspects}
+              onChange={handleInputChange}
+              placeholder="e.g., 3 five-stars"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="level">Program Level</label>
+            <select
+              id="level"
+              name="level"
+              value={formData.level}
+              onChange={handleInputChange}
+            >
+              <option value="">Select Level</option>
+              {(sport === 'football' ? FOOTBALL_PROGRAM_LEVELS : PROGRAM_LEVELS).map(lvl => (
+                <option key={lvl} value={lvl}>{lvl}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="primaryColor">Primary Color</label>
+              <select
+                id="primaryColor"
+                name="primaryColor"
+                value={formData.primaryColor}
+                onChange={handleInputChange}
+                style={formData.primaryColor ? { borderLeft: `4px solid ${TEAM_COLORS.find(c => c.name === formData.primaryColor)?.hex || '#ccc'}` } : {}}
+              >
+                <option value="">Select Color</option>
+                {TEAM_COLORS.map(color => (
+                  <option key={color.name} value={color.name}>{color.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="secondaryColor">Secondary Color</label>
+              <select
+                id="secondaryColor"
+                name="secondaryColor"
+                value={formData.secondaryColor}
+                onChange={handleInputChange}
+                style={formData.secondaryColor ? { borderLeft: `4px solid ${TEAM_COLORS.find(c => c.name === formData.secondaryColor)?.hex || '#ccc'}` } : {}}
+              >
+                <option value="">Select Color</option>
+                {TEAM_COLORS.map(color => (
+                  <option key={color.name} value={color.name}>{color.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group form-checkbox">
+            <label>
+              <input
+                type="checkbox"
+                name="isSelect"
+                checked={formData.isSelect}
+                onChange={(e) => setFormData(prev => ({ ...prev, isSelect: e.target.checked }))}
+              />
+              Adidas Select Program
+            </label>
+            <span className="checkbox-hint">Uncheck for elite tier programs that are not officially Select</span>
+          </div>
+
+          <div className="form-group form-checkbox">
+            <label>
+              <input
+                type="checkbox"
+                name="onboarding2026"
+                checked={formData.onboarding2026}
+                onChange={(e) => setFormData(prev => ({ ...prev, onboarding2026: e.target.checked }))}
+              />
+              Onboarding 2026
+            </label>
+            <span className="checkbox-hint">Mark if this program is being onboarded in 2026</span>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="contactEmail">Contact Email</label>
+              <input
+                type="email"
+                id="contactEmail"
+                name="contactEmail"
+                value={formData.contactEmail}
+                onChange={handleInputChange}
+                placeholder="coach@program.com"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="contactPhone">Contact Phone</label>
+              <input
+                type="tel"
+                id="contactPhone"
+                name="contactPhone"
+                value={formData.contactPhone}
+                onChange={handleInputChange}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="twitter">Twitter / X Handle</label>
+              <input
+                type="text"
+                id="twitter"
+                name="twitter"
+                value={formData.twitter}
+                onChange={handleInputChange}
+                placeholder="@handle"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="instagram">Instagram Handle</label>
+              <input
+                type="text"
+                id="instagram"
+                name="instagram"
+                value={formData.instagram}
+                onChange={handleInputChange}
+                placeholder="@handle"
               />
             </div>
           </div>

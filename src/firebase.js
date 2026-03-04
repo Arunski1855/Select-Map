@@ -74,7 +74,12 @@ export const deleteProgram = async (sport, programId) => {
 // Edit/Update a program in Firebase
 export const editProgram = async (sport, program) => {
   const programRef = ref(database, `programs/${sport}/${program.id}`)
-  await set(programRef, program)
+  try {
+    await set(programRef, program)
+  } catch (error) {
+    console.error('Edit program error:', error.code, error.message)
+    throw error
+  }
 }
 
 // Subscribe to programs (real-time updates)
@@ -216,8 +221,11 @@ export const subscribeToNotes = (sport, programId, callback) => {
   const notesRef = ref(database, `notes/${sport}/${programId}`)
   return onValue(notesRef, (snapshot) => {
     const data = snapshot.val()
-    const notes = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : []
+    const notes = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
     callback(notes)
+  }, (error) => {
+    console.error('Firebase notes error:', error)
+    callback([])
   })
 }
 
@@ -238,9 +246,371 @@ export const subscribeToSchedule = (sport, programId, callback) => {
   const schedRef = ref(database, `schedule/${sport}/${programId}`)
   return onValue(schedRef, (snapshot) => {
     const data = snapshot.val()
-    const entries = data ? Object.values(data).sort((a, b) => a.date.localeCompare(b.date)) : []
+    const entries = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
     callback(entries)
+  }, (error) => {
+    console.error('Firebase schedule error:', error)
+    callback([])
   })
+}
+
+// Social metrics tracking (Instagram follower snapshots)
+export const addSocialMetric = async (sport, programId, metricData) => {
+  const metricsRef = ref(database, `socialMetrics/${sport}/${programId}`)
+  const newRef = push(metricsRef)
+  await set(newRef, { ...metricData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToSocialMetrics = (sport, programId, callback) => {
+  const metricsRef = ref(database, `socialMetrics/${sport}/${programId}`)
+  return onValue(metricsRef, (snapshot) => {
+    const data = snapshot.val()
+    const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
+    callback(metrics)
+  }, (error) => {
+    console.error('Firebase social metrics error:', error)
+    callback([])
+  })
+}
+
+export const deleteSocialMetric = async (sport, programId, metricId) => {
+  const metricRef = ref(database, `socialMetrics/${sport}/${programId}/${metricId}`)
+  await remove(metricRef)
+}
+
+// Ranking metrics tracking (National & State ranking snapshots over time)
+export const addRankingMetric = async (sport, programId, metricData) => {
+  const metricsRef = ref(database, `rankingMetrics/${sport}/${programId}`)
+  const newRef = push(metricsRef)
+  await set(newRef, { ...metricData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToRankingMetrics = (sport, programId, callback) => {
+  const metricsRef = ref(database, `rankingMetrics/${sport}/${programId}`)
+  return onValue(metricsRef, (snapshot) => {
+    const data = snapshot.val()
+    const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
+    callback(metrics)
+  }, (error) => {
+    console.error('Firebase ranking metrics error:', error)
+    callback([])
+  })
+}
+
+export const deleteRankingMetric = async (sport, programId, metricId) => {
+  const metricRef = ref(database, `rankingMetrics/${sport}/${programId}/${metricId}`)
+  await remove(metricRef)
+}
+
+// Soft delete (archive) a program instead of permanent deletion
+export const archiveProgram = async (sport, programId) => {
+  const programRef = ref(database, `programs/${sport}/${programId}`)
+  return new Promise((resolve, reject) => {
+    onValue(programRef, async (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        try {
+          await set(programRef, { ...data, isArchived: true, archivedAt: Date.now() })
+          resolve()
+        } catch (error) {
+          console.error('Archive set error:', error)
+          reject(error)
+        }
+      } else {
+        reject(new Error('Program not found'))
+      }
+    }, { onlyOnce: true }, (error) => {
+      console.error('Archive read error:', error)
+      reject(error)
+    })
+  })
+}
+
+// Restore an archived program
+export const restoreProgram = async (sport, programId) => {
+  const programRef = ref(database, `programs/${sport}/${programId}`)
+  return new Promise((resolve, reject) => {
+    onValue(programRef, async (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        const { isArchived, archivedAt, ...rest } = data
+        await set(programRef, rest)
+        resolve()
+      } else {
+        reject(new Error('Program not found'))
+      }
+    }, { onlyOnce: true })
+  })
+}
+
+// Subscribe to archived programs
+export const subscribeToArchivedPrograms = (sport, callback) => {
+  const sportRef = ref(database, `programs/${sport}`)
+  const unsubscribe = onValue(sportRef, (snapshot) => {
+    const data = snapshot.val()
+    const programs = data ? Object.values(data).filter(p => p.isArchived) : []
+    callback(programs)
+  }, (error) => {
+    console.error('Firebase archived programs error:', error)
+    callback([])
+  })
+  return unsubscribe
+}
+
+// Mentions tracking for programs
+export const addMention = async (sport, programId, mentionData) => {
+  const mentionsRef = ref(database, `mentions/${sport}/${programId}`)
+  const newRef = push(mentionsRef)
+  await set(newRef, { ...mentionData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToMentions = (sport, programId, callback) => {
+  const mentionsRef = ref(database, `mentions/${sport}/${programId}`)
+  return onValue(mentionsRef, (snapshot) => {
+    const data = snapshot.val()
+    const mentions = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
+    callback(mentions)
+  }, (error) => {
+    console.error('Firebase mentions error:', error)
+    callback([])
+  })
+}
+
+export const deleteMention = async (sport, programId, mentionId) => {
+  const mentionRef = ref(database, `mentions/${sport}/${programId}/${mentionId}`)
+  await remove(mentionRef)
+}
+
+// Event to program linking
+export const linkEventToPrograms = async (eventId, programIds) => {
+  const eventRef = ref(database, `events/${eventId}`)
+  return new Promise((resolve, reject) => {
+    onValue(eventRef, async (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        await set(eventRef, { ...data, linkedPrograms: programIds })
+        resolve()
+      } else {
+        reject(new Error('Event not found'))
+      }
+    }, { onlyOnce: true })
+  })
+}
+
+// Get events linked to a specific program
+export const subscribeToLinkedEvents = (programId, callback) => {
+  const eventsRef = ref(database, 'events')
+  return onValue(eventsRef, (snapshot) => {
+    const data = snapshot.val()
+    const events = data ? Object.values(data).filter(e =>
+      e.linkedPrograms && e.linkedPrograms.includes(programId)
+    ) : []
+    callback(events)
+  }, (error) => {
+    console.error('Firebase linked events error:', error)
+    callback([])
+  })
+}
+
+// Target Programs (recruitment pipeline)
+export const addTargetProgram = async (sport, targetData) => {
+  const targetsRef = ref(database, `targetPrograms/${sport}`)
+  const newRef = push(targetsRef)
+  await set(newRef, { ...targetData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToTargetPrograms = (sport, callback) => {
+  const targetsRef = ref(database, `targetPrograms/${sport}`)
+  return onValue(targetsRef, (snapshot) => {
+    const data = snapshot.val()
+    const targets = data ? Object.values(data).sort((a, b) => {
+      // Sort by status order (active pipeline stages first)
+      const statusOrder = {
+        negotiating: 0,
+        proposal_sent: 1,
+        in_discussion: 2,
+        contacted: 3,
+        identified: 4,
+        signed: 5,
+        lost: 6
+      }
+      const statusDiff = (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4)
+      if (statusDiff !== 0) return statusDiff
+      // Then by priority (high first)
+      const priorityOrder = { high: 0, medium: 1, low: 2 }
+      const priorityDiff = (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1)
+      if (priorityDiff !== 0) return priorityDiff
+      // Then by timestamp (newest first)
+      return (b.timestamp || 0) - (a.timestamp || 0)
+    }) : []
+    callback(targets)
+  }, (error) => {
+    console.error('Firebase target programs error:', error)
+    callback([])
+  })
+}
+
+export const editTargetProgram = async (sport, targetData) => {
+  const targetRef = ref(database, `targetPrograms/${sport}/${targetData.id}`)
+  await set(targetRef, { ...targetData, updatedAt: Date.now() })
+}
+
+export const deleteTargetProgram = async (sport, targetId) => {
+  const targetRef = ref(database, `targetPrograms/${sport}/${targetId}`)
+  await remove(targetRef)
+}
+
+// Target program notes (activity tracking)
+export const addTargetNote = async (sport, targetId, noteData) => {
+  const notesRef = ref(database, `targetNotes/${sport}/${targetId}`)
+  const newRef = push(notesRef)
+  await set(newRef, { ...noteData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToTargetNotes = (sport, targetId, callback) => {
+  const notesRef = ref(database, `targetNotes/${sport}/${targetId}`)
+  return onValue(notesRef, (snapshot) => {
+    const data = snapshot.val()
+    const notes = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
+    callback(notes)
+  }, (error) => {
+    console.error('Firebase target notes error:', error)
+    callback([])
+  })
+}
+
+export const deleteTargetNote = async (sport, targetId, noteId) => {
+  const noteRef = ref(database, `targetNotes/${sport}/${targetId}/${noteId}`)
+  await remove(noteRef)
+}
+
+// Target ranking metrics tracking (Ranking history over time)
+export const addTargetRankingMetric = async (sport, targetId, metricData) => {
+  const metricsRef = ref(database, `targetRankingMetrics/${sport}/${targetId}`)
+  const newRef = push(metricsRef)
+  await set(newRef, { ...metricData, id: newRef.key })
+  return newRef.key
+}
+
+export const subscribeToTargetRankingMetrics = (sport, targetId, callback) => {
+  const metricsRef = ref(database, `targetRankingMetrics/${sport}/${targetId}`)
+  return onValue(metricsRef, (snapshot) => {
+    const data = snapshot.val()
+    const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
+    callback(metrics)
+  }, (error) => {
+    console.error('Firebase target ranking metrics error:', error)
+    callback([])
+  })
+}
+
+export const deleteTargetRankingMetric = async (sport, targetId, metricId) => {
+  const metricRef = ref(database, `targetRankingMetrics/${sport}/${targetId}/${metricId}`)
+  await remove(metricRef)
+}
+
+// Contract details (private, auth-gated)
+export const subscribeToContractDetails = (sport, programId, callback) => {
+  const contractRef = ref(database, `contractDetails/${sport}/${programId}`)
+  return onValue(contractRef, (snapshot) => {
+    const data = snapshot.val()
+    callback(data || null)
+  }, (error) => {
+    console.error('Firebase contract details error:', error)
+    callback(null)
+  })
+}
+
+export const updateContractDetails = async (sport, programId, details, userEmail) => {
+  const contractRef = ref(database, `contractDetails/${sport}/${programId}`)
+  await set(contractRef, {
+    ...details,
+    lastUpdated: Date.now(),
+    updatedBy: userEmail
+  })
+}
+
+// Contract audit history
+export const addContractHistory = async (sport, programId, action, userEmail, details = {}) => {
+  const historyRef = ref(database, `contractHistory/${sport}/${programId}`)
+  const newRef = push(historyRef)
+  await set(newRef, {
+    id: newRef.key,
+    action,
+    userEmail,
+    timestamp: Date.now(),
+    details
+  })
+}
+
+export const subscribeToContractHistory = (sport, programId, callback) => {
+  const historyRef = ref(database, `contractHistory/${sport}/${programId}`)
+  return onValue(historyRef, (snapshot) => {
+    const data = snapshot.val()
+    const history = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : []
+    callback(history)
+  }, (error) => {
+    console.error('Firebase contract history error:', error)
+    callback([])
+  })
+}
+
+// Subscribe to all contract details for a sport (for dashboard and map layer)
+export const subscribeToAllContractDetails = (sport, callback) => {
+  const contractRef = ref(database, `contractDetails/${sport}`)
+  return onValue(contractRef, (snapshot) => {
+    const data = snapshot.val()
+    callback(data || {})
+  }, (error) => {
+    console.error('Firebase all contract details error:', error)
+    callback({})
+  })
+}
+
+// Competitor Events CRUD
+export const subscribeToCompetitorEvents = (callback) => {
+  const eventsRef = ref(database, 'competitorEvents')
+  return onValue(eventsRef, (snapshot) => {
+    const data = snapshot.val()
+    const events = data ? Object.values(data).sort((a, b) => {
+      // Sort by date ascending (upcoming first)
+      return new Date(a.date) - new Date(b.date)
+    }) : []
+    callback(events)
+  }, (error) => {
+    console.error('Firebase competitor events error:', error)
+    callback([])
+  })
+}
+
+export const addCompetitorEvent = async (eventData) => {
+  const eventsRef = ref(database, 'competitorEvents')
+  const newRef = push(eventsRef)
+  await set(newRef, {
+    ...eventData,
+    id: newRef.key,
+    addedAt: Date.now()
+  })
+  return newRef.key
+}
+
+export const updateCompetitorEvent = async (eventId, eventData) => {
+  const eventRef = ref(database, `competitorEvents/${eventId}`)
+  await set(eventRef, {
+    ...eventData,
+    id: eventId,
+    updatedAt: Date.now()
+  })
+}
+
+export const deleteCompetitorEvent = async (eventId) => {
+  const eventRef = ref(database, `competitorEvents/${eventId}`)
+  await remove(eventRef)
 }
 
 export { database, auth }
