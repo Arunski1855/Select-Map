@@ -33,10 +33,16 @@ The ADI SEL3CT identity has two layers:
 
 ## Logo System
 
-### Variants
-1. **Primary (Horizontal)**: Adidas trefoil + "ADISEL3CT" wordmark side by side
-2. **Stacked**: Adidas trefoil above "ADISEL3CT" wordmark
-3. **Simplified**: "ADISEL3CT" wordmark only (no trefoil)
+### Global Brand Design Requirements
+- **Retain "ADI"** in the program name and wordmark (ADI SEL3CT, not just SEL3CT)
+- **Detach BOS** (Badge of Sport / adidas logo) from the wordmark
+- **BOS Hierarchy**: BOS must be at top of visual hierarchy
+- **Clear Space**: Proper spacing between BOS and wordmark
+
+### Wordmark Variants
+1. **Primary (Horizontal)**: BOS + "ADI SEL3CT" side by side (with clear space between)
+2. **Stacked**: BOS centered above "ADI SEL3CT" wordmark
+3. **Simplified**: "ADI SEL3CT" wordmark only (no BOS) - for tight spaces
 
 ### Color Applications
 - **On Light**: Black logo on white/light backgrounds
@@ -44,7 +50,46 @@ The ADI SEL3CT identity has two layers:
 - Never use other colors for the logo itself
 
 ### Clear Space
-- Maintain minimum clear space equal to the height of the "A" in ADISEL3CT around all sides
+- Maintain minimum clear space equal to the height of the "A" in ADI SEL3CT around all sides
+- BOS and wordmark must have visible separation (not touching)
+
+---
+
+## Shield Symbol / Badge
+
+### Primary Symbol Structure
+The shield badge is a key graphic element that can be used as a micro-expression or expanded into larger layouts.
+
+```
+    ┌─────────────────┐
+    │       BOS       │  ← adidas Performance logo at top
+    │    ADI SEL3CT   │  ← Wordmark below BOS
+    │   ┌─────────┐   │
+    │   │  2026   │   │  ← Year OR Sport in bottom section
+    │   └─────────┘   │
+    └─────────────────┘
+```
+
+### Shield Variants
+| Type | Bottom Content | Use Case |
+|------|----------------|----------|
+| **Year Badge** | "2026" (or current year) | General branding, event materials |
+| **Sport Badge** | "BASKETBALL", "FOOTBALL", etc. | Sport-specific content |
+| **School Badge** | School name | School-led moments |
+
+### Shield Rules
+- Shield shape is **approved**
+- **Do NOT** use three-stripes as decorative element inside shield
+- BOS must serve as top/primary branding element
+- Bottom tag area can be filled with magenta (brand-led) or school color (school-led)
+
+### Badge Applications
+- Helmet decals (small, micro-expression)
+- Jersey patches
+- Backpack/equipment labels
+- Social media profile images
+- Pennants and banners
+- Event signage
 
 ---
 
@@ -154,6 +199,71 @@ Neon Magenta was chosen specifically because it won't conflict with any school's
 
 ---
 
+## Layout: Ticker Tape
+
+A horizontal strip that combines logos, graphic elements, and messaging at the same height. Used across physical and digital applications.
+
+### Structure
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ WELCOME TO │ [BOS] │ ADI SEL3CT │ [BADGE] │ THE S-TIER │ [BOS] │   │
+│ THE S-TIER │       │            │  2026   │            │       │   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Ticker Tape Elements
+- **BOS (Badge of Sport)**: adidas Performance logo
+- **Wordmark**: "ADI SEL3CT" in FG Compressed Bold Italic
+- **Shield Badge**: Year badge or sport badge
+- **Messaging**: Taglines like "WELCOME TO THE S-TIER"
+- **Separator**: Vertical lines or spacing between elements
+
+### Ticker Tape Applications
+| Context | Background | Text Color |
+|---------|------------|------------|
+| Brand-Led | Magenta `#E500A4` | White |
+| School-Led | School Primary Color | White or Black (contrast) |
+| Neutral | Black | White |
+
+### Use Cases
+- Event banners and signage
+- Social media headers
+- Website hero sections
+- Broadcast graphics lower thirds
+- Physical venue branding (field wraps, court sides)
+
+### CSS Implementation
+```css
+.ticker-tape {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--adi-magenta);
+  color: var(--adi-white);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ticker-tape__separator {
+  width: 2px;
+  height: 1.5rem;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.ticker-tape--school {
+  background: var(--school-accent);
+}
+```
+
+---
+
 ## School-Led Moments (Detailed)
 
 When creating graphics in the context of a specific school, the ADI SEL3CT system flexes to accommodate each program while maintaining brand consistency.
@@ -174,7 +284,34 @@ When creating graphics in the context of a specific school, the ADI SEL3CT syste
 | **School Logo** | Prominently featured, maintains original form |
 | **Image Treatment** | Athlete in colored circle cutout on black background |
 
-### Circle Cutout Image Treatment
+### Image Treatment Options
+
+There are **three approved image treatments** for athlete/action photography:
+
+#### 1. Clipping (Cutout)
+Athlete is cut out from background and placed on solid color or black.
+
+```
+┌─────────────────────────────────────┐
+│         BLACK BACKGROUND            │
+│                                     │
+│           [ATHLETE]                 │
+│          (cut out, no              │
+│           background)               │
+│                                     │
+│ ═══════════════════════════════════ │
+│ ADI SEL3CT | SPORT | SCHOOL NAME   │
+└─────────────────────────────────────┘
+```
+
+- Use for: Hero images, posters, social cards
+- Athlete fully removed from original background
+- Place on black or school color
+- Add branding bar below
+
+#### 2. Container Shape (Circle Cutout)
+Athlete image contained within a geometric shape (usually circle).
+
 ```
 ┌─────────────────────────────────────┐
 │             BLACK BG                │
@@ -190,6 +327,91 @@ When creating graphics in the context of a specific school, the ADI SEL3CT syste
 │ ═══════════════════════════════════ │
 │ ADI SEL3CT | SPORT | SCHOOL NAME   │
 └─────────────────────────────────────┘
+```
+
+- Use for: Cards, grids, multi-athlete layouts
+- Circle filled with school color
+- Athlete image clips to circle bounds
+- Strong visual consistency across different photos
+
+#### 3. Color Overlay
+Full-bleed image with school color overlay and text treatment.
+
+```
+┌─────────────────────────────────────┐
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+│ ▓▓   FULL IMAGE WITH SCHOOL     ▓▓ │
+│ ▓▓    COLOR OVERLAY (30-50%)    ▓▓ │
+│ ▓▓                              ▓▓ │
+│ ▓▓      [ LARGE HEADLINE ]      ▓▓ │
+│ ▓▓        [ SUBTEXT ]           ▓▓ │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+│ ADI SEL3CT BRANDING BAR             │
+└─────────────────────────────────────┘
+```
+
+- Use for: Event promos, announcements, editorial
+- Original image remains mostly visible
+- School color overlaid at 30-50% opacity
+- Large typography placed over image
+- Creates dramatic, editorial feel
+
+### CSS for Image Treatments
+
+```css
+/* Treatment 1: Clipping */
+.athlete-cutout {
+  background: var(--adi-black);
+  padding: 2rem;
+}
+
+.athlete-cutout img {
+  /* Image should already be PNG with transparent background */
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Treatment 2: Container Shape */
+.athlete-circle {
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: var(--school-accent, var(--adi-magenta));
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.athlete-circle img {
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* Treatment 3: Color Overlay */
+.color-overlay {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.color-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--school-accent, var(--adi-magenta));
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+}
+
+.color-overlay__content {
+  position: relative;
+  z-index: 1;
+  color: var(--adi-white);
+}
 ```
 
 ### Branding Bar Structure
