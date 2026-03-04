@@ -2332,8 +2332,9 @@ textarea {
   font-family: var(--font-heading-compressed);
   font-size: 0.65rem;
   font-weight: 700;
+  font-style: italic;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: var(--letter-spacing-brand);
   color: white;
 }
 
@@ -4200,8 +4201,9 @@ textarea {
   padding: 2px 8px;
   border-radius: 3px;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: var(--letter-spacing-brand);
   font-weight: 700;
+  font-style: italic;
 }
 
 .detail-level-value {
@@ -4384,8 +4386,9 @@ textarea {
   padding: 2px 8px;
   border-radius: 3px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: var(--letter-spacing-brand);
   font-weight: 700;
+  font-style: italic;
   min-width: 80px;
   text-align: center;
 }
@@ -4653,8 +4656,9 @@ textarea {
   padding: 2px 8px;
   border-radius: 3px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: var(--letter-spacing-brand);
   font-weight: 700;
+  font-style: italic;
   min-width: 80px;
   text-align: center;
 }
