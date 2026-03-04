@@ -7744,20 +7744,24 @@ textarea {
    =========================================== */
 
 .competitor-events-btn {
-  background: linear-gradient(135deg, #F35B04 0%, #E03A3E 50%, #00857C 100%);
-  color: white;
+  background: var(--adi-magenta);
+  color: var(--adi-white);
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  border-radius: 0;
+  padding: 6px 14px;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, transform 0.15s ease;
 }
 
 .competitor-events-btn:hover {
-  transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  background: var(--adi-magenta-light);
+  transform: translateY(-1px);
 }
 
 .ce-modal {
