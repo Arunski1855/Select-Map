@@ -16,8 +16,12 @@ function SplashScreen({ onComplete }) {
 
   return (
     <div className={`splash-screen splash-${phase}`}>
+      {/* Magenta blur texture corners */}
+      <div className="splash-blur splash-blur--tl" />
+      <div className="splash-blur splash-blur--br" />
+
       <div className="splash-content">
-        {/* adidas Performance Logo */}
+        {/* BOS (Badge of Sport) - adidas Performance Logo */}
         <div className="splash-logo">
           <img
             src="/logos/adidas-logo.png"
@@ -25,10 +29,11 @@ function SplashScreen({ onComplete }) {
             className="splash-logo-img"
           />
         </div>
+        {/* ADI SEL3CT Wordmark - detached from BOS per brand guidelines */}
         <div className="splash-wordmark">
-          <span className="splash-brand">adidas</span>
-          <span className="splash-sub">SELECT MAP</span>
+          <span className="splash-wordmark-text">ADI SEL3CT</span>
         </div>
+        {/* Magenta loader bar */}
         <div className="splash-loader">
           <div className="splash-loader-track">
             <div className="splash-loader-fill" />

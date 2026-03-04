@@ -3064,7 +3064,7 @@ function App() {
         <div className="header-content">
           <div className="title-row">
             <img src="/logos/adidas-logo.png" alt="adidas" className="header-logo" />
-            <h1 className="title">Select Map</h1>
+            <h1 className="title">ADI SEL3CT</h1>
           </div>
         </div>
 
