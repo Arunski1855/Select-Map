@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { addRankingMetric } from '../firebase'
 import './AddProgramForm.css'
 
 // US States for dropdown
@@ -112,7 +113,7 @@ const initialFormState = {
   isSelect: true
 }
 
-function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) {
+function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, user }) {
   const [formData, setFormData] = useState(initialFormState)
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoData, setLogoData] = useState(null)
@@ -332,6 +333,26 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram }) 
         await onEdit(programData)
       } else {
         await onAdd(programData)
+      }
+
+      // Sync ranking to ranking history if set/changed
+      const rankingChanged = isEditMode
+        ? (formData.ranking !== editProgram.ranking || formData.stateRanking !== editProgram.stateRanking)
+        : (formData.ranking || formData.stateRanking)
+
+      if (rankingChanged && (formData.ranking || formData.stateRanking)) {
+        try {
+          await addRankingMetric(sport, programData.id, {
+            nationalRank: formData.ranking || null,
+            stateRank: formData.stateRanking || null,
+            date: new Date().toISOString().split('T')[0],
+            addedBy: user?.email || 'system',
+            timestamp: Date.now(),
+            source: 'program-edit'
+          })
+        } catch (rankErr) {
+          console.error('Error syncing ranking to history:', rankErr)
+        }
       }
 
       // Reset form

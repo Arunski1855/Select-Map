@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getDatabase, ref, push, onValue, remove, set } from 'firebase/database'
+import { getDatabase, ref, push, onValue, remove, set, update } from 'firebase/database'
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -302,6 +302,11 @@ export const subscribeToRankingMetrics = (sport, programId, callback) => {
 export const deleteRankingMetric = async (sport, programId, metricId) => {
   const metricRef = ref(database, `rankingMetrics/${sport}/${programId}/${metricId}`)
   await remove(metricRef)
+}
+
+export const updateRankingMetric = async (sport, programId, metricId, updates) => {
+  const metricRef = ref(database, `rankingMetrics/${sport}/${programId}/${metricId}`)
+  await update(metricRef, updates)
 }
 
 // Soft delete (archive) a program instead of permanent deletion

@@ -4005,6 +4005,7 @@ function App() {
         onEdit={handleEditProgram}
         sport={activeTab}
         editProgram={editingProgram}
+        user={user}
       />
 
       <AuthModal

@@ -13,6 +13,7 @@ import {
   addRankingMetric,
   subscribeToRankingMetrics,
   deleteRankingMetric,
+  updateRankingMetric,
   subscribeToLinkedEvents,
   subscribeToContractDetails,
   updateContractDetails,
@@ -146,6 +147,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   const [newNationalRank, setNewNationalRank] = useState('')
   const [newStateRank, setNewStateRank] = useState('')
   const [rankingLoading, setRankingLoading] = useState(false)
+  const [editingRankingId, setEditingRankingId] = useState(null)
+  const [editRankingForm, setEditRankingForm] = useState({ nationalRank: '', stateRank: '', date: '' })
 
   // Linked events state
   const [linkedEvents, setLinkedEvents] = useState([])
@@ -346,6 +349,40 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       await deleteRankingMetric(sport, program.id, metricId)
     } catch (err) {
       console.error('Error deleting ranking metric:', err)
+    }
+  }
+
+  const handleEditRankingMetric = (metric) => {
+    setEditingRankingId(metric.id)
+    setEditRankingForm({
+      nationalRank: metric.nationalRank || '',
+      stateRank: metric.stateRank || '',
+      date: metric.date || ''
+    })
+  }
+
+  const handleCancelEditRanking = () => {
+    setEditingRankingId(null)
+    setEditRankingForm({ nationalRank: '', stateRank: '', date: '' })
+  }
+
+  const handleSaveRankingMetric = async () => {
+    if (!editingRankingId) return
+    setRankingLoading(true)
+    try {
+      await updateRankingMetric(sport, program.id, editingRankingId, {
+        nationalRank: editRankingForm.nationalRank || null,
+        stateRank: editRankingForm.stateRank || null,
+        date: editRankingForm.date,
+        updatedBy: user?.email,
+        updatedAt: Date.now()
+      })
+      setEditingRankingId(null)
+      setEditRankingForm({ nationalRank: '', stateRank: '', date: '' })
+    } catch (err) {
+      console.error('Error updating ranking metric:', err)
+    } finally {
+      setRankingLoading(false)
     }
   }
 
@@ -1110,12 +1147,42 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   <div className="ranking-history">
                     {rankingHistory.slice().reverse().slice(0, 5).map(m => (
                       <div key={m.id} className="ranking-history-row">
-                        <span className="ranking-history-date">{new Date(m.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        <span className="ranking-history-values">
-                          {m.nationalRank && <span className="ranking-badge national">N: {m.nationalRank}</span>}
-                          {m.stateRank && <span className="ranking-badge state">S: {m.stateRank}</span>}
-                        </span>
-                        <button className="ranking-history-delete" onClick={() => handleDeleteRankingMetric(m.id)}>&times;</button>
+                        {editingRankingId === m.id ? (
+                          <>
+                            <input
+                              type="date"
+                              value={editRankingForm.date}
+                              onChange={e => setEditRankingForm(f => ({ ...f, date: e.target.value }))}
+                              className="ranking-edit-date"
+                            />
+                            <input
+                              type="text"
+                              value={editRankingForm.nationalRank}
+                              onChange={e => setEditRankingForm(f => ({ ...f, nationalRank: e.target.value }))}
+                              placeholder="National"
+                              className="ranking-edit-input"
+                            />
+                            <input
+                              type="text"
+                              value={editRankingForm.stateRank}
+                              onChange={e => setEditRankingForm(f => ({ ...f, stateRank: e.target.value }))}
+                              placeholder="State"
+                              className="ranking-edit-input"
+                            />
+                            <button className="ranking-edit-save" onClick={handleSaveRankingMetric} disabled={rankingLoading}>Save</button>
+                            <button className="ranking-edit-cancel" onClick={handleCancelEditRanking}>Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="ranking-history-date">{new Date(m.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <span className="ranking-history-values">
+                              {m.nationalRank && <span className="ranking-badge national">N: {m.nationalRank}</span>}
+                              {m.stateRank && <span className="ranking-badge state">S: {m.stateRank}</span>}
+                            </span>
+                            <button className="ranking-history-edit" onClick={() => handleEditRankingMetric(m)} title="Edit">&#9998;</button>
+                            <button className="ranking-history-delete" onClick={() => handleDeleteRankingMetric(m.id)} title="Delete">&times;</button>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
