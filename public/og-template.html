@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OG Image Template - Screenshot at 1200x630</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;1,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .og-container {
+      width: 1200px;
+      height: 630px;
+      background: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Magenta blur - top left */
+    .blur-tl {
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 400px;
+      height: 400px;
+      background: #E500A4;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+    }
+
+    /* Magenta blur - bottom right */
+    .blur-br {
+      position: absolute;
+      bottom: -100px;
+      right: -100px;
+      width: 450px;
+      height: 450px;
+      background: #E500A4;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.3;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    /* BOS - adidas logo placeholder */
+    .bos {
+      width: 120px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bos img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: invert(1);
+    }
+
+    /* If no image, show text placeholder */
+    .bos-text {
+      color: white;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+    }
+
+    .wordmark {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 96px;
+      font-weight: 700;
+      font-style: italic;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .tagline {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-top: 8px;
+    }
+
+    .accent-line {
+      width: 300px;
+      height: 4px;
+      background: #E500A4;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="og-container">
+    <!-- Magenta blur textures -->
+    <div class="blur-tl"></div>
+    <div class="blur-br"></div>
+
+    <div class="content">
+      <!-- BOS (Badge of Sport) - Replace with actual adidas logo -->
+      <div class="bos">
+        <img src="logos/adidas-logo.png" alt="adidas" onerror="this.parentElement.innerHTML='<span class=\'bos-text\'>adidas</span>'" />
+      </div>
+
+      <!-- ADI SEL3CT Wordmark -->
+      <div class="wordmark">ADI SEL3CT</div>
+
+      <!-- Tagline -->
+      <div class="tagline">Welcome to the S-Tier</div>
+
+      <!-- Magenta accent line -->
+      <div class="accent-line"></div>
+    </div>
+  </div>
+
+  <p style="margin-top: 20px; font-family: sans-serif; color: #666;">
+    Screenshot this at exactly 1200x630 pixels, then save as <code>og-image.png</code>
+  </p>
+</body>
+</html>
