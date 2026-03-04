@@ -1,11 +1,11 @@
 {
-  "name": "adidas Select Programs Map",
-  "short_name": "Select Map",
-  "description": "Interactive map of adidas Select basketball and football programs",
+  "name": "ADI SEL3CT | Program Map",
+  "short_name": "ADI SEL3CT",
+  "description": "Welcome to the S-Tier. Interactive map of adidas Select basketball and football programs.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#000000",
+  "theme_color": "#E500A4",
   "icons": [
     {
       "src": "/logos/adidas-logo.png",
