@@ -230,41 +230,222 @@ We only use adidas core brand font: **adidasFG**. All type sizes are proportiona
 
 ## Texture: Blur Backdrops
 
-### Usage
-- Apply magenta blur textures as background elements for brand-led moments
-- Use behind splash screens, modals, hero sections
-- Creates depth and energy while maintaining legibility
+The ADI SEL3CT brand uses magenta blur textures as signature background elements for brand-led moments. These create depth, energy, and visual interest while maintaining the black/white/magenta color foundation.
 
-### Implementation
+### Backdrop Variants
+
+We have **three approved backdrop textures**, each suited for different contexts:
+
+#### 1. Intense Backdrop (`backdrop-intense.jpg`)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│      ████████████████████████████████████                      │
+│   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓                   │
+│  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                 │
+│   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓                   │
+│      ████████████████████████████████████                      │
+│                                                                 │
+│  Dramatic magenta waves/streaks on black                        │
+│  High saturation, visible light trails                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Character**: Bold, energetic, dramatic
+- **Use for**: Splash screens, launch moments, hero banners, high-impact marketing
+- **Energy level**: High
+- **File**: `/textures/backdrop-intense.jpg`
+
+#### 2. Soft Backdrop (`backdrop-soft.jpg`)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                       │
+│      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                     │
+│    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                   │
+│      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                     │
+│        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                       │
+│                                                                 │
+│  Diffused magenta glow with smoky gradients                     │
+│  Softer edges, more atmospheric                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Character**: Warm, atmospheric, sophisticated
+- **Use for**: Modal backgrounds, section dividers, content overlays, dialog backdrops
+- **Energy level**: Medium
+- **File**: `/textures/backdrop-soft.jpg`
+
+#### 3. Subtle Backdrop (`backdrop-subtle.jpg`)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                                                                 │
+│                 ░░░░░░░░░░░░░░░░                               │
+│               ░░░░░░░░░░░░░░░░░░░░                             │
+│                 ░░░░░░░░░░░░░░░░                               │
+│                                                                 │
+│                                                                 │
+│  Very dark with minimal magenta accent                          │
+│  Understated, nearly black with hint of glow                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Character**: Minimal, understated, elegant
+- **Use for**: App backgrounds, persistent UI elements, subtle branding, long-form content
+- **Energy level**: Low
+- **File**: `/textures/backdrop-subtle.jpg`
+
+### When to Use Each Backdrop
+
+| Context | Recommended Backdrop | Rationale |
+|---------|---------------------|-----------|
+| Splash screen | Intense | Maximum brand impact on first impression |
+| App loading states | Soft or Subtle | Less distracting during wait |
+| Hero sections | Intense or Soft | Depends on content density |
+| Modal/dialog backgrounds | Soft | Draws focus without overwhelming |
+| Full-page backgrounds | Subtle | Long-term viewing comfort |
+| Behind video content | Subtle | Doesn't compete with video |
+| Event announcements | Intense | Creates excitement |
+| Navigation/UI chrome | None or Subtle | Functional areas stay clean |
+
+### CSS Implementation
+
 ```css
-/* Blur backdrop overlay */
+/* Base backdrop class */
 .brand-backdrop {
+  background-color: var(--adi-black);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Variant: Intense */
+.brand-backdrop--intense {
+  background-image: url('/textures/backdrop-intense.jpg');
+}
+
+/* Variant: Soft */
+.brand-backdrop--soft {
+  background-image: url('/textures/backdrop-soft.jpg');
+}
+
+/* Variant: Subtle */
+.brand-backdrop--subtle {
+  background-image: url('/textures/backdrop-subtle.jpg');
+}
+
+/* Overlay version (for layering over content) */
+.brand-backdrop-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+
+/* CSS-only fallback (if images not available) */
+.brand-backdrop--fallback {
   background: linear-gradient(
     135deg,
     rgba(229, 0, 164, 0.3) 0%,
     rgba(229, 0, 164, 0.1) 50%,
-    rgba(0, 0, 0, 0.8) 100%
+    rgba(0, 0, 0, 0.9) 100%
   );
-  backdrop-filter: blur(40px);
+}
+```
+
+### Backdrop with Content Overlay
+
+```css
+/* Hero section with backdrop */
+.hero-section {
+  position: relative;
+  min-height: 60vh;
 }
 
-/* Alternative: Image-based blur texture */
-.brand-texture {
-  background-image: url('/textures/magenta-blur.jpg');
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/textures/backdrop-intense.jpg');
   background-size: cover;
   background-position: center;
+  z-index: 0;
+}
+
+.hero-section__content {
+  position: relative;
+  z-index: 1;
+  color: var(--adi-white);
+}
+```
+
+### Corner Accent Pattern
+
+For splash screens and hero moments, backdrops can be positioned in corners rather than full-bleed:
+
+```css
+.splash-screen {
+  position: relative;
+  background: var(--adi-black);
+}
+
+/* Top-left corner accent */
+.splash-blur--tl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 50%;
+  background-image: url('/textures/backdrop-intense.jpg');
+  background-size: 200% 200%;
+  background-position: top left;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* Bottom-right corner accent */
+.splash-blur--br {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 50%;
+  height: 50%;
+  background-image: url('/textures/backdrop-intense.jpg');
+  background-size: 200% 200%;
+  background-position: bottom right;
+  opacity: 0.8;
+  pointer-events: none;
 }
 ```
 
 ### Do's
 - Layer blur over dark backgrounds for best contrast
-- Use blur at 30-60% opacity for overlays
+- Use blur at 30-60% opacity when overlaying on content
 - Combine with black/white typography
+- Match backdrop intensity to content importance
+- Use consistent backdrop style within a single flow/section
 
 ### Don'ts
-- Don't use blur textures on school-led content
-- Don't place blur behind small text (legibility)
-- Don't oversaturate - keep it subtle
+- Don't use blur textures on school-led content (use school colors instead)
+- Don't place intense backdrops behind small text (legibility)
+- Don't oversaturate - keep it tasteful
+- Don't mix multiple backdrop variants in the same view
+- Don't use backdrops on functional/transactional UI (forms, data tables)
+
+### File Specifications
+
+| Property | Value |
+|----------|-------|
+| Format | JPEG (optimized) or WebP |
+| Resolution | 1920x1080 minimum, 2560x1440 recommended |
+| Color profile | sRGB |
+| Quality | 80-85% JPEG, or WebP for smaller files |
+| Fallback | CSS gradient for slow connections |
 
 ---
 
