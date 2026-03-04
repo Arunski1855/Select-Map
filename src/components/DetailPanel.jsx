@@ -442,6 +442,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
 
   const regionColor = REGIONS[program.region]?.color || '#333'
   const levelColor = LEVEL_COLORS[program.level] || null
+  // School-led moment: use school's primary color for banner (per ADI SEL3CT guidelines)
+  const schoolColor = program.primaryColor ? (TEAM_COLORS_HEX[program.primaryColor] || regionColor) : regionColor
 
   // Auto-detect contract expiry year from term field
   const currentYear = new Date().getFullYear()
@@ -679,8 +681,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       className={`detail-panel ${isOpen ? 'open' : ''} ${isDragging ? 'dragging' : ''}`}
       style={sheetStyle}
     >
-      {/* Banner area */}
-      <div className="detail-panel-banner" style={{ background: regionColor }}>
+      {/* Banner area - school-led moment uses school primary color */}
+      <div className="detail-panel-banner" style={{ background: schoolColor }}>
         <span className="detail-panel-banner-text">{sport === 'football' ? 'Select Football' : 'Select Basketball'}</span>
       </div>
 
