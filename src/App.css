@@ -1855,13 +1855,25 @@ textarea {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
   padding: 1rem;
   backdrop-filter: blur(4px);
+}
+
+/* Backdrop texture for modal overlay */
+.modal-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/textures/backdrop-two.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .modal-close {
@@ -2353,9 +2365,9 @@ textarea {
 }
 
 .detail-panel-close {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--adi-white);
   font-size: 1.1rem;
   width: 28px;
   height: 28px;
@@ -2367,11 +2379,14 @@ textarea {
   transition: all 0.2s;
   flex-shrink: 0;
   margin-left: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .detail-panel-close:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: var(--adi-magenta);
+  border-color: var(--adi-magenta);
+  color: var(--adi-white);
 }
 
 .detail-region-badge {
@@ -2385,6 +2400,8 @@ textarea {
   font-weight: 700;
   font-style: italic;
   margin-top: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .detail-panel-profile {
@@ -2394,6 +2411,20 @@ textarea {
   padding: 14px 16px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
+  background: var(--adi-black);
+  overflow: hidden;
+}
+
+/* Backdrop texture for detail panel header */
+.detail-panel-profile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/textures/backdrop-two.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* Handle is now a separate element .detail-panel-handle */
@@ -2403,9 +2434,12 @@ textarea {
   height: 44px;
   border-radius: 8px;
   overflow: hidden;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--adi-white);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .detail-panel-logo img {
@@ -2417,6 +2451,8 @@ textarea {
 .detail-panel-title {
   flex: 1;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .detail-panel-title h2 {
@@ -2425,17 +2461,22 @@ textarea {
   font-size: 1.25rem;
   font-weight: 700;
   font-style: italic;
-  color: var(--text-primary);
+  color: var(--adi-white);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-brand);
   line-height: 1.1;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .detail-panel-title p {
   font-family: var(--font-body);
   margin: 2px 0 0;
   font-size: 0.78rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.7);
+  position: relative;
+  z-index: 1;
 }
 
 /* Mt. Zion Prep/National toggle */
