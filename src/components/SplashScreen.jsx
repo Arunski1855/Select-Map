@@ -1,33 +1,18 @@
 import { useState, useEffect } from 'react'
 
-function SplashScreen({ onComplete, isDataReady = false }) {
+function SplashScreen({ onComplete }) {
   const [phase, setPhase] = useState('enter') // enter -> hold -> exit
-  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
 
   useEffect(() => {
     const holdTimer = setTimeout(() => setPhase('hold'), 100)
-    // Minimum splash time reduced to 1s for faster perceived load
-    const minTimer = setTimeout(() => setMinTimeElapsed(true), 1000)
+    const exitTimer = setTimeout(() => setPhase('exit'), 2000)
+    const doneTimer = setTimeout(() => onComplete(), 2600)
     return () => {
       clearTimeout(holdTimer)
-      clearTimeout(minTimer)
+      clearTimeout(exitTimer)
+      clearTimeout(doneTimer)
     }
-  }, [])
-
-  // Exit when both minimum time elapsed AND data is ready (or after max 2.5s fallback)
-  useEffect(() => {
-    if (minTimeElapsed && (isDataReady || phase === 'hold')) {
-      setPhase('exit')
-      const doneTimer = setTimeout(() => onComplete(), 400)
-      return () => clearTimeout(doneTimer)
-    }
-    // Fallback max time of 2.5s regardless of data
-    const maxTimer = setTimeout(() => {
-      setPhase('exit')
-      setTimeout(() => onComplete(), 400)
-    }, 2500)
-    return () => clearTimeout(maxTimer)
-  }, [minTimeElapsed, isDataReady, onComplete, phase])
+  }, [onComplete])
 
   return (
     <div className={`splash-screen splash-${phase}`}>

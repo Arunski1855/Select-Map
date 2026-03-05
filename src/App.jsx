@@ -3070,7 +3070,7 @@ function App() {
   const activeTabInfo = TABS.find(t => t.id === activeTab)
 
   if (showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} isDataReady={!isLoading && programs.length > 0} />
+    return <SplashScreen onComplete={() => setShowSplash(false)} />
   }
 
   return (
