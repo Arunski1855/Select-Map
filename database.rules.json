@@ -1,0 +1,81 @@
+{
+  "rules": {
+    // Allow read access to all data for anyone (map is public-viewable)
+    ".read": true,
+
+    // Programs - authenticated users can write
+    "programs": {
+      ".write": "auth != null"
+    },
+
+    // Events - authenticated users can write
+    "events": {
+      ".write": "auth != null"
+    },
+
+    // Target programs pipeline - authenticated users can write
+    "targetPrograms": {
+      ".write": "auth != null"
+    },
+
+    // Target notes - authenticated users can write
+    "targetNotes": {
+      ".write": "auth != null"
+    },
+
+    // Target ranking metrics - authenticated users can write
+    "targetRankingMetrics": {
+      ".write": "auth != null"
+    },
+
+    // Notes - authenticated users can write
+    "notes": {
+      ".write": "auth != null"
+    },
+
+    // Schedule entries - authenticated users can write
+    "schedule": {
+      ".write": "auth != null"
+    },
+
+    // History logs - authenticated users can write
+    "history": {
+      ".write": "auth != null"
+    },
+
+    // Social metrics - authenticated users can write
+    "socialMetrics": {
+      ".write": "auth != null"
+    },
+
+    // Ranking metrics - authenticated users can write
+    "rankingMetrics": {
+      ".write": "auth != null"
+    },
+
+    // Mentions - authenticated users can write
+    "mentions": {
+      ".write": "auth != null"
+    },
+
+    // Contract details (sensitive) - authenticated users can write
+    "contractDetails": {
+      ".write": "auth != null"
+    },
+
+    // Contract history - authenticated users can write
+    "contractHistory": {
+      ".write": "auth != null"
+    },
+
+    // Competitor events - authenticated users can write
+    "competitorEvents": {
+      ".write": "auth != null"
+    },
+
+    // Allowed users list - authenticated users can read/write
+    "allowedUsers": {
+      ".write": "auth != null"
+    }
+  }
+}
