@@ -65,3 +65,27 @@
 ### Session Notes
 - User prefers collaborative approach — discuss before executing
 - Wants to memorialize sessions to preserve context across conversations
+
+---
+
+## 2026-03-05
+
+### Built
+- **Firebase Database Rules** — Created `database.rules.json`, `firebase.json`, `.firebaserc` to fix PERMISSION_DENIED errors for authenticated admin users
+- **CLAUDE.md** — Created persistent project instructions file documenting brand hierarchy
+
+### Decisions Made
+- **Brand Hierarchy Established (Permanent):**
+  1. ADI SEL3CT Brand Guidelines are **superior/primary** for this application
+  2. Everything ties back to adidas Master Brand Guidelines as foundation
+  3. When ADI SEL3CT is silent, defer to adidas master brand
+  4. Always invoke `/adi-select` skill for design decisions
+
+### Flagged
+- Firebase rules need manual deployment: `firebase login && firebase deploy --only database`
+- Brand guideline changes identified but awaiting approval before implementation
+
+### Session Notes
+- User emphasized: "Select brand guidelines are superior" — this is an adidas Select property
+- All proposed changes must be approved before implementation
+- Brand consistency is mission-critical
