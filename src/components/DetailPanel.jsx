@@ -265,205 +265,14 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
     }
   }, [isDragging, handleDragMove, handleDragEnd])
 
-  if (!isOpen || !program) return null
-
-  const handleAddNote = async (e) => {
-    e.preventDefault()
-    if (!newNote.trim() || !user) return
-    setNoteLoading(true)
-    try {
-      await addNote(sport, program.id, {
-        text: newNote.trim(),
-        author: user.email,
-        timestamp: Date.now()
-      })
-      setNewNote('')
-    } catch (err) {
-      console.error('Error adding note:', err)
-    } finally {
-      setNoteLoading(false)
-    }
-  }
-
-  const handleDeleteNote = async (noteId) => {
-    try {
-      await deleteNote(sport, program.id, noteId)
-    } catch (err) {
-      console.error('Error deleting note:', err)
-    }
-  }
-
-  const handleAddMetric = async (e) => {
-    e.preventDefault()
-    const count = parseInt(newFollowerCount, 10)
-    if (!count || count < 0 || !user) return
-    setMetricLoading(true)
-    try {
-      await addSocialMetric(sport, program.id, {
-        platform: 'instagram',
-        followers: count,
-        date: new Date().toISOString().split('T')[0],
-        addedBy: user.email,
-        timestamp: Date.now()
-      })
-      setNewFollowerCount('')
-    } catch (err) {
-      console.error('Error adding metric:', err)
-    } finally {
-      setMetricLoading(false)
-    }
-  }
-
-  const handleDeleteMetric = async (metricId) => {
-    try {
-      await deleteSocialMetric(sport, program.id, metricId)
-    } catch (err) {
-      console.error('Error deleting metric:', err)
-    }
-  }
-
-  // Ranking metrics handlers
-  const handleAddRankingMetric = async (e) => {
-    e.preventDefault()
-    if ((!newNationalRank && !newStateRank) || !user) return
-    setRankingLoading(true)
-    try {
-      await addRankingMetric(sport, program.id, {
-        nationalRank: newNationalRank || null,
-        stateRank: newStateRank || null,
-        date: new Date().toISOString().split('T')[0],
-        addedBy: user.email,
-        timestamp: Date.now()
-      })
-      setNewNationalRank('')
-      setNewStateRank('')
-    } catch (err) {
-      console.error('Error adding ranking metric:', err)
-    } finally {
-      setRankingLoading(false)
-    }
-  }
-
-  const handleDeleteRankingMetric = async (metricId) => {
-    try {
-      await deleteRankingMetric(sport, program.id, metricId)
-    } catch (err) {
-      console.error('Error deleting ranking metric:', err)
-    }
-  }
-
-  const handleEditRankingMetric = (metric) => {
-    setEditingRankingId(metric.id)
-    setEditRankingForm({
-      nationalRank: metric.nationalRank || '',
-      stateRank: metric.stateRank || '',
-      date: metric.date || ''
-    })
-  }
-
-  const handleCancelEditRanking = () => {
-    setEditingRankingId(null)
-    setEditRankingForm({ nationalRank: '', stateRank: '', date: '' })
-  }
-
-  const handleSaveRankingMetric = async () => {
-    if (!editingRankingId) return
-    setRankingLoading(true)
-    try {
-      await updateRankingMetric(sport, program.id, editingRankingId, {
-        nationalRank: editRankingForm.nationalRank || null,
-        stateRank: editRankingForm.stateRank || null,
-        date: editRankingForm.date,
-        updatedBy: user?.email,
-        updatedAt: Date.now()
-      })
-      setEditingRankingId(null)
-      setEditRankingForm({ nationalRank: '', stateRank: '', date: '' })
-    } catch (err) {
-      console.error('Error updating ranking metric:', err)
-    } finally {
-      setRankingLoading(false)
-    }
-  }
-
-  // Contract detail handlers
-  const handleEditContract = () => {
-    setContractForm({
-      term: contractDetails?.term || '',
-      travelStipend: contractDetails?.travelStipend || '',
-      productAllotment: contractDetails?.productAllotment || '',
-      productCoverage: contractDetails?.productCoverage || '',
-      incentiveStructure: contractDetails?.incentiveStructure || '',
-      contractExpiring2026: contractDetails?.contractExpiring2026 || false
-    })
-    setIsEditingContract(true)
-  }
-
-  const handleCancelContractEdit = () => {
-    setIsEditingContract(false)
-    setContractForm({ term: '', travelStipend: '', productAllotment: '', productCoverage: '', incentiveStructure: '', contractExpiring2026: false })
-  }
-
-  const handleSaveContract = async (e) => {
-    e.preventDefault()
-    if (!user) return
-    setContractLoading(true)
-    try {
-      const oldDetails = contractDetails || {}
-      await updateContractDetails(sport, program.id, contractForm, user.email)
-
-      // Log the change to contract history
-      const changes = []
-      if (contractForm.term !== (oldDetails.term || '')) changes.push(`Term: "${oldDetails.term || '(empty)'}" → "${contractForm.term || '(empty)'}"`)
-      if (contractForm.travelStipend !== (oldDetails.travelStipend || '')) changes.push(`Travel Stipend: "${oldDetails.travelStipend || '(empty)'}" → "${contractForm.travelStipend || '(empty)'}"`)
-      if (contractForm.productAllotment !== (oldDetails.productAllotment || '')) changes.push(`Product Allotment: "${oldDetails.productAllotment || '(empty)'}" → "${contractForm.productAllotment || '(empty)'}"`)
-      if (contractForm.productCoverage !== (oldDetails.productCoverage || '')) changes.push(`Product Coverage: "${oldDetails.productCoverage || '(none)'}" → "${contractForm.productCoverage || '(none)'}"`)
-      if (contractForm.incentiveStructure !== (oldDetails.incentiveStructure || '')) changes.push(`Incentive Structure: "${oldDetails.incentiveStructure || '(empty)'}" → "${contractForm.incentiveStructure || '(empty)'}"`)
-      if (contractForm.contractExpiring2026 !== (oldDetails.contractExpiring2026 || false)) changes.push(`Expiring 2026: ${oldDetails.contractExpiring2026 ? 'Yes' : 'No'} → ${contractForm.contractExpiring2026 ? 'Yes' : 'No'}`)
-
-      if (changes.length > 0) {
-        await addContractHistory(sport, program.id, 'updated', user.email, { changes })
-      }
-
-      setIsEditingContract(false)
-    } catch (err) {
-      console.error('Error saving contract:', err)
-      alert('Failed to save contract details. Please try again.')
-    } finally {
-      setContractLoading(false)
-    }
-  }
-
   // Compute chart data for Instagram follower growth
   const igMetrics = useMemo(() => socialMetrics.filter(m => m.platform === 'instagram'), [socialMetrics])
 
   // Compute ranking history data (sorted by date)
-  const rankingHistory = useMemo(() => rankingMetrics.sort((a, b) => (a.date || '').localeCompare(b.date || '')), [rankingMetrics])
-
-  const regionColor = REGIONS[program.region]?.color || '#333'
-  const levelColor = LEVEL_COLORS[program.level] || null
-  // School-led moment: use school's primary color for banner (per ADI SEL3CT guidelines)
-  const schoolColor = program.primaryColor ? (TEAM_COLORS_HEX[program.primaryColor] || regionColor) : regionColor
-
-  // Auto-detect contract expiry year from term field
-  const currentYear = new Date().getFullYear()
-  const termYears = contractDetails?.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
-  const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
-  const isContractExpiring = contractDetails?.contractExpiring2026 || termEndYear === currentYear
-  const expiringYear = termEndYear === currentYear ? termEndYear : currentYear
-
-  const sheetStyle = sheetHeight ? {
-    height: `${sheetHeight}px`,
-    maxHeight: `${sheetHeight}px`,
-    transition: isDragging ? 'none' : undefined
-  } : {}
-
-  const tabs = isUserAllowed
-    ? ['info', 'vitals', 'intel', 'contract']
-    : ['info', 'vitals', 'intel']
+  const rankingHistory = useMemo(() => [...rankingMetrics].sort((a, b) => (a.date || '').localeCompare(b.date || '')), [rankingMetrics])
 
   // Helper to load image and convert to data URL for PDF
-  const loadImageAsDataUrl = (url) => {
+  const loadImageAsDataUrl = useCallback((url) => {
     return new Promise((resolve) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -478,10 +287,11 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       img.onerror = () => resolve(null)
       img.src = url
     })
-  }
+  }, [])
 
   // Generate individual program PDF report
   const handleExportProgramPDF = useCallback(async () => {
+    if (!program) return
     try {
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -673,7 +483,198 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       console.error('PDF export error:', err)
       alert(`Could not generate PDF: ${err.message || 'Unknown error'}`)
     }
-  }, [program, sport, linkedEvents])
+  }, [program, sport, linkedEvents, loadImageAsDataUrl])
+
+  if (!isOpen || !program) return null
+
+  const handleAddNote = async (e) => {
+    e.preventDefault()
+    if (!newNote.trim() || !user) return
+    setNoteLoading(true)
+    try {
+      await addNote(sport, program.id, {
+        text: newNote.trim(),
+        author: user.email,
+        timestamp: Date.now()
+      })
+      setNewNote('')
+    } catch (err) {
+      console.error('Error adding note:', err)
+    } finally {
+      setNoteLoading(false)
+    }
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await deleteNote(sport, program.id, noteId)
+    } catch (err) {
+      console.error('Error deleting note:', err)
+    }
+  }
+
+  const handleAddMetric = async (e) => {
+    e.preventDefault()
+    const count = parseInt(newFollowerCount, 10)
+    if (!count || count < 0 || !user) return
+    setMetricLoading(true)
+    try {
+      await addSocialMetric(sport, program.id, {
+        platform: 'instagram',
+        followers: count,
+        date: new Date().toISOString().split('T')[0],
+        addedBy: user.email,
+        timestamp: Date.now()
+      })
+      setNewFollowerCount('')
+    } catch (err) {
+      console.error('Error adding metric:', err)
+    } finally {
+      setMetricLoading(false)
+    }
+  }
+
+  const handleDeleteMetric = async (metricId) => {
+    try {
+      await deleteSocialMetric(sport, program.id, metricId)
+    } catch (err) {
+      console.error('Error deleting metric:', err)
+    }
+  }
+
+  // Ranking metrics handlers
+  const handleAddRankingMetric = async (e) => {
+    e.preventDefault()
+    if ((!newNationalRank && !newStateRank) || !user) return
+    setRankingLoading(true)
+    try {
+      await addRankingMetric(sport, program.id, {
+        nationalRank: newNationalRank || null,
+        stateRank: newStateRank || null,
+        date: new Date().toISOString().split('T')[0],
+        addedBy: user.email,
+        timestamp: Date.now()
+      })
+      setNewNationalRank('')
+      setNewStateRank('')
+    } catch (err) {
+      console.error('Error adding ranking metric:', err)
+    } finally {
+      setRankingLoading(false)
+    }
+  }
+
+  const handleDeleteRankingMetric = async (metricId) => {
+    try {
+      await deleteRankingMetric(sport, program.id, metricId)
+    } catch (err) {
+      console.error('Error deleting ranking metric:', err)
+    }
+  }
+
+  const handleEditRankingMetric = (metric) => {
+    setEditingRankingId(metric.id)
+    setEditRankingForm({
+      nationalRank: metric.nationalRank || '',
+      stateRank: metric.stateRank || '',
+      date: metric.date || ''
+    })
+  }
+
+  const handleCancelEditRanking = () => {
+    setEditingRankingId(null)
+    setEditRankingForm({ nationalRank: '', stateRank: '', date: '' })
+  }
+
+  const handleSaveRankingMetric = async () => {
+    if (!editingRankingId) return
+    setRankingLoading(true)
+    try {
+      await updateRankingMetric(sport, program.id, editingRankingId, {
+        nationalRank: editRankingForm.nationalRank || null,
+        stateRank: editRankingForm.stateRank || null,
+        date: editRankingForm.date,
+        updatedBy: user?.email,
+        updatedAt: Date.now()
+      })
+      setEditingRankingId(null)
+      setEditRankingForm({ nationalRank: '', stateRank: '', date: '' })
+    } catch (err) {
+      console.error('Error updating ranking metric:', err)
+    } finally {
+      setRankingLoading(false)
+    }
+  }
+
+  // Contract detail handlers
+  const handleEditContract = () => {
+    setContractForm({
+      term: contractDetails?.term || '',
+      travelStipend: contractDetails?.travelStipend || '',
+      productAllotment: contractDetails?.productAllotment || '',
+      productCoverage: contractDetails?.productCoverage || '',
+      incentiveStructure: contractDetails?.incentiveStructure || '',
+      contractExpiring2026: contractDetails?.contractExpiring2026 || false
+    })
+    setIsEditingContract(true)
+  }
+
+  const handleCancelContractEdit = () => {
+    setIsEditingContract(false)
+    setContractForm({ term: '', travelStipend: '', productAllotment: '', productCoverage: '', incentiveStructure: '', contractExpiring2026: false })
+  }
+
+  const handleSaveContract = async (e) => {
+    e.preventDefault()
+    if (!user) return
+    setContractLoading(true)
+    try {
+      const oldDetails = contractDetails || {}
+      await updateContractDetails(sport, program.id, contractForm, user.email)
+
+      // Log the change to contract history
+      const changes = []
+      if (contractForm.term !== (oldDetails.term || '')) changes.push(`Term: "${oldDetails.term || '(empty)'}" → "${contractForm.term || '(empty)'}"`)
+      if (contractForm.travelStipend !== (oldDetails.travelStipend || '')) changes.push(`Travel Stipend: "${oldDetails.travelStipend || '(empty)'}" → "${contractForm.travelStipend || '(empty)'}"`)
+      if (contractForm.productAllotment !== (oldDetails.productAllotment || '')) changes.push(`Product Allotment: "${oldDetails.productAllotment || '(empty)'}" → "${contractForm.productAllotment || '(empty)'}"`)
+      if (contractForm.productCoverage !== (oldDetails.productCoverage || '')) changes.push(`Product Coverage: "${oldDetails.productCoverage || '(none)'}" → "${contractForm.productCoverage || '(none)'}"`)
+      if (contractForm.incentiveStructure !== (oldDetails.incentiveStructure || '')) changes.push(`Incentive Structure: "${oldDetails.incentiveStructure || '(empty)'}" → "${contractForm.incentiveStructure || '(empty)'}"`)
+      if (contractForm.contractExpiring2026 !== (oldDetails.contractExpiring2026 || false)) changes.push(`Expiring 2026: ${oldDetails.contractExpiring2026 ? 'Yes' : 'No'} → ${contractForm.contractExpiring2026 ? 'Yes' : 'No'}`)
+
+      if (changes.length > 0) {
+        await addContractHistory(sport, program.id, 'updated', user.email, { changes })
+      }
+
+      setIsEditingContract(false)
+    } catch (err) {
+      console.error('Error saving contract:', err)
+      alert('Failed to save contract details. Please try again.')
+    } finally {
+      setContractLoading(false)
+    }
+  }
+
+  const regionColor = REGIONS[program.region]?.color || '#333'
+  const levelColor = LEVEL_COLORS[program.level] || null
+  // School-led moment: use school's primary color for banner (per ADI SEL3CT guidelines)
+  const schoolColor = program.primaryColor ? (TEAM_COLORS_HEX[program.primaryColor] || regionColor) : regionColor
+
+  // Auto-detect contract expiry year from term field
+  const currentYear = new Date().getFullYear()
+  const termYears = contractDetails?.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+  const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+  const isContractExpiring = contractDetails?.contractExpiring2026 || termEndYear === currentYear
+  const expiringYear = termEndYear === currentYear ? termEndYear : currentYear
+
+  const sheetStyle = sheetHeight ? {
+    height: `${sheetHeight}px`,
+    maxHeight: `${sheetHeight}px`,
+    transition: isDragging ? 'none' : undefined
+  } : {}
+
+  const tabs = isUserAllowed
+    ? ['info', 'vitals', 'intel', 'contract']
+    : ['info', 'vitals', 'intel']
 
   return (
     <div
