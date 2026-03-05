@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Component } from 'react'
-import jsPDF from 'jspdf'
 import {
   addNote,
   deleteNote,
@@ -293,6 +292,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   const handleExportProgramPDF = useCallback(async () => {
     if (!program) return
     try {
+      // Lazy load jsPDF only when user exports
+      const jsPDF = (await import('jspdf')).default
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       const sportName = sport === 'football' ? 'Select Football' : 'Select Basketball'

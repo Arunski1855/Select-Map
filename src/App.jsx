@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react'
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import { toPng } from 'html-to-image'
 import {
   subscribeToPrograms,
   addProgram,
@@ -46,8 +45,6 @@ import {
   updateCompetitorEvent,
   deleteCompetitorEvent
 } from './firebase'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
 import AddProgramForm from './components/AddProgramForm'
 import AddEventForm from './components/AddEventForm'
 import AddTargetForm from './components/AddTargetForm'
@@ -2316,6 +2313,8 @@ function App() {
     if (!node || isExporting) return
     setIsExporting(true)
     try {
+      // Lazy load html-to-image only when needed
+      const { toPng } = await import('html-to-image')
       const dataUrl = await toPng(node, {
         cacheBust: true,
         backgroundColor: '#ffffff',
@@ -2365,27 +2364,39 @@ function App() {
     return () => unsubscribe()
   }, [activeTab])
 
-  // Subscribe to events
+  // Subscribe to events (deferred to prioritize main program load)
   useEffect(() => {
     setIsEventsLoading(true)
-    const unsubscribe = subscribeToEvents((data) => {
-      setEvents(data)
-      setIsEventsLoading(false)
-    })
-    return () => unsubscribe()
+    // Defer events load by 500ms to let main programs load first
+    const timeout = setTimeout(() => {
+      const unsubscribe = subscribeToEvents((data) => {
+        setEvents(data)
+        setIsEventsLoading(false)
+      })
+      return () => unsubscribe()
+    }, 500)
+    return () => clearTimeout(timeout)
   }, [])
 
-  // Subscribe to competitor events
+  // Subscribe to competitor events (deferred - not critical for initial load)
   useEffect(() => {
-    const unsubscribe = subscribeToCompetitorEvents(setCompetitorEvents)
-    return () => unsubscribe()
+    // Only load competitor events when panel is opened or after delay
+    const timeout = setTimeout(() => {
+      const unsubscribe = subscribeToCompetitorEvents(setCompetitorEvents)
+      return () => unsubscribe()
+    }, 2000)
+    return () => clearTimeout(timeout)
   }, [])
 
-  // Subscribe to archived programs
+  // Subscribe to archived programs (deferred - only needed when archive modal opened)
   useEffect(() => {
     if (activeTab === 'events' || activeTab === 'targets') return
-    const unsubscribe = subscribeToArchivedPrograms(activeTab, setArchivedPrograms)
-    return () => unsubscribe()
+    // Defer archived programs by 1s
+    const timeout = setTimeout(() => {
+      const unsubscribe = subscribeToArchivedPrograms(activeTab, setArchivedPrograms)
+      return () => unsubscribe()
+    }, 1000)
+    return () => clearTimeout(timeout)
   }, [activeTab])
 
   // Subscribe to target programs
@@ -2897,9 +2908,13 @@ function App() {
     return groups
   }, [filteredTargetPrograms])
 
-  // PDF Export function
-  const handleExportPDF = useCallback(() => {
+  // PDF Export function (lazy loads jsPDF for smaller initial bundle)
+  const handleExportPDF = useCallback(async () => {
     try {
+      // Lazy load jsPDF only when user exports
+      const jsPDF = (await import('jspdf')).default
+      await import('jspdf-autotable')
+
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
@@ -3055,7 +3070,7 @@ function App() {
   const activeTabInfo = TABS.find(t => t.id === activeTab)
 
   if (showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} />
+    return <SplashScreen onComplete={() => setShowSplash(false)} isDataReady={!isLoading && programs.length > 0} />
   }
 
   return (
