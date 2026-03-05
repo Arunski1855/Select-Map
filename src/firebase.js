@@ -74,10 +74,25 @@ export const deleteProgram = async (sport, programId) => {
 // Edit/Update a program in Firebase
 export const editProgram = async (sport, program) => {
   const programRef = ref(database, `programs/${sport}/${program.id}`)
+
+  // Debug: Log auth state when edit is attempted
+  const currentUser = auth.currentUser
+  console.log('=== EDIT PROGRAM DEBUG ===')
+  console.log('Auth current user:', currentUser ? currentUser.email : 'NULL (not authenticated)')
+  console.log('Auth user UID:', currentUser?.uid || 'N/A')
+  console.log('Program path:', `programs/${sport}/${program.id}`)
+
+  if (!currentUser) {
+    console.error('EDIT BLOCKED: No authenticated user!')
+    throw new Error('You must be logged in to edit programs. Please log out and log back in.')
+  }
+
   try {
     await set(programRef, program)
+    console.log('Edit successful!')
   } catch (error) {
     console.error('Edit program error:', error.code, error.message)
+    console.error('Full error:', error)
     throw error
   }
 }
