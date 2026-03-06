@@ -6756,6 +6756,23 @@ textarea {
   font-size: 1.1rem;
 }
 
+.td-sport-logo {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.td-sport-btn.active .td-sport-logo {
+  opacity: 1;
+}
+
+.td-sport-btn:hover .td-sport-logo {
+  opacity: 0.9;
+}
+
 .td-view-toggle {
   display: flex;
   background: rgba(255, 255, 255, 0.1);
@@ -7112,7 +7129,79 @@ textarea {
   font-size: 0.8rem;
 }
 
-/* Dashboard Grid (Pipeline + Activity) */
+/* Large Empty State (for Hot Targets) */
+.td-empty-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 48px 32px;
+}
+
+.td-empty-icon {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.td-empty-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: var(--adi-magenta);
+  color: var(--adi-white);
+  border: none;
+  font-family: var(--font-heading-compressed);
+  font-size: 1rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.td-empty-action:hover {
+  background: var(--adi-magenta-light);
+}
+
+/* Dashboard Main Layout (Left + Right columns) */
+.td-dashboard-main {
+  display: grid;
+  grid-template-columns: minmax(400px, 1fr) minmax(400px, 1.5fr);
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+}
+
+.td-dashboard-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.td-dashboard-right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.td-dashboard-right .td-hot-targets {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.td-dashboard-right .td-hot-cards {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Legacy: Dashboard Grid (for backward compat) */
 .td-dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -7683,6 +7772,19 @@ textarea {
 
   .td-dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .td-dashboard-main {
+    grid-template-columns: 1fr;
+  }
+
+  .td-dashboard-right {
+    order: -1; /* Show hot targets first on mobile */
+  }
+
+  .td-empty-large {
+    min-height: 200px;
+    padding: 32px 20px;
   }
 
   .td-hot-cards {

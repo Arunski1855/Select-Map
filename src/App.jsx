@@ -3517,14 +3517,14 @@ function App() {
                     className={`td-sport-btn${targetsSport === 'basketball' ? ' active' : ''}`}
                     onClick={() => setTargetsSport('basketball')}
                   >
-                    <span className="td-sport-icon">🏀</span>
+                    <img src="/logos/adidas-select-basketball.png" alt="" className="td-sport-logo" />
                     <span>Basketball</span>
                   </button>
                   <button
                     className={`td-sport-btn${targetsSport === 'football' ? ' active' : ''}`}
                     onClick={() => setTargetsSport('football')}
                   >
-                    <span className="td-sport-icon">🏈</span>
+                    <img src="/logos/mahomes-logo.png" alt="" className="td-sport-logo" />
                     <span>Football</span>
                   </button>
                 </div>
@@ -3646,158 +3646,179 @@ function App() {
             ) : targetDashboardView === 'dashboard' ? (
               /* NEW: Dashboard View with Hot Targets + Mini Kanban + Activity */
               <div className="td-dashboard">
-                {/* Hot Targets Section */}
-                <section className="td-section td-hot-targets">
-                  <div className="td-section-header">
-                    <h3>Hot Targets</h3>
-                    <span className="td-section-badge">{targetKPIs.hotTargets.length}</span>
-                  </div>
-                  <div className="td-hot-cards">
-                    {targetKPIs.hotTargets.length > 0 ? (
-                      targetKPIs.hotTargets.slice(0, 4).map(target => (
-                        <div
-                          key={target.id}
-                          className="td-hot-card"
-                          onClick={() => setSelectedTargetProgram(target)}
-                        >
-                          <div className="td-hot-card-logo">
-                            {target.logo ? (
-                              <img src={target.logo} alt="" />
-                            ) : (
-                              <span className="td-hot-card-fallback">{target.name?.charAt(0)}</span>
-                            )}
-                            {target.ranking && (
-                              <span className="td-hot-card-rank">{target.ranking}</span>
-                            )}
-                          </div>
-                          <div className="td-hot-card-info">
-                            <h4>{target.name}</h4>
-                            <p>{target.city}, {target.state}</p>
-                          </div>
-                          <div className="td-hot-card-progress">
-                            <div
-                              className="td-hot-card-bar"
-                              style={{
-                                width: target.status === 'negotiating' ? '90%' :
-                                       target.status === 'proposal_sent' ? '70%' :
-                                       target.status === 'in_discussion' ? '50%' : '30%'
-                              }}
-                            />
-                          </div>
-                          <div className="td-hot-card-status">
-                            <span
-                              className="td-status-badge"
-                              style={{ backgroundColor: PIPELINE_STATUSES.find(s => s.id === target.status)?.color }}
-                            >
-                              {PIPELINE_STATUSES.find(s => s.id === target.status)?.label}
-                            </span>
-                          </div>
-                          <div className="td-hot-card-actions">
-                            {target.contactPhone && (
-                              <a href={`tel:${target.contactPhone}`} className="td-action-btn" title="Call">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-                                </svg>
-                              </a>
-                            )}
-                            {target.contactEmail && (
-                              <a href={`mailto:${target.contactEmail}`} className="td-action-btn" title="Email">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                  <polyline points="22,6 12,13 2,6"/>
-                                </svg>
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="td-empty-state">
-                        <p>No hot targets yet</p>
-                        <span>High priority targets in discussion or later stages appear here</span>
+                {/* Main Grid: Left (Pipeline + Activity) | Right (Hot Targets) */}
+                <div className="td-dashboard-main">
+                  {/* Left Column: Pipeline Overview + Activity Feed */}
+                  <div className="td-dashboard-left">
+                    {/* Mini Pipeline Overview */}
+                    <section className="td-section td-pipeline-overview">
+                      <div className="td-section-header">
+                        <h3>Pipeline Overview</h3>
+                        <button className="td-section-link" onClick={() => setTargetDashboardView('kanban')}>
+                          View Full Pipeline →
+                        </button>
                       </div>
-                    )}
+                      <div className="td-pipeline-bars">
+                        {PIPELINE_STATUSES.map(status => {
+                          const count = targetsByStatus[status.id]?.length || 0
+                          const percentage = targetPrograms.length > 0 ? (count / targetPrograms.length) * 100 : 0
+                          return (
+                            <div key={status.id} className="td-pipeline-row">
+                              <span className="td-pipeline-label">{status.label}</span>
+                              <div className="td-pipeline-track">
+                                <div
+                                  className="td-pipeline-fill"
+                                  style={{
+                                    width: `${Math.max(percentage, count > 0 ? 8 : 0)}%`,
+                                    backgroundColor: status.color
+                                  }}
+                                />
+                              </div>
+                              <span className="td-pipeline-count">{count}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
+
+                    {/* Recent Activity Feed */}
+                    <section className="td-section td-activity-feed">
+                      <div className="td-section-header">
+                        <h3>Recent Activity</h3>
+                      </div>
+                      <div className="td-activity-list">
+                        {recentTargetActivity.length > 0 ? (
+                          recentTargetActivity.slice(0, 6).map(activity => (
+                            <div key={activity.id} className="td-activity-item">
+                              <div className="td-activity-icon">
+                                {activity.logo ? (
+                                  <img src={activity.logo} alt="" />
+                                ) : (
+                                  <span>{activity.name?.charAt(0)}</span>
+                                )}
+                              </div>
+                              <div className="td-activity-content">
+                                <span className="td-activity-name">{activity.name}</span>
+                                <span className="td-activity-action">
+                                  {activity.action === 'signed' ? 'was signed' :
+                                   activity.action === 'lost' ? 'was lost' : 'was updated'}
+                                </span>
+                              </div>
+                              <div className="td-activity-meta">
+                                <span className="td-activity-time">
+                                  {activity.timestamp && new Date(activity.timestamp).toLocaleDateString('en-US', {
+                                    month: 'short', day: 'numeric'
+                                  })}
+                                </span>
+                                {activity.addedBy && (
+                                  <span className="td-activity-user">@{activity.addedBy.split('@')[0]}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="td-empty-state">
+                            <p>No recent activity</p>
+                          </div>
+                        )}
+                      </div>
+                    </section>
                   </div>
-                </section>
 
-                {/* Pipeline Overview + Activity Feed Side by Side */}
-                <div className="td-dashboard-grid">
-                  {/* Mini Pipeline Overview */}
-                  <section className="td-section td-pipeline-overview">
-                    <div className="td-section-header">
-                      <h3>Pipeline Overview</h3>
-                      <button className="td-section-link" onClick={() => setTargetDashboardView('kanban')}>
-                        View Full Pipeline →
-                      </button>
-                    </div>
-                    <div className="td-pipeline-bars">
-                      {PIPELINE_STATUSES.map(status => {
-                        const count = targetsByStatus[status.id]?.length || 0
-                        const percentage = targetPrograms.length > 0 ? (count / targetPrograms.length) * 100 : 0
-                        return (
-                          <div key={status.id} className="td-pipeline-row">
-                            <span className="td-pipeline-label">{status.label}</span>
-                            <div className="td-pipeline-track">
-                              <div
-                                className="td-pipeline-fill"
-                                style={{
-                                  width: `${Math.max(percentage, count > 0 ? 8 : 0)}%`,
-                                  backgroundColor: status.color
-                                }}
-                              />
+                  {/* Right Column: Hot Targets */}
+                  <div className="td-dashboard-right">
+                    <section className="td-section td-hot-targets">
+                      <div className="td-section-header">
+                        <h3>Hot Targets</h3>
+                        <span className="td-section-badge">{targetKPIs.hotTargets.length}</span>
+                      </div>
+                      <div className="td-hot-cards">
+                        {targetKPIs.hotTargets.length > 0 ? (
+                          targetKPIs.hotTargets.slice(0, 6).map(target => (
+                            <div
+                              key={target.id}
+                              className="td-hot-card"
+                              onClick={() => setSelectedTargetProgram(target)}
+                            >
+                              <div className="td-hot-card-logo">
+                                {target.logo ? (
+                                  <img src={target.logo} alt="" />
+                                ) : (
+                                  <span className="td-hot-card-fallback">{target.name?.charAt(0)}</span>
+                                )}
+                                {target.ranking && (
+                                  <span className="td-hot-card-rank">{target.ranking}</span>
+                                )}
+                              </div>
+                              <div className="td-hot-card-info">
+                                <h4>{target.name}</h4>
+                                <p>{target.city}, {target.state}</p>
+                              </div>
+                              <div className="td-hot-card-progress">
+                                <div
+                                  className="td-hot-card-bar"
+                                  style={{
+                                    width: target.status === 'negotiating' ? '90%' :
+                                           target.status === 'proposal_sent' ? '70%' :
+                                           target.status === 'in_discussion' ? '50%' : '30%'
+                                  }}
+                                />
+                              </div>
+                              <div className="td-hot-card-status">
+                                <span
+                                  className="td-status-badge"
+                                  style={{ backgroundColor: PIPELINE_STATUSES.find(s => s.id === target.status)?.color }}
+                                >
+                                  {PIPELINE_STATUSES.find(s => s.id === target.status)?.label}
+                                </span>
+                              </div>
+                              <div className="td-hot-card-actions">
+                                {target.contactPhone && (
+                                  <a href={`tel:${target.contactPhone}`} className="td-action-btn" title="Call">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                    </svg>
+                                  </a>
+                                )}
+                                {target.contactEmail && (
+                                  <a href={`mailto:${target.contactEmail}`} className="td-action-btn" title="Email">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                      <polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                  </a>
+                                )}
+                              </div>
                             </div>
-                            <span className="td-pipeline-count">{count}</span>
+                          ))
+                        ) : (
+                          <div className="td-empty-state td-empty-large">
+                            <div className="td-empty-icon">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                              </svg>
+                            </div>
+                            <p>No hot targets yet</p>
+                            <span>High priority targets in discussion or later stages appear here</span>
+                            {isUserAllowed && (
+                              <button className="td-empty-action" onClick={() => setIsTargetFormOpen(true)}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <line x1="12" y1="5" x2="12" y2="19"/>
+                                  <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add Target
+                              </button>
+                            )}
                           </div>
-                        )
-                      })}
-                    </div>
-                  </section>
-
-                  {/* Recent Activity Feed */}
-                  <section className="td-section td-activity-feed">
-                    <div className="td-section-header">
-                      <h3>Recent Activity</h3>
-                    </div>
-                    <div className="td-activity-list">
-                      {recentTargetActivity.length > 0 ? (
-                        recentTargetActivity.slice(0, 6).map(activity => (
-                          <div key={activity.id} className="td-activity-item">
-                            <div className="td-activity-icon">
-                              {activity.logo ? (
-                                <img src={activity.logo} alt="" />
-                              ) : (
-                                <span>{activity.name?.charAt(0)}</span>
-                              )}
-                            </div>
-                            <div className="td-activity-content">
-                              <span className="td-activity-name">{activity.name}</span>
-                              <span className="td-activity-action">
-                                {activity.action === 'signed' ? 'was signed' :
-                                 activity.action === 'lost' ? 'was lost' : 'was updated'}
-                              </span>
-                            </div>
-                            <div className="td-activity-meta">
-                              <span className="td-activity-time">
-                                {activity.timestamp && new Date(activity.timestamp).toLocaleDateString('en-US', {
-                                  month: 'short', day: 'numeric'
-                                })}
-                              </span>
-                              {activity.addedBy && (
-                                <span className="td-activity-user">@{activity.addedBy.split('@')[0]}</span>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="td-empty-state">
-                          <p>No recent activity</p>
-                        </div>
-                      )}
-                    </div>
-                  </section>
+                        )}
+                      </div>
+                    </section>
+                  </div>
                 </div>
 
-                {/* Regional Distribution Mini Map */}
+                {/* Regional Distribution - Below main grid */}
                 <section className="td-section td-region-section">
                   <div className="td-section-header">
                     <h3>Regional Distribution</h3>
