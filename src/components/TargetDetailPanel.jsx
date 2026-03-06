@@ -45,7 +45,7 @@ function formatPhone(phone) {
   return phone
 }
 
-function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete, onStatusChange }) {
+function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete, onStatusChange, inline = false }) {
   const [activeDetailTab, setActiveDetailTab] = useState('info')
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
@@ -201,9 +201,9 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
 
   return (
     <div
-      className={`detail-panel target-detail-panel ${isOpen ? 'open' : ''}`}
-      ref={panelRef}
-      style={panelStyle}
+      className={inline ? 'target-detail-inline' : `detail-panel target-detail-panel ${isOpen ? 'open' : ''}`}
+      ref={inline ? undefined : panelRef}
+      style={inline ? {} : panelStyle}
     >
       {/* Mobile drag handle */}
       <div
