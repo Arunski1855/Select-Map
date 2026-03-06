@@ -97,6 +97,12 @@ export const editProgram = async (sport, program) => {
   }
 }
 
+// Update program historicals
+export const updateProgramHistoricals = async (sport, programId, historicals) => {
+  const programRef = ref(database, `programs/${sport}/${programId}/historicals`)
+  await set(programRef, historicals)
+}
+
 // Subscribe to programs (real-time updates)
 export const subscribeToPrograms = (sport, callback) => {
   const sportRef = ref(database, `programs/${sport}`)

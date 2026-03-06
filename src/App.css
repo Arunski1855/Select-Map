@@ -5533,6 +5533,98 @@ textarea {
   font-size: 0.78rem;
 }
 
+.historicals-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.historicals-edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.historicals-edit-btn:hover {
+  color: var(--accent-color);
+}
+
+.historicals-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historicals-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.historicals-edit-row .historicals-year {
+  min-width: 40px;
+}
+
+.historicals-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+}
+
+.historicals-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.historicals-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.historicals-cancel-btn,
+.historicals-save-btn {
+  padding: 6px 14px;
+  border: none;
+  font-size: 0.75rem;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.historicals-cancel-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.historicals-cancel-btn:hover {
+  background: var(--border-color);
+}
+
+.historicals-save-btn {
+  background: var(--accent-color);
+  color: white;
+}
+
+.historicals-save-btn:hover {
+  opacity: 0.85;
+}
+
+.historicals-save-btn:disabled,
+.historicals-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ================= */
 /* Target Ranking History */
 /* ================= */

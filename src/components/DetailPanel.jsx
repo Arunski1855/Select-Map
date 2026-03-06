@@ -17,7 +17,8 @@ import {
   subscribeToContractDetails,
   updateContractDetails,
   addContractHistory,
-  subscribeToContractHistory
+  subscribeToContractHistory,
+  updateProgramHistoricals
 } from '../firebase'
 
 // Error boundary to prevent white-screen crashes
@@ -175,6 +176,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
 
   // Historicals section state (collapsible by year)
   const [historicalsExpanded, setHistoricalsExpanded] = useState(false)
+  const [isEditingHistoricals, setIsEditingHistoricals] = useState(false)
+  const [historicalsForm, setHistoricalsForm] = useState({ '2024': '', '2025': '', '2026': '' })
+  const [historicalsLoading, setHistoricalsLoading] = useState(false)
 
   useEffect(() => {
     if (!program?.id || !sport || sport === 'events') return
@@ -655,6 +659,36 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
       alert('Failed to save contract details. Please try again.')
     } finally {
       setContractLoading(false)
+    }
+  }
+
+  // Historicals handlers
+  const handleEditHistoricals = () => {
+    setHistoricalsForm({
+      '2024': program?.historicals?.['2024'] || '',
+      '2025': program?.historicals?.['2025'] || '',
+      '2026': program?.historicals?.['2026'] || ''
+    })
+    setIsEditingHistoricals(true)
+    setHistoricalsExpanded(true)
+  }
+
+  const handleCancelHistoricals = () => {
+    setIsEditingHistoricals(false)
+    setHistoricalsForm({ '2024': '', '2025': '', '2026': '' })
+  }
+
+  const handleSaveHistoricals = async () => {
+    if (!user) return
+    setHistoricalsLoading(true)
+    try {
+      await updateProgramHistoricals(sport, program.id, historicalsForm)
+      setIsEditingHistoricals(false)
+    } catch (err) {
+      console.error('Error saving historicals:', err)
+      alert('Failed to save historicals. Please try again.')
+    } finally {
+      setHistoricalsLoading(false)
     }
   }
 
@@ -1222,39 +1256,73 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
 
             {/* Historicals Section - Collapsible by year */}
             <div className="detail-social-section historicals-section">
-              <button
-                type="button"
-                className="historicals-toggle"
-                onClick={() => setHistoricalsExpanded(!historicalsExpanded)}
-              >
-                <h4 className="detail-section-heading" style={{ margin: 0 }}>Historicals</h4>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  style={{ transform: historicalsExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+              <div className="historicals-header">
+                <button
+                  type="button"
+                  className="historicals-toggle"
+                  onClick={() => setHistoricalsExpanded(!historicalsExpanded)}
                 >
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
+                  <h4 className="detail-section-heading" style={{ margin: 0 }}>Historicals</h4>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ transform: historicalsExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                  >
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                {isUserAllowed && !isEditingHistoricals && (
+                  <button className="historicals-edit-btn" onClick={handleEditHistoricals} title="Edit">
+                    &#9998;
+                  </button>
+                )}
+              </div>
 
               {historicalsExpanded && (
                 <div className="historicals-content">
-                  {['2024', '2025', '2026'].map(year => (
-                    <div key={year} className="historicals-year-row">
-                      <span className="historicals-year">{year}</span>
-                      <span className="historicals-data">
-                        {program?.historicals?.[year] || '—'}
-                      </span>
+                  {isEditingHistoricals ? (
+                    <div className="historicals-edit-form">
+                      {['2024', '2025', '2026'].map(year => (
+                        <div key={year} className="historicals-edit-row">
+                          <label className="historicals-year">{year}</label>
+                          <input
+                            type="text"
+                            value={historicalsForm[year]}
+                            onChange={e => setHistoricalsForm(prev => ({ ...prev, [year]: e.target.value }))}
+                            placeholder="e.g., State Champions, Final Four, 25-5 record"
+                            className="historicals-input"
+                          />
+                        </div>
+                      ))}
+                      <div className="historicals-actions">
+                        <button className="historicals-cancel-btn" onClick={handleCancelHistoricals} disabled={historicalsLoading}>
+                          Cancel
+                        </button>
+                        <button className="historicals-save-btn" onClick={handleSaveHistoricals} disabled={historicalsLoading}>
+                          {historicalsLoading ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
                     </div>
-                  ))}
-                  {!program?.historicals && (
-                    <p className="detail-empty" style={{ fontSize: '12px', marginTop: '8px' }}>
-                      No historical data recorded yet.
-                    </p>
+                  ) : (
+                    <>
+                      {['2024', '2025', '2026'].map(year => (
+                        <div key={year} className="historicals-year-row">
+                          <span className="historicals-year">{year}</span>
+                          <span className="historicals-data">
+                            {program?.historicals?.[year] || '—'}
+                          </span>
+                        </div>
+                      ))}
+                      {!program?.historicals && (
+                        <p className="detail-empty" style={{ fontSize: '12px', marginTop: '8px' }}>
+                          No historical data recorded yet.
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               )}
