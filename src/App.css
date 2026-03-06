@@ -1920,6 +1920,33 @@ textarea {
   color: var(--text-muted);
 }
 
+/* Add Target Form Portal Overlay - unique class to avoid CSS conflicts */
+.target-form-portal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999 !important;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.target-form-portal-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/textures/backdrop-two.jpg');
+  background-size: 250%;
+  background-position: 30% 60%;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 /* Modal Overlay and Close Button - ADI SEL3CT styled */
 .modal-overlay {
   position: fixed;

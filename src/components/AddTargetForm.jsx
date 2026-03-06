@@ -640,7 +640,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
   }
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="target-form-portal-overlay" onClick={onClose}>
       {formContent}
     </div>,
     document.body
