@@ -42,6 +42,24 @@ const BS_ISLANDS = [
 
 const REGIONS = ['Canada', 'Mid Atlantic', 'North', 'South', 'Midwest', 'West']
 
+// Auto-detect region from state/province
+const determineRegion = (state) => {
+  const regionMap = {
+    'Canada': ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'ON', 'PE', 'QC', 'SK'],
+    'Mid Atlantic': ['NY', 'NJ', 'PA', 'DE', 'MD', 'DC', 'VA', 'WV'],
+    'South': ['FL', 'GA', 'SC', 'NC', 'TN', 'AL', 'MS', 'LA', 'AR', 'KY', 'TX', 'OK'],
+    'Midwest': ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'],
+    'North': ['ME', 'NH', 'VT', 'MA', 'CT', 'RI'],
+    'West': ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI']
+  }
+  // Bahamas goes to South region
+  if (state?.startsWith('BS-')) return 'South'
+  for (const [region, states] of Object.entries(regionMap)) {
+    if (states.includes(state)) return region
+  }
+  return ''
+}
+
 const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
 
 // Mahomes tier only available for football
@@ -177,6 +195,15 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleStateChange = (e) => {
+    const state = e.target.value
+    setFormData(prev => ({
+      ...prev,
+      state,
+      region: determineRegion(state)
+    }))
   }
 
   const handleLogoUpload = (e) => {
@@ -448,7 +475,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
                 id="state"
                 name="state"
                 value={formData.state}
-                onChange={handleInputChange}
+                onChange={handleStateChange}
               >
                 <option value="">Select State/Province</option>
                 <optgroup label="United States">
@@ -478,7 +505,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="region">Region *</label>
+              <label htmlFor="region">Region * {formData.state && formData.region && <span style={{ fontWeight: 400, fontSize: '11px', color: 'var(--text-muted)' }}>(auto-detected)</span>}</label>
               <select
                 id="region"
                 name="region"

@@ -5476,6 +5476,63 @@ textarea {
 }
 
 /* ================= */
+/* Historicals Section */
+/* ================= */
+
+.historicals-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.historicals-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.historicals-toggle:hover {
+  opacity: 0.8;
+}
+
+.historicals-content {
+  padding: 8px 0;
+}
+
+.historicals-year-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-size: 0.82rem;
+}
+
+.historicals-year-row:last-child {
+  margin-bottom: 0;
+}
+
+.historicals-year {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+}
+
+.historicals-data {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* ================= */
 /* Target Ranking History */
 /* ================= */
 
