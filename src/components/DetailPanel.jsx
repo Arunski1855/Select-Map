@@ -1286,7 +1286,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                 <div className="historicals-content">
                   {isEditingHistoricals ? (
                     <div className="historicals-edit-form">
-                      {['2024', '2025', '2026'].map(year => (
+                      {['2026', '2025', '2024'].map(year => (
                         <div key={year} className="historicals-edit-row">
                           <label className="historicals-year">{year}</label>
                           <input
@@ -1309,7 +1309,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                     </div>
                   ) : (
                     <>
-                      {['2024', '2025', '2026'].map(year => (
+                      {['2026', '2025', '2024'].map(year => (
                         <div key={year} className="historicals-year-row">
                           <span className="historicals-year">{year}</span>
                           <span className="historicals-data">
