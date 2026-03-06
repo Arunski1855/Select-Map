@@ -3414,7 +3414,7 @@ function App() {
             {!user ? (
               <LoginRequiredOverlay
                 onLoginClick={() => setIsAuthModalOpen(true)}
-                title="Targets Access Restricted"
+                title="Program Access Restricted"
                 message="Sign in to view target programs and pipeline information."
               />
             ) : (
@@ -3686,8 +3686,16 @@ function App() {
             )}
           </div>
         ) : activeTab === 'events' ? (
-          /* Events Split Layout */
-          <div className="events-split-layout" ref={mapRef}>
+          /* Events Split Layout - Login Required */
+          <div className="events-split-layout" ref={mapRef} style={{ position: 'relative' }}>
+            {!user ? (
+              <LoginRequiredOverlay
+                onLoginClick={() => setIsAuthModalOpen(true)}
+                title="Program Access Restricted"
+                message="Sign in to view events and program information."
+              />
+            ) : (
+            <>
             <div className="events-map-panel">
               {isEventsLoading ? (
                 <div className="skeleton-map">
@@ -3968,6 +3976,8 @@ function App() {
                 )}
               </div>
             </div>
+            </>
+            )}
           </div>
         ) : (
           /* Programs Map + Detail Panel - Login Required */
