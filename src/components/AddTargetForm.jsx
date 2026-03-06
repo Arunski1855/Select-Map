@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import './AddProgramForm.css'
 
 // US States for dropdown
@@ -638,10 +639,11 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
     return formContent
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       {formContent}
-    </div>
+    </div>,
+    document.body
   )
 }
 
