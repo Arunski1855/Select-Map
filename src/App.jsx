@@ -2283,6 +2283,11 @@ function App() {
   // Mobile region popup
   const [showRegionPopup, setShowRegionPopup] = useState(false)
 
+  // Mobile UX states
+  const [compactMode, setCompactMode] = useState(() => localStorage.getItem('compactMode') === 'true')
+  const [mobileNavExpanded, setMobileNavExpanded] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+
   // Analytics
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -2446,6 +2451,12 @@ function App() {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
     localStorage.setItem('darkMode', darkMode)
   }, [darkMode])
+
+  // Apply compact mode to document and persist
+  useEffect(() => {
+    document.documentElement.setAttribute('data-compact', compactMode ? 'true' : 'false')
+    localStorage.setItem('compactMode', compactMode)
+  }, [compactMode])
 
   // Reset filters when switching tabs
   useEffect(() => {
@@ -4048,6 +4059,219 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className={`mobile-bottom-nav${mobileNavExpanded ? ' expanded' : ''}${mobileSearchOpen ? ' search-open' : ''}`}>
+        {/* Search overlay */}
+        {mobileSearchOpen && (
+          <div className="mobile-search-overlay">
+            <div className="mobile-search-container">
+              <input
+                type="text"
+                placeholder="Search programs, cities, coaches..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="mobile-search-input"
+                autoFocus
+              />
+              {searchQuery && (
+                <button className="mobile-search-clear" onClick={() => setSearchQuery('')}>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="5" y1="5" x2="15" y2="15"/>
+                    <line x1="15" y1="5" x2="5" y2="15"/>
+                  </svg>
+                </button>
+              )}
+              <button className="mobile-search-close" onClick={() => setMobileSearchOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Expanded nav items - Bottom Sheet style */}
+        {mobileNavExpanded && (
+          <>
+            <div className="mobile-nav-backdrop" onClick={() => setMobileNavExpanded(false)} />
+            <div className="mobile-nav-sheet">
+              <div className="mobile-nav-sheet-handle" />
+              <div className="mobile-nav-sheet-header">
+                <h3>Quick Actions</h3>
+                <button className="mobile-nav-sheet-close" onClick={() => setMobileNavExpanded(false)}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+              <div className="mobile-nav-sheet-items">
+                <button className="mobile-nav-sheet-item" onClick={() => { setIsAnalyticsOpen(true); setMobileNavExpanded(false) }}>
+                  <span className="mobile-nav-sheet-icon">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="10" width="4" height="8" rx="1"/>
+                      <rect x="8" y="6" width="4" height="12" rx="1"/>
+                      <rect x="14" y="2" width="4" height="16" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Analytics</span>
+                </button>
+                <button className="mobile-nav-sheet-item" onClick={() => { setIsDigestOpen(true); setMobileNavExpanded(false) }}>
+                  <span className="mobile-nav-sheet-icon">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="2" width="14" height="16" rx="2"/>
+                      <line x1="6" y1="6" x2="14" y2="6"/>
+                      <line x1="6" y1="10" x2="14" y2="10"/>
+                      <line x1="6" y1="14" x2="10" y2="14"/>
+                    </svg>
+                  </span>
+                  <span>Digest</span>
+                </button>
+                <button className="mobile-nav-sheet-item" onClick={() => { setIsReportsOpen(true); setMobileNavExpanded(false) }}>
+                  <span className="mobile-nav-sheet-icon">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="2" width="6" height="6" rx="1"/>
+                      <rect x="12" y="2" width="6" height="6" rx="1"/>
+                      <rect x="2" y="12" width="6" height="6" rx="1"/>
+                      <rect x="12" y="12" width="6" height="6" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Reports</span>
+                </button>
+                <button className="mobile-nav-sheet-item" onClick={() => { setIsComparisonOpen(true); setMobileNavExpanded(false) }}>
+                  <span className="mobile-nav-sheet-icon">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="4" width="6" height="12" rx="1"/>
+                      <rect x="12" y="4" width="6" height="12" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Compare</span>
+                </button>
+                <button className="mobile-nav-sheet-item" onClick={() => { setShowFilters(!showFilters); setMobileNavExpanded(false) }}>
+                  <span className="mobile-nav-sheet-icon">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="3" y1="5" x2="17" y2="5"/>
+                      <line x1="5" y1="10" x2="15" y2="10"/>
+                      <line x1="7" y1="15" x2="13" y2="15"/>
+                    </svg>
+                  </span>
+                  <span>Filters {showFilters ? 'On' : 'Off'}</span>
+                </button>
+                {isUserAllowed && (
+                  <button className="mobile-nav-sheet-item" onClick={() => { setIsContractDashboardOpen(true); setMobileNavExpanded(false) }}>
+                    <span className="mobile-nav-sheet-icon">
+                      <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="2" width="14" height="16" rx="2"/>
+                        <line x1="6" y1="6" x2="14" y2="6"/>
+                        <line x1="6" y1="10" x2="14" y2="10"/>
+                        <circle cx="14" cy="14" r="3"/>
+                      </svg>
+                    </span>
+                    <span>Contracts</span>
+                  </button>
+                )}
+                <button className="mobile-nav-sheet-item" onClick={() => { setShowExportMenu(true); setMobileNavExpanded(false) }}>
+                  <span className="mobile-nav-sheet-icon">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M10 3v10"/>
+                      <polyline points="6,9 10,13 14,9"/>
+                      <path d="M3 14v3a1 1 0 001 1h12a1 1 0 001-1v-3"/>
+                    </svg>
+                  </span>
+                  <span>Export</span>
+                </button>
+                <div className="mobile-nav-sheet-divider" />
+                <button
+                  className={`mobile-nav-sheet-item${compactMode ? ' active' : ''}`}
+                  onClick={() => setCompactMode(!compactMode)}
+                >
+                  <span className="mobile-nav-sheet-icon">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="4" width="16" height="3" rx="1"/>
+                      <rect x="2" y="9" width="16" height="3" rx="1"/>
+                      <rect x="2" y="14" width="16" height="3" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Compact Mode {compactMode ? 'On' : 'Off'}</span>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Fixed bottom bar */}
+        <div className="mobile-bottom-bar">
+          <button
+            className="mobile-nav-btn"
+            onClick={() => setMobileSearchOpen(true)}
+            title="Search"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7"/>
+              <line x1="16" y1="16" x2="22" y2="22"/>
+            </svg>
+            <span>Search</span>
+          </button>
+          <button
+            className={`mobile-nav-btn${showLogoView ? ' active' : ''}`}
+            onClick={() => setShowLogoView(v => !v)}
+            title="Logo View"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <span>Logos</span>
+          </button>
+          <button
+            className="mobile-nav-btn mobile-nav-btn-primary"
+            onClick={handleAddClick}
+            title="Add"
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+          <button
+            className={`mobile-nav-btn${darkMode ? ' active' : ''}`}
+            onClick={() => setDarkMode(!darkMode)}
+            title="Theme"
+          >
+            {darkMode ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            )}
+            <span>Theme</span>
+          </button>
+          <button
+            className="mobile-nav-btn"
+            onClick={() => setMobileNavExpanded(true)}
+            title="More"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="5" r="1.5" fill="currentColor"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+              <circle cx="12" cy="19" r="1.5" fill="currentColor"/>
+            </svg>
+            <span>More</span>
+          </button>
+        </div>
+      </nav>
 
       <footer className="footer">
         <p>
