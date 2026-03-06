@@ -102,47 +102,51 @@
   object-fit: contain;
 }
 
+/* Gender selector - ADI SEL3CT clean aesthetic */
 .gender-selector {
   display: flex;
   gap: 0;
   margin-bottom: 1.25rem;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
-  border: 2px solid #000;
+  border: 1px solid #333;
 }
 
 .gender-selector-btn {
   flex: 1;
-  padding: 0.6rem 0;
+  padding: 12px 0;
   border: none;
-  background: #fff;
-  color: #333;
+  background: #1a1a1a;
+  color: #888;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .gender-selector-btn:not(:last-child) {
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid #333;
 }
 
 .gender-selector-btn.active {
-  background: #000;
-  color: #fff;
+  background: #fff;
+  color: #000;
 }
 
 .gender-selector-btn:hover:not(.active) {
-  background: #f0f0f0;
+  background: #222;
+  color: #ccc;
 }
 
 [data-theme="dark"] .gender-selector {
-  border-color: #fff;
+  border-color: #444;
 }
 
 [data-theme="dark"] .gender-selector-btn {
   background: #1a1a1a;
-  color: #ccc;
+  color: #666;
 }
 
 [data-theme="dark"] .gender-selector-btn:not(:last-child) {
@@ -156,6 +160,7 @@
 
 [data-theme="dark"] .gender-selector-btn:hover:not(.active) {
   background: #222;
+  color: #aaa;
 }
 
 
