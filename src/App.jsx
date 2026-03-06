@@ -3377,16 +3377,22 @@ function App() {
 
       {/* Tab Navigation */}
       <nav className="tabs">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <img src={tab.icon} alt="" className="tab-icon" />
-            <span className="tab-name">{tab.name}</span>
-          </button>
-        ))}
+        {TABS.map(tab => {
+          // Use sport-specific icons for targets tab
+          const tabIcon = tab.id === 'targets'
+            ? (targetsSport === 'football' ? '/logos/mahomes-logo.png' : '/logos/adidas-select-basketball.png')
+            : tab.icon
+          return (
+            <button
+              key={tab.id}
+              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <img src={tabIcon} alt="" className="tab-icon" />
+              <span className="tab-name">{tab.name}</span>
+            </button>
+          )
+        })}
       </nav>
 
       {/* Search and Filter Bar (programs only, requires login except targets which has its own gate) */}
@@ -3646,8 +3652,8 @@ function App() {
             ) : targetDashboardView === 'dashboard' ? (
               /* NEW: Dashboard View with Hot Targets + Mini Kanban + Activity */
               <div className="td-dashboard">
-                {/* Main Grid: Left (Pipeline + Activity) | Right (Hot Targets) */}
-                <div className="td-dashboard-main">
+                {/* Main Grid: Left (Pipeline + Activity) | Right (Hot Targets) | Form (when open) */}
+                <div className={`td-dashboard-main${isTargetFormOpen && isUserAllowed ? ' with-form' : ''}`}>
                   {/* Left Column: Pipeline Overview + Activity Feed */}
                   <div className="td-dashboard-left">
                     {/* Mini Pipeline Overview */}
@@ -3816,6 +3822,21 @@ function App() {
                       </div>
                     </section>
                   </div>
+
+                  {/* Inline Add Target Form */}
+                  {isTargetFormOpen && isUserAllowed && (
+                    <div className="td-dashboard-form">
+                      <AddTargetForm
+                        isOpen={isTargetFormOpen}
+                        onClose={closeTargetForm}
+                        onAdd={handleAddTargetProgram}
+                        onEdit={handleEditTargetProgram}
+                        sport={targetsSport}
+                        editTarget={editingTarget}
+                        inline={true}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Regional Distribution - Below main grid */}
@@ -4703,14 +4724,17 @@ function App() {
         allPrograms={programs}
       />
 
-      <AddTargetForm
-        isOpen={isTargetFormOpen}
-        onClose={closeTargetForm}
-        onAdd={handleAddTargetProgram}
-        onEdit={handleEditTargetProgram}
-        sport={targetsSport}
-        editTarget={editingTarget}
-      />
+      {/* Only show modal form when not in targets dashboard view (inline form is shown there instead) */}
+      {!(activeTab === 'targets' && targetDashboardView === 'dashboard') && (
+        <AddTargetForm
+          isOpen={isTargetFormOpen}
+          onClose={closeTargetForm}
+          onAdd={handleAddTargetProgram}
+          onEdit={handleEditTargetProgram}
+          sport={targetsSport}
+          editTarget={editingTarget}
+        />
+      )}
 
       {showExportMenu && (
         <div className="modal-overlay" onClick={() => setShowExportMenu(false)}>

@@ -91,7 +91,7 @@ const initialFormState = {
   notes: ''
 }
 
-function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
+function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inline = false }) {
   const [formData, setFormData] = useState(initialFormState)
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoData, setLogoData] = useState(null)
@@ -250,26 +250,25 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
     { id: 'intel', label: 'Intel' }
   ]
 
-  return (
-    <div className="form-overlay" onClick={onClose}>
-      <div className="form-container target-form-container" onClick={e => e.stopPropagation()}>
-        <div className="form-header">
-          <h2>{isEditMode ? 'Edit Target Program' : 'Add Target Program'}</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
-        </div>
+  const formContent = (
+    <div className={`form-container target-form-container${inline ? ' inline-form' : ''}`} onClick={e => e.stopPropagation()}>
+      <div className="form-header">
+        <h2>{isEditMode ? 'Edit Target Program' : 'Add Target Program'}</h2>
+        <button className="close-btn" onClick={onClose}>&times;</button>
+      </div>
 
-        <div className="form-section-tabs">
-          {sections.map(section => (
-            <button
-              key={section.id}
-              className={`form-section-tab ${activeSection === section.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(section.id)}
-              type="button"
-            >
-              {section.label}
-            </button>
-          ))}
-        </div>
+      <div className="form-section-tabs">
+        {sections.map(section => (
+          <button
+            key={section.id}
+            className={`form-section-tab ${activeSection === section.id ? 'active' : ''}`}
+            onClick={() => setActiveSection(section.id)}
+            type="button"
+          >
+            {section.label}
+          </button>
+        ))}
+      </div>
 
         <form onSubmit={handleSubmit} className="program-form">
           {activeSection === 'basic' && (
@@ -632,6 +631,16 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
           </div>
         </form>
       </div>
+  )
+
+  // Return inline or with overlay
+  if (inline) {
+    return formContent
+  }
+
+  return (
+    <div className="form-overlay" onClick={onClose}>
+      {formContent}
     </div>
   )
 }
