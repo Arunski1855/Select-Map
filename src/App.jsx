@@ -2319,8 +2319,6 @@ function App() {
   const [targetStatusFilter, setTargetStatusFilter] = useState('all')
   const [targetPriorityFilter, setTargetPriorityFilter] = useState('all')
   const [targetDashboardView, setTargetDashboardView] = useState('dashboard') // 'dashboard' or 'kanban' or 'list' or 'map'
-  const [dashboardRightView, setDashboardRightView] = useState('hot-targets') // 'hot-targets' | 'detail' | 'form'
-  const [dashboardDetailTarget, setDashboardDetailTarget] = useState(null) // target shown inline in right column
   const [draggedTarget, setDraggedTarget] = useState(null)
   const [dragOverColumn, setDragOverColumn] = useState(null)
 
@@ -2441,11 +2439,6 @@ function App() {
     return () => unsubscribe()
   }, [activeTab, targetsSport])
 
-  // Reset dashboard right panel when sport or view changes
-  useEffect(() => {
-    setDashboardRightView('hot-targets')
-    setDashboardDetailTarget(null)
-  }, [targetsSport, targetDashboardView])
 
   // Subscribe to all contract details for the current sport (auth-gated)
   useEffect(() => {
@@ -3607,14 +3600,7 @@ function App() {
                 </select>
 
                 {isUserAllowed && (
-                  <button className="td-add-btn" onClick={() => {
-                    if (targetDashboardView === 'dashboard') {
-                      setEditingTarget(null)
-                      setDashboardRightView('form')
-                    } else {
-                      setIsTargetFormOpen(true)
-                    }
-                  }}>
+                  <button className="td-add-btn" onClick={() => setIsTargetFormOpen(true)}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="12" y1="5" x2="12" y2="19"/>
                       <line x1="5" y1="12" x2="19" y2="12"/>
@@ -3715,9 +3701,10 @@ function App() {
                               className="td-activity-item"
                               onClick={() => {
                                 const target = targetPrograms.find(t => t.id === activity.id)
-                                if (target) {
-                                  setDashboardDetailTarget(target)
-                                  setDashboardRightView('detail')
+                                if (target && isUserAllowed) {
+                                  openEditTargetForm(target)
+                                } else if (target) {
+                                  setSelectedTargetProgram(target)
                                 }
                               }}
                               style={{ cursor: 'pointer' }}
@@ -3757,126 +3744,96 @@ function App() {
                     </section>
                   </div>
 
-                  {/* Right Column: Hot Targets / Inline Detail / Inline Form */}
+                  {/* Right Column: Hot Targets */}
                   <div className="td-dashboard-right">
-                    {dashboardRightView === 'form' && isUserAllowed ? (
-                      <div className="td-dashboard-form">
-                        <AddTargetForm
-                          isOpen={true}
-                          onClose={() => { setDashboardRightView('hot-targets'); setEditingTarget(null) }}
-                          onAdd={async (data) => { await handleAddTargetProgram(data); setDashboardRightView('hot-targets') }}
-                          onEdit={async (data) => { await handleEditTargetProgram(data); setDashboardRightView('hot-targets') }}
-                          sport={targetsSport}
-                          editTarget={editingTarget}
-                          inline={true}
-                        />
+                    <section className="td-section td-hot-targets">
+                      <div className="td-section-header">
+                        <h3>Hot Targets</h3>
+                        <span className="td-section-badge">{targetKPIs.hotTargets.length}</span>
                       </div>
-                    ) : dashboardRightView === 'detail' && dashboardDetailTarget ? (
-                      <TargetDetailPanel
-                        target={dashboardDetailTarget}
-                        sport={targetsSport}
-                        isOpen={true}
-                        onClose={() => { setDashboardRightView('hot-targets'); setDashboardDetailTarget(null) }}
-                        isUserAllowed={isUserAllowed}
-                        user={user}
-                        onEdit={(t) => { setEditingTarget(t); setDashboardRightView('form') }}
-                        onDelete={(id) => { setDashboardRightView('hot-targets'); setDashboardDetailTarget(null); handleDeleteTargetProgram(id) }}
-                        onStatusChange={handleUpdateTargetStatus}
-                        inline={true}
-                      />
-                    ) : (
-                      <section className="td-section td-hot-targets">
-                        <div className="td-section-header">
-                          <h3>Hot Targets</h3>
-                          <span className="td-section-badge">{targetKPIs.hotTargets.length}</span>
-                        </div>
-                        <div className="td-hot-cards">
-                          {targetKPIs.hotTargets.length > 0 ? (
-                            targetKPIs.hotTargets.slice(0, 6).map(target => (
-                              <div
-                                key={target.id}
-                                className="td-hot-card"
-                                onClick={() => { setDashboardDetailTarget(target); setDashboardRightView('detail') }}
-                              >
-                                <div className="td-hot-card-logo">
-                                  {target.logo ? (
-                                    <img src={target.logo} alt="" />
-                                  ) : (
-                                    <span className="td-hot-card-fallback">{target.name?.charAt(0)}</span>
-                                  )}
-                                  {target.ranking && (
-                                    <span className="td-hot-card-rank">{target.ranking}</span>
-                                  )}
-                                </div>
-                                <div className="td-hot-card-info">
-                                  <h4>{target.name}</h4>
-                                  <p>{target.city}, {target.state}</p>
-                                </div>
-                                <div className="td-hot-card-progress">
-                                  <div
-                                    className="td-hot-card-bar"
-                                    style={{
-                                      width: target.status === 'negotiating' ? '90%' :
-                                             target.status === 'proposal_sent' ? '70%' :
-                                             target.status === 'in_discussion' ? '50%' : '30%'
-                                    }}
-                                  />
-                                </div>
-                                <div className="td-hot-card-status">
-                                  <span
-                                    className="td-status-badge"
-                                    style={{ backgroundColor: PIPELINE_STATUSES.find(s => s.id === target.status)?.color }}
-                                  >
-                                    {PIPELINE_STATUSES.find(s => s.id === target.status)?.label}
-                                  </span>
-                                </div>
-                                <div className="td-hot-card-actions">
-                                  {target.contactPhone && (
-                                    <a href={`tel:${target.contactPhone}`} className="td-action-btn" title="Call">
-                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-                                      </svg>
-                                    </a>
-                                  )}
-                                  {target.contactEmail && (
-                                    <a href={`mailto:${target.contactEmail}`} className="td-action-btn" title="Email">
-                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                        <polyline points="22,6 12,13 2,6"/>
-                                      </svg>
-                                    </a>
-                                  )}
-                                </div>
+                      <div className="td-hot-cards">
+                        {targetKPIs.hotTargets.length > 0 ? (
+                          targetKPIs.hotTargets.slice(0, 6).map(target => (
+                            <div
+                              key={target.id}
+                              className="td-hot-card"
+                              onClick={() => setSelectedTargetProgram(target)}
+                            >
+                              <div className="td-hot-card-logo">
+                                {target.logo ? (
+                                  <img src={target.logo} alt="" />
+                                ) : (
+                                  <span className="td-hot-card-fallback">{target.name?.charAt(0)}</span>
+                                )}
+                                {target.ranking && (
+                                  <span className="td-hot-card-rank">{target.ranking}</span>
+                                )}
                               </div>
-                            ))
-                          ) : (
-                            <div className="td-empty-state td-empty-large">
-                              <div className="td-empty-icon">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                  <circle cx="12" cy="12" r="10"/>
-                                  <line x1="12" y1="8" x2="12" y2="12"/>
-                                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                </svg>
+                              <div className="td-hot-card-info">
+                                <h4>{target.name}</h4>
+                                <p>{target.city}, {target.state}</p>
                               </div>
-                              <p>No hot targets yet</p>
-                              <span>High priority targets in discussion or later stages appear here</span>
-                              {isUserAllowed && (
-                                <button className="td-empty-action" onClick={() => {
-                                  setEditingTarget(null)
-                                  setDashboardRightView('form')
-                                }}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    <line x1="12" y1="5" x2="12" y2="19"/>
-                                    <line x1="5" y1="12" x2="19" y2="12"/>
-                                  </svg>
-                                  Add Target
-                                </button>
-                              )}
+                              <div className="td-hot-card-progress">
+                                <div
+                                  className="td-hot-card-bar"
+                                  style={{
+                                    width: target.status === 'negotiating' ? '90%' :
+                                           target.status === 'proposal_sent' ? '70%' :
+                                           target.status === 'in_discussion' ? '50%' : '30%'
+                                  }}
+                                />
+                              </div>
+                              <div className="td-hot-card-status">
+                                <span
+                                  className="td-status-badge"
+                                  style={{ backgroundColor: PIPELINE_STATUSES.find(s => s.id === target.status)?.color }}
+                                >
+                                  {PIPELINE_STATUSES.find(s => s.id === target.status)?.label}
+                                </span>
+                              </div>
+                              <div className="td-hot-card-actions">
+                                {target.contactPhone && (
+                                  <a href={`tel:${target.contactPhone}`} className="td-action-btn" title="Call">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                    </svg>
+                                  </a>
+                                )}
+                                {target.contactEmail && (
+                                  <a href={`mailto:${target.contactEmail}`} className="td-action-btn" title="Email">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                      <polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                  </a>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </section>
-                    )}
+                          ))
+                        ) : (
+                          <div className="td-empty-state td-empty-large">
+                            <div className="td-empty-icon">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                              </svg>
+                            </div>
+                            <p>No hot targets yet</p>
+                            <span>High priority targets in discussion or later stages appear here</span>
+                            {isUserAllowed && (
+                              <button className="td-empty-action" onClick={() => setIsTargetFormOpen(true)}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <line x1="12" y1="5" x2="12" y2="19"/>
+                                  <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add Target
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </section>
                   </div>
 
                 </div>
@@ -4138,8 +4095,8 @@ function App() {
               onStatusChange={handleUpdateTargetStatus}
             />
 
-            {/* Target Form Modal - shown for kanban/list/map views only; dashboard uses inline form */}
-            {isTargetFormOpen && isUserAllowed && targetDashboardView !== 'dashboard' && (
+            {/* Target Form Modal */}
+            {isTargetFormOpen && isUserAllowed && (
               <AddTargetForm
                 isOpen={isTargetFormOpen}
                 onClose={closeTargetForm}

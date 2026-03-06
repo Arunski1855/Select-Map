@@ -639,7 +639,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
   }
 
   return (
-    <div className="form-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose}>
       {formContent}
     </div>
   )

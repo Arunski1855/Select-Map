@@ -7430,34 +7430,6 @@ textarea {
   padding: 8px 16px;
 }
 
-/* Inline Target Detail Panel inside dashboard right column */
-.target-detail-inline {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-height: calc(100vh - 280px);
-  overflow: hidden;
-  background: var(--bg-secondary, #111);
-  border: 1px solid var(--border-color, #333);
-}
-
-.target-detail-inline .detail-header {
-  flex-shrink: 0;
-}
-
-.target-detail-inline .detail-tabs {
-  flex-shrink: 0;
-}
-
-.target-detail-inline .detail-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.target-detail-inline .detail-drag-handle {
-  display: none;
-}
-
 /* Legacy: Dashboard Grid (for backward compat) */
 .td-dashboard-grid {
   display: grid;
@@ -8184,7 +8156,13 @@ textarea {
 }
 
 .target-form-container {
+  width: 90%;
+  max-width: 600px;
   max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  background: var(--bg-secondary, #1a1a1a);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Mobile Responsive */
