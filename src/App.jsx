@@ -3695,7 +3695,19 @@ function App() {
                       <div className="td-activity-list">
                         {recentTargetActivity.length > 0 ? (
                           recentTargetActivity.slice(0, 6).map(activity => (
-                            <div key={activity.id} className="td-activity-item">
+                            <div
+                              key={activity.id}
+                              className="td-activity-item"
+                              onClick={() => {
+                                const target = targetPrograms.find(t => t.id === activity.id)
+                                if (target && isUserAllowed) {
+                                  openEditTargetForm(target)
+                                } else if (target) {
+                                  setSelectedTargetProgram(target)
+                                }
+                              }}
+                              style={{ cursor: 'pointer' }}
+                            >
                               <div className="td-activity-icon">
                                 {activity.logo ? (
                                   <img src={activity.logo} alt="" />
@@ -3823,20 +3835,6 @@ function App() {
                     </section>
                   </div>
 
-                  {/* Inline Add Target Form */}
-                  {isTargetFormOpen && isUserAllowed && (
-                    <div className="td-dashboard-form">
-                      <AddTargetForm
-                        isOpen={isTargetFormOpen}
-                        onClose={closeTargetForm}
-                        onAdd={handleAddTargetProgram}
-                        onEdit={handleEditTargetProgram}
-                        sport={targetsSport}
-                        editTarget={editingTarget}
-                        inline={true}
-                      />
-                    </div>
-                  )}
                 </div>
 
                 {/* Regional Distribution - Below main grid */}
@@ -4095,6 +4093,19 @@ function App() {
               onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
               onStatusChange={handleUpdateTargetStatus}
             />
+
+            {/* Target Form Modal */}
+            {isTargetFormOpen && isUserAllowed && (
+              <AddTargetForm
+                isOpen={isTargetFormOpen}
+                onClose={closeTargetForm}
+                onAdd={handleAddTargetProgram}
+                onEdit={handleEditTargetProgram}
+                sport={targetsSport}
+                editTarget={editingTarget}
+                inline={false}
+              />
+            )}
               </>
             )}
           </div>
