@@ -4017,6 +4017,7 @@ textarea {
 
   .detail-panel-content {
     padding: 10px 14px;
+    padding-bottom: 80px; /* Account for mobile bottom nav */
     -webkit-overflow-scrolling: touch;
   }
 
