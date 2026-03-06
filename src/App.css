@@ -1775,6 +1775,75 @@ textarea {
   text-decoration: underline;
 }
 
+/* Login Required Overlay */
+.login-required-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.login-required-content {
+  text-align: center;
+  max-width: 400px;
+  padding: 2rem;
+}
+
+.login-required-icon {
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+}
+
+.login-required-icon svg {
+  width: 64px;
+  height: 64px;
+}
+
+.login-required-content h3 {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-headlines);
+  font-size: 1.75rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--text-primary);
+}
+
+.login-required-content p {
+  font-family: var(--font-heading-compressed);
+  letter-spacing: var(--letter-spacing-headlines);
+  color: var(--text-muted);
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.login-required-btn {
+  padding: 0.85rem 2rem;
+  background: var(--adi-magenta);
+  color: white;
+  border: none;
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-headlines);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.login-required-btn:hover {
+  background: var(--adi-magenta-light);
+}
+
 /* History Modal */
 .history-modal {
   background: var(--bg-primary);

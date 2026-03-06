@@ -247,6 +247,27 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
   )
 }
 
+// Login Required Overlay - shows when content requires authentication
+function LoginRequiredOverlay({ onLoginClick, title = "Sign in required", message = "Please sign in to access this content." }) {
+  return (
+    <div className="login-required-overlay">
+      <div className="login-required-content">
+        <div className="login-required-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h3>{title}</h3>
+        <p>{message}</p>
+        <button className="login-required-btn" onClick={onLoginClick}>
+          Sign In
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // History Modal Component
 function HistoryModal({ isOpen, onClose, program, sport }) {
   const [history, setHistory] = useState([])
@@ -3115,8 +3136,8 @@ function App() {
         </div>
       </header>
 
-      {/* Dashboard Stats (programs only) */}
-      {activeTab !== 'events' && (
+      {/* Dashboard Stats (programs only, requires login except targets which has its own gate) */}
+      {activeTab !== 'events' && activeTab !== 'targets' && user && (
         <div className="dashboard">
           <div className="dashboard-stats">
             <div className="stat-item stat-total" onClick={() => setShowRegionPopup(!showRegionPopup)}>
@@ -3278,8 +3299,8 @@ function App() {
         ))}
       </nav>
 
-      {/* Search and Filter Bar (programs only) */}
-      {activeTab !== 'events' && <div className="toolbar">
+      {/* Search and Filter Bar (programs only, requires login except targets which has its own gate) */}
+      {activeTab !== 'events' && activeTab !== 'targets' && user && <div className="toolbar">
         <div className="search-box">
           <input
             type="text"
@@ -3388,8 +3409,16 @@ function App() {
 
       <main className="main">
         {activeTab === 'targets' ? (
-          /* Targets Pipeline View */
-          <div className="targets-layout" style={{ background: 'var(--bg-primary)' }}>
+          /* Targets Pipeline View - Login Required */
+          <div className="targets-layout" style={{ background: 'var(--bg-primary)', position: 'relative' }}>
+            {!user ? (
+              <LoginRequiredOverlay
+                onLoginClick={() => setIsAuthModalOpen(true)}
+                title="Targets Access Restricted"
+                message="Sign in to view target programs and pipeline information."
+              />
+            ) : (
+              <>
             {/* Targets Header with Sport Toggle and View Mode */}
             <div className="targets-header">
               <div className="targets-sport-toggle">
@@ -3653,6 +3682,8 @@ function App() {
               onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
               onStatusChange={handleUpdateTargetStatus}
             />
+              </>
+            )}
           </div>
         ) : activeTab === 'events' ? (
           /* Events Split Layout */
@@ -3939,9 +3970,15 @@ function App() {
             </div>
           </div>
         ) : (
-          /* Programs Map + Detail Panel */
-          <div className="programs-layout" ref={mapRef}>
-            {isLoading ? (
+          /* Programs Map + Detail Panel - Login Required */
+          <div className="programs-layout" ref={mapRef} style={{ position: 'relative' }}>
+            {!user ? (
+              <LoginRequiredOverlay
+                onLoginClick={() => setIsAuthModalOpen(true)}
+                title="Program Access Restricted"
+                message="Sign in to view program information and details."
+              />
+            ) : isLoading ? (
               <div className="skeleton-map">
                   <span className="skeleton-map-label">Loading map...</span>
                 </div>
