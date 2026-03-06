@@ -4095,18 +4095,6 @@ function App() {
               onStatusChange={handleUpdateTargetStatus}
             />
 
-            {/* Target Form Modal */}
-            {isTargetFormOpen && isUserAllowed && (
-              <AddTargetForm
-                isOpen={isTargetFormOpen}
-                onClose={closeTargetForm}
-                onAdd={handleAddTargetProgram}
-                onEdit={handleEditTargetProgram}
-                sport={targetsSport}
-                editTarget={editingTarget}
-                inline={false}
-              />
-            )}
               </>
             )}
           </div>
@@ -4736,17 +4724,14 @@ function App() {
         allPrograms={programs}
       />
 
-      {/* Only show modal form when not in targets dashboard view (inline form is shown there instead) */}
-      {!(activeTab === 'targets' && targetDashboardView === 'dashboard') && (
-        <AddTargetForm
-          isOpen={isTargetFormOpen}
-          onClose={closeTargetForm}
-          onAdd={handleAddTargetProgram}
-          onEdit={handleEditTargetProgram}
-          sport={targetsSport}
-          editTarget={editingTarget}
-        />
-      )}
+      <AddTargetForm
+        isOpen={isTargetFormOpen}
+        onClose={closeTargetForm}
+        onAdd={handleAddTargetProgram}
+        onEdit={handleEditTargetProgram}
+        sport={targetsSport}
+        editTarget={editingTarget}
+      />
 
       {showExportMenu && (
         <div className="modal-overlay" onClick={() => setShowExportMenu(false)}>
