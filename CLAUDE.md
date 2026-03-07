@@ -13,6 +13,13 @@
 - Never deviate from either without explicit approval
 - Always invoke the `adi-select` skill when making design/styling decisions
 
+## Live Deployment (CRITICAL)
+- **Live site: https://select-map.vercel.app** — this is the site used by the entire team
+- Vercel auto-deploys from the `main` branch on GitHub on every push
+- ALL changes must end up on `main` to go live — the `claude/` feature branch alone is NOT enough
+- After pushing to the `claude/` branch, the user merges into `main` and pushes to trigger Vercel
+- Never consider a task complete until changes are on `main` and reflected at select-map.vercel.app
+
 ## Technical Stack
 - React + Vite frontend
 - Firebase Realtime Database (not Firestore)
