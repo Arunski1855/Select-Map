@@ -301,20 +301,21 @@ input[type="file"]::file-selector-button:hover {
   right: -6px;
   width: 20px;
   height: 20px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  border: 2px solid #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
   line-height: 1;
+  transition: all 0.2s;
 }
 
 .gallery-remove:hover {
-  background: #c0392b;
+  background: #E500A4;
+  border-color: #E500A4;
 }
 
 .brand-guide-preview {
@@ -338,22 +339,23 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .brand-guide-remove {
-  background: #e74c3c;
-  color: white;
-  border: none;
+  background: #000;
+  color: #fff;
+  border: 2px solid #fff;
   width: 22px;
   height: 22px;
-  border-radius: 50%;
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s;
 }
 
 .brand-guide-remove:hover {
-  background: #c0392b;
+  background: #E500A4;
+  border-color: #E500A4;
 }
 
 /* Dark Mode Support */
