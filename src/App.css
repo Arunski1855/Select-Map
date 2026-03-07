@@ -569,13 +569,9 @@ textarea {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 1rem;
-  overflow-x: auto;
-}
-
-/* Allow dropdown to overflow when open */
-.dashboard:has(.stat-analytics-dropdown.open) {
   overflow: visible;
 }
+
 
 .dashboard-stats {
   display: flex;
