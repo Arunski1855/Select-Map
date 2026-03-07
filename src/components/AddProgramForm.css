@@ -445,6 +445,44 @@ input[type="file"]::file-selector-button:hover {
   color: #ff8080;
 }
 
+/* Form Actions (used by AddTargetForm) */
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 1rem;
+  background: transparent;
+  color: #666;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  border-color: #999;
+  color: #333;
+}
+
+[data-theme="dark"] .cancel-btn {
+  color: #999;
+  border-color: #444;
+}
+
+[data-theme="dark"] .cancel-btn:hover {
+  border-color: #888;
+  color: #ccc;
+}
+
+.form-actions .submit-btn {
+  flex: 2;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .modal-content {
