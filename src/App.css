@@ -7157,87 +7157,92 @@ textarea {
 
 /* Hot Targets Cards */
 .td-hot-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
 }
 
 .td-hot-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast);
   position: relative;
 }
 
+.td-hot-card:last-child {
+  border-bottom: none;
+}
+
 .td-hot-card:hover {
-  border-color: var(--adi-magenta);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: color-mix(in srgb, var(--adi-magenta) 8%, var(--bg-secondary));
 }
 
 .td-hot-card-logo {
-  width: 64px;
-  height: 64px;
+  width: 40px;
+  height: 40px;
   background: var(--bg-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 12px;
+  flex-shrink: 0;
   position: relative;
 }
 
 .td-hot-card-logo img {
-  max-width: 56px;
-  max-height: 56px;
+  max-width: 36px;
+  max-height: 36px;
   object-fit: contain;
 }
 
 .td-hot-card-fallback {
   font-family: var(--font-heading-compressed);
-  font-size: 2rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--text-muted);
 }
 
 .td-hot-card-rank {
   position: absolute;
-  bottom: -6px;
-  right: -6px;
+  bottom: -4px;
+  right: -4px;
   background: var(--adi-black);
   color: var(--adi-white);
-  padding: 2px 6px;
+  padding: 1px 4px;
   font-family: var(--font-heading-compressed);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
 }
 
 .td-hot-card-info {
-  text-align: center;
-  margin-bottom: 12px;
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
 }
 
 .td-hot-card-info h4 {
   font-family: var(--font-heading-compressed);
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-brand);
-  margin: 0 0 4px;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .td-hot-card-info p {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin: 0;
 }
 
 .td-hot-card-progress {
-  height: 4px;
-  background: var(--border-color);
-  margin-bottom: 12px;
+  display: none;
 }
 
 .td-hot-card-bar {
@@ -7248,8 +7253,8 @@ textarea {
 
 .td-hot-card-status {
   display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
+  justify-content: flex-end;
+  margin-bottom: 0;
 }
 
 .td-status-badge {
@@ -7264,8 +7269,9 @@ textarea {
 
 .td-hot-card-actions {
   display: flex;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .td-action-btn {
@@ -7348,7 +7354,7 @@ textarea {
 /* Dashboard Main Layout (Left + Right columns) */
 .td-dashboard-main {
   display: grid;
-  grid-template-columns: minmax(400px, 1fr) minmax(400px, 1.5fr);
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
   gap: 24px;
   flex: 1;
   min-height: 0;
@@ -7514,8 +7520,8 @@ textarea {
 .td-activity-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border-color);
   transition: background var(--transition-fast);
 }

@@ -3695,7 +3695,7 @@ function App() {
                       </div>
                       <div className="td-activity-list">
                         {recentTargetActivity.length > 0 ? (
-                          recentTargetActivity.slice(0, 6).map(activity => (
+                          recentTargetActivity.slice(0, 10).map(activity => (
                             <div
                               key={activity.id}
                               className="td-activity-item"
@@ -3753,7 +3753,7 @@ function App() {
                       </div>
                       <div className="td-hot-cards">
                         {targetKPIs.hotTargets.length > 0 ? (
-                          targetKPIs.hotTargets.slice(0, 6).map(target => (
+                          targetKPIs.hotTargets.slice(0, 10).map(target => (
                             <div
                               key={target.id}
                               className="td-hot-card"
