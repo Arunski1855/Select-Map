@@ -2280,7 +2280,7 @@ function App() {
   // Mt Zion team type filter
   const [filterTeamType, setFilterTeamType] = useState('all') // 'Prep', 'National', 'all'
 
-  // Mobile region popup
+  // Region dropdown (unused - kept for mobile compatibility)
   const [showRegionPopup, setShowRegionPopup] = useState(false)
 
   // Mobile UX states
@@ -2303,6 +2303,8 @@ function App() {
 
   // Analytics dropdown menu (desktop)
   const [analyticsMenuOpen, setAnalyticsMenuOpen] = useState(false)
+  // Total Programs dropdown menu (desktop)
+  const [totalProgramsMenuOpen, setTotalProgramsMenuOpen] = useState(false)
 
   // Archive modal and state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
@@ -3233,9 +3235,50 @@ function App() {
       {activeTab !== 'events' && activeTab !== 'targets' && user && (
         <div className="dashboard">
           <div className="dashboard-stats">
-            <div className="stat-item stat-total" onClick={() => setShowRegionPopup(!showRegionPopup)}>
+            {/* Total Programs Dropdown - shows region populations */}
+            <div
+              className={`stat-item stat-total-dropdown ${totalProgramsMenuOpen ? 'open' : ''}`}
+              onMouseEnter={() => setTotalProgramsMenuOpen(true)}
+              onMouseLeave={() => setTotalProgramsMenuOpen(false)}
+            >
               <span className="stat-value">{regionCounts.total}</span>
               <span className="stat-label">Total Programs {selectedRegion !== 'all' ? `(${selectedRegion})` : ''}</span>
+              <span className="stat-dropdown-arrow">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3,4.5 6,7.5 9,4.5"/>
+                </svg>
+              </span>
+
+              {/* Dropdown Menu */}
+              <div className="analytics-dropdown-menu total-programs-menu">
+                {Object.keys(REGIONS).map(region => (
+                  <button
+                    key={region}
+                    className={`analytics-dropdown-item ${selectedRegion === region ? 'active' : ''}`}
+                    onClick={() => { setSelectedRegion(selectedRegion === region ? 'all' : region); setTotalProgramsMenuOpen(false) }}
+                  >
+                    <span className="analytics-dropdown-icon">
+                      <span className="region-color-dot" style={{ background: REGIONS[region].color }} />
+                    </span>
+                    <span>{region}</span>
+                    <span className="region-dropdown-count">{regionCounts[region] || 0}</span>
+                  </button>
+                ))}
+                {selectedRegion !== 'all' && (
+                  <button
+                    className="analytics-dropdown-item region-clear-item"
+                    onClick={() => { setSelectedRegion('all'); setTotalProgramsMenuOpen(false) }}
+                  >
+                    <span className="analytics-dropdown-icon">
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="5" y1="5" x2="15" y2="15"/>
+                        <line x1="15" y1="5" x2="5" y2="15"/>
+                      </svg>
+                    </span>
+                    <span>Clear Filter</span>
+                  </button>
+                )}
+              </div>
             </div>
             <div className="region-stats-desktop">
               {Object.keys(REGIONS).map(region => (
@@ -3250,30 +3293,6 @@ function App() {
                 </div>
               ))}
             </div>
-            {showRegionPopup && (
-              <>
-                <div className="region-popup-overlay" onClick={() => setShowRegionPopup(false)} />
-                <div className="region-popup">
-                  {Object.keys(REGIONS).map(region => (
-                    <div
-                      key={region}
-                      className={`region-popup-item ${selectedRegion === region ? 'active' : ''}`}
-                      style={{ '--region-color': REGIONS[region].color }}
-                      onClick={() => { setSelectedRegion(selectedRegion === region ? 'all' : region); setShowRegionPopup(false) }}
-                    >
-                      <span className="region-popup-color" style={{ background: REGIONS[region].color }} />
-                      <span className="region-popup-name">{region}</span>
-                      <span className="region-popup-count">{regionCounts[region] || 0}</span>
-                    </div>
-                  ))}
-                  {selectedRegion !== 'all' && (
-                    <div className="region-popup-item region-popup-clear" onClick={() => { setSelectedRegion('all'); setShowRegionPopup(false) }}>
-                      <span className="region-popup-name">Clear filter</span>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
             {/* Analytics Dropdown - nests Dashboard, Digest, Reports, Compare */}
             <div
               className={`stat-item stat-analytics-dropdown ${analyticsMenuOpen ? 'open' : ''}`}
@@ -3339,32 +3358,7 @@ function App() {
                 </button>
               </div>
             </div>
-            {isUserAllowed && (
-              <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
-                <span className="stat-icon">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="3" width="16" height="4" rx="1"/>
-                    <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
-                    <line x1="8" y1="11" x2="12" y2="11"/>
-                  </svg>
-                </span>
-                <span className="stat-label">Archive ({archivedPrograms.length})</span>
-              </div>
-            )}
-            {isUserAllowed && (
-              <div className="stat-item stat-bulk-edit" onClick={() => setIsBulkEditOpen(true)} title="Bulk edit programs">
-                <span className="stat-icon">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <rect x="2" y="2" width="16" height="16" rx="2"/>
-                    <line x1="2" y1="7" x2="18" y2="7"/>
-                    <line x1="2" y1="12" x2="18" y2="12"/>
-                    <line x1="7" y1="2" x2="7" y2="18"/>
-                    <line x1="13" y1="2" x2="13" y2="18"/>
-                  </svg>
-                </span>
-                <span className="stat-label">Bulk Edit</span>
-              </div>
-            )}
+            {/* Contracts - next to Analytics */}
             {isUserAllowed && activeTab !== 'events' && activeTab !== 'targets' && (
               <div className="stat-item stat-contracts" onClick={() => setIsContractDashboardOpen(true)} title="Contract overview">
                 <span className="stat-icon">
@@ -3381,6 +3375,21 @@ function App() {
                 <span className="stat-label">Contracts</span>
               </div>
             )}
+            {isUserAllowed && (
+              <div className="stat-item stat-bulk-edit" onClick={() => setIsBulkEditOpen(true)} title="Bulk edit programs">
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <rect x="2" y="2" width="16" height="16" rx="2"/>
+                    <line x1="2" y1="7" x2="18" y2="7"/>
+                    <line x1="2" y1="12" x2="18" y2="12"/>
+                    <line x1="7" y1="2" x2="7" y2="18"/>
+                    <line x1="13" y1="2" x2="13" y2="18"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Bulk Edit</span>
+              </div>
+            )}
+            {/* Export */}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
@@ -3395,6 +3404,19 @@ function App() {
               </span>
               <span className="stat-label">Export</span>
             </div>
+            {/* Archive - after Export */}
+            {isUserAllowed && (
+              <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="16" height="4" rx="1"/>
+                    <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
+                    <line x1="8" y1="11" x2="12" y2="11"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Archive ({archivedPrograms.length})</span>
+              </div>
+            )}
           </div>
         </div>
       )}
