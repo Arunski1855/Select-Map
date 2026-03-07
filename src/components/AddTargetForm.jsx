@@ -251,11 +251,9 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
   ]
 
   const formContent = (
-    <div className={`form-container target-form-container${inline ? ' inline-form' : ''}`} onClick={e => e.stopPropagation()}>
-      <div className="form-header">
-        <h2>{isEditMode ? 'Edit Target Program' : 'Add Target Program'}</h2>
-        <button className="close-btn" onClick={onClose}>&times;</button>
-      </div>
+    <div className={`modal-content target-form-content${inline ? ' inline-form' : ''}`} onClick={e => e.stopPropagation()}>
+      <button className="modal-close" onClick={onClose}>&times;</button>
+      <h2>{isEditMode ? 'Edit Target Program' : 'Add Target Program'}</h2>
 
       <div className="form-section-tabs">
         {sections.map(section => (
@@ -639,7 +637,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
   }
 
   return (
-    <div className="form-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose}>
       {formContent}
     </div>
   )
