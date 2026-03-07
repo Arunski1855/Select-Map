@@ -572,6 +572,11 @@ textarea {
   overflow-x: auto;
 }
 
+/* Allow dropdown to overflow when open */
+.dashboard:has(.stat-analytics-dropdown.open) {
+  overflow: visible;
+}
+
 .dashboard-stats {
   display: flex;
   gap: 0.5rem;
@@ -688,7 +693,7 @@ textarea {
 
 .analytics-dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 50%;
   transform: translateX(-50%);
   min-width: 160px;
@@ -699,8 +704,8 @@ textarea {
   padding: 6px 0;
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-50%) translateY(-8px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s;
   z-index: 10000;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
@@ -708,7 +713,7 @@ textarea {
 .stat-analytics-dropdown.open .analytics-dropdown-menu {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(4px);
+  pointer-events: auto;
 }
 
 .analytics-dropdown-item {
