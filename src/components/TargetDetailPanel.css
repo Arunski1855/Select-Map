@@ -1,0 +1,739 @@
+/* TargetDetailPanel - dedicated styles */
+
+/* Root panel */
+.target-detail-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 380px;
+  background: #ffffff;
+  border-left: 1px solid #e0e0e0;
+  z-index: 1200;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.2);
+}
+
+.target-detail-panel.open {
+  transform: translateX(0);
+}
+
+[data-theme="dark"] .target-detail-panel {
+  background: #111111;
+  border-left-color: #222222;
+}
+
+/* Mobile drag handle */
+.tdp-drag-handle {
+  display: none;
+  justify-content: center;
+  padding: 8px 0 4px;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.tdp-drag-indicator {
+  width: 36px;
+  height: 4px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
+/* ─── Header ─────────────────────────────── */
+.tdp-header {
+  background: #000000;
+  border-left: 4px solid #E500A4;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.tdp-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/textures/backdrop-two.jpg');
+  background-size: 350%;
+  background-position: 40% 50%;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.tdp-header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 8px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Logo slot: 48×48 white square */
+.tdp-logo {
+  width: 48px;
+  height: 48px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.tdp-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Name + location */
+.tdp-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tdp-name {
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  margin: 0 0 2px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdp-location {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+}
+
+/* Close button: black + white border + magenta hover */
+.tdp-close {
+  background: #000000;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  font-size: 1.1rem;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 150ms ease-out, border-color 150ms ease-out;
+  padding: 0;
+}
+
+.tdp-close:hover {
+  background: #E500A4;
+  border-color: #E500A4;
+}
+
+/* Badges row */
+.tdp-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 12px 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.tdp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  border-radius: 0;
+}
+
+/* Status quick-change dropdown */
+.tdp-status-row {
+  padding: 0 12px 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.tdp-status-select {
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #ffffff;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-radius: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23fff' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.tdp-status-select option {
+  background: #000000;
+  color: #ffffff;
+}
+
+/* ─── Tabs ─────────────────────────────── */
+.tdp-tabs {
+  display: flex;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .tdp-tabs {
+  background: #0a0a0a;
+  border-bottom-color: #222222;
+}
+
+.tdp-tab {
+  flex: 1;
+  padding: 10px 4px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #888888;
+  cursor: pointer;
+  transition: color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.tdp-tab.active {
+  color: #000000;
+  border-bottom-color: #E500A4;
+}
+
+[data-theme="dark"] .tdp-tab {
+  color: #666666;
+}
+
+[data-theme="dark"] .tdp-tab.active {
+  color: #ffffff;
+  border-bottom-color: #E500A4;
+}
+
+/* ─── Content area ─────────────────────── */
+.tdp-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+[data-theme="dark"] .tdp-content {
+  background: #111111;
+}
+
+.tdp-tab-pane {
+  padding: 12px 16px;
+}
+
+/* Detail rows (label / value) */
+.tdp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  gap: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.82rem;
+}
+
+[data-theme="dark"] .tdp-row {
+  border-bottom-color: #1a1a1a;
+}
+
+.tdp-label {
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888888;
+  flex-shrink: 0;
+}
+
+.tdp-value {
+  text-align: right;
+  color: #000000;
+  word-break: break-word;
+}
+
+[data-theme="dark"] .tdp-value {
+  color: #e0e0e0;
+}
+
+.tdp-value-multiline {
+  text-align: left;
+  white-space: pre-wrap;
+  display: block;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.tdp-link {
+  color: #E500A4;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tdp-link:hover {
+  text-decoration: underline;
+}
+
+.tdp-empty {
+  font-size: 0.8rem;
+  color: #888888;
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* ─── Actions ──────────────────────────── */
+.tdp-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+[data-theme="dark"] .tdp-actions {
+  border-top-color: #1a1a1a;
+}
+
+.tdp-edit-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: #000000;
+  color: #ffffff;
+  border: 2px solid #000000;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 150ms ease-out;
+}
+
+.tdp-edit-btn:hover {
+  background: #333333;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .tdp-edit-btn {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+[data-theme="dark"] .tdp-edit-btn:hover {
+  background: #e0e0e0;
+  border-color: #e0e0e0;
+}
+
+.tdp-delete-btn {
+  padding: 10px 16px;
+  background: transparent;
+  color: #E500A4;
+  border: 2px solid #E500A4;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+
+.tdp-delete-btn:hover {
+  background: #E500A4;
+  color: #ffffff;
+}
+
+/* ─── Ranking History ──────────────────── */
+.tdp-ranking-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 2px solid #E500A4;
+}
+
+.tdp-ranking-title {
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #000000;
+  margin: 0 0 10px;
+}
+
+[data-theme="dark"] .tdp-ranking-title {
+  color: #e0e0e0;
+}
+
+.tdp-ranking-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tdp-ranking-current-label {
+  font-size: 0.75rem;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tdp-ranking-current-value {
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #E500A4;
+  letter-spacing: 0.05em;
+}
+
+.tdp-ranking-form {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tdp-ranking-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  color: #000000;
+  font-size: 0.82rem;
+  border-radius: 0;
+  outline: none;
+  transition: border-color 150ms ease-out;
+}
+
+.tdp-ranking-input:focus {
+  border-color: #E500A4;
+}
+
+[data-theme="dark"] .tdp-ranking-input {
+  background: #1a1a1a;
+  border-color: #333333;
+  color: #e0e0e0;
+}
+
+.tdp-ranking-add-btn {
+  padding: 7px 14px;
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 150ms ease-out;
+  border-radius: 0;
+}
+
+.tdp-ranking-add-btn:hover:not(:disabled) {
+  background: #E500A4;
+}
+
+.tdp-ranking-add-btn:disabled {
+  background: #999999;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .tdp-ranking-add-btn {
+  background: #ffffff;
+  color: #000000;
+}
+
+[data-theme="dark"] .tdp-ranking-add-btn:hover:not(:disabled) {
+  background: #E500A4;
+  color: #ffffff;
+}
+
+.tdp-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tdp-ranking-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: #f5f5f5;
+  gap: 8px;
+}
+
+[data-theme="dark"] .tdp-ranking-item {
+  background: #1a1a1a;
+}
+
+.tdp-ranking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tdp-ranking-value {
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #000000;
+}
+
+[data-theme="dark"] .tdp-ranking-value {
+  color: #e0e0e0;
+}
+
+.tdp-ranking-date {
+  font-size: 0.7rem;
+  color: #888888;
+}
+
+.tdp-ranking-delete {
+  background: #000000;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 150ms ease-out, border-color 150ms ease-out;
+  padding: 0;
+  border-radius: 0;
+}
+
+.tdp-ranking-delete:hover {
+  background: #E500A4;
+  border-color: #E500A4;
+}
+
+/* ─── Activity Notes ───────────────────── */
+.tdp-note-form {
+  margin-bottom: 12px;
+}
+
+.tdp-note-form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  color: #000000;
+  font-size: 0.82rem;
+  font-family: inherit;
+  resize: vertical;
+  border-radius: 0;
+  outline: none;
+  transition: border-color 150ms ease-out;
+}
+
+.tdp-note-form textarea:focus {
+  border-color: #E500A4;
+}
+
+[data-theme="dark"] .tdp-note-form textarea {
+  background: #1a1a1a;
+  border-color: #333333;
+  color: #e0e0e0;
+}
+
+.tdp-note-add-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 16px;
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 150ms ease-out;
+  border-radius: 0;
+}
+
+.tdp-note-add-btn:hover:not(:disabled) {
+  background: #E500A4;
+}
+
+.tdp-note-add-btn:disabled {
+  background: #999999;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .tdp-note-add-btn {
+  background: #ffffff;
+  color: #000000;
+}
+
+[data-theme="dark"] .tdp-note-add-btn:hover:not(:disabled) {
+  background: #E500A4;
+  color: #ffffff;
+}
+
+.tdp-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tdp-note-item {
+  padding: 10px 12px;
+  background: #f9f9f9;
+  border-left: 3px solid #E500A4;
+}
+
+[data-theme="dark"] .tdp-note-item {
+  background: #0a0a0a;
+}
+
+.tdp-note-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tdp-note-author {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+[data-theme="dark"] .tdp-note-author {
+  color: #e0e0e0;
+}
+
+.tdp-note-time {
+  font-size: 0.68rem;
+  color: #888888;
+}
+
+.tdp-note-delete {
+  background: #000000;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 150ms ease-out, border-color 150ms ease-out;
+  padding: 0;
+  border-radius: 0;
+}
+
+.tdp-note-delete:hover {
+  background: #E500A4;
+  border-color: #E500A4;
+}
+
+.tdp-note-text {
+  font-size: 0.82rem;
+  color: #333333;
+  line-height: 1.5;
+  margin: 0;
+}
+
+[data-theme="dark"] .tdp-note-text {
+  color: #cccccc;
+}
+
+/* Meta info */
+.tdp-meta {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+[data-theme="dark"] .tdp-meta {
+  border-top-color: #1a1a1a;
+}
+
+.tdp-meta-text {
+  font-size: 0.72rem;
+  color: #888888;
+  margin: 0;
+}
+
+/* ─── Mobile bottom sheet ─────────────── */
+@media (max-width: 768px) {
+  .target-detail-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    height: 45vh;
+    min-height: 200px;
+    transform: translateY(100%);
+    border-left: none;
+    border-top: 3px solid #E500A4;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+  }
+
+  .target-detail-panel.open {
+    transform: translateY(0);
+  }
+
+  .tdp-drag-handle {
+    display: flex;
+  }
+}
