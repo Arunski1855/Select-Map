@@ -121,7 +121,7 @@ const TABS = [
   { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
   { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' },
   { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' },
-  { id: 'targets', name: 'Target Programs', icon: '/logos/adi-select-logo.svg' }
+  { id: 'targets', name: 'Target Programs', icon: '/logos/adidas-logo.png' }
 ]
 
 // Pipeline status configuration
@@ -2301,6 +2301,9 @@ function App() {
   // Program comparison modal
   const [isComparisonOpen, setIsComparisonOpen] = useState(false)
 
+  // Analytics dropdown menu (desktop)
+  const [analyticsMenuOpen, setAnalyticsMenuOpen] = useState(false)
+
   // Archive modal and state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
   const [archivedPrograms, setArchivedPrograms] = useState([])
@@ -3271,7 +3274,12 @@ function App() {
                 </div>
               </>
             )}
-            <div className="stat-item stat-analytics" onClick={() => setIsAnalyticsOpen(true)}>
+            {/* Analytics Dropdown - nests Dashboard, Digest, Reports, Compare */}
+            <div
+              className={`stat-item stat-analytics-dropdown ${analyticsMenuOpen ? 'open' : ''}`}
+              onMouseEnter={() => setAnalyticsMenuOpen(true)}
+              onMouseLeave={() => setAnalyticsMenuOpen(false)}
+            >
               <span className="stat-icon">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <rect x="2" y="10" width="4" height="8" rx="1"/>
@@ -3280,40 +3288,56 @@ function App() {
                 </svg>
               </span>
               <span className="stat-label">Analytics</span>
-            </div>
-            <div className="stat-item stat-digest" onClick={() => setIsDigestOpen(true)}>
-              <span className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <rect x="3" y="2" width="14" height="16" rx="2"/>
-                  <line x1="6" y1="6" x2="14" y2="6"/>
-                  <line x1="6" y1="10" x2="14" y2="10"/>
-                  <line x1="6" y1="14" x2="10" y2="14"/>
+              <span className="stat-dropdown-arrow">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3,4.5 6,7.5 9,4.5"/>
                 </svg>
               </span>
-              <span className="stat-label">Digest</span>
-            </div>
-            <div className="stat-item stat-reports" onClick={() => setIsReportsOpen(true)}>
-              <span className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <rect x="2" y="2" width="6" height="6" rx="1"/>
-                  <rect x="12" y="2" width="6" height="6" rx="1"/>
-                  <rect x="2" y="12" width="6" height="6" rx="1"/>
-                  <rect x="12" y="12" width="6" height="6" rx="1"/>
-                </svg>
-              </span>
-              <span className="stat-label">Reports</span>
-            </div>
-            <div className="stat-item stat-compare" onClick={() => setIsComparisonOpen(true)}>
-              <span className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <rect x="2" y="4" width="6" height="12" rx="1"/>
-                  <rect x="12" y="4" width="6" height="12" rx="1"/>
-                  <line x1="10" y1="8" x2="10" y2="12"/>
-                  <polyline points="8,10 10,8 12,10"/>
-                  <polyline points="8,10 10,12 12,10"/>
-                </svg>
-              </span>
-              <span className="stat-label">Compare</span>
+
+              {/* Dropdown Menu */}
+              <div className="analytics-dropdown-menu">
+                <button className="analytics-dropdown-item" onClick={() => { setIsAnalyticsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="10" width="4" height="8" rx="1"/>
+                      <rect x="8" y="6" width="4" height="12" rx="1"/>
+                      <rect x="14" y="2" width="4" height="16" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Dashboard</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsDigestOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="2" width="14" height="16" rx="2"/>
+                      <line x1="6" y1="6" x2="14" y2="6"/>
+                      <line x1="6" y1="10" x2="14" y2="10"/>
+                      <line x1="6" y1="14" x2="10" y2="14"/>
+                    </svg>
+                  </span>
+                  <span>Digest</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsReportsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="2" width="6" height="6" rx="1"/>
+                      <rect x="12" y="2" width="6" height="6" rx="1"/>
+                      <rect x="2" y="12" width="6" height="6" rx="1"/>
+                      <rect x="12" y="12" width="6" height="6" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Reports</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsComparisonOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="4" width="6" height="12" rx="1"/>
+                      <rect x="12" y="4" width="6" height="12" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Compare</span>
+                </button>
+              </div>
             </div>
             {isUserAllowed && (
               <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
