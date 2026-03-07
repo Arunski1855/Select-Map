@@ -3280,19 +3280,6 @@ function App() {
                 )}
               </div>
             </div>
-            <div className="region-stats-desktop">
-              {Object.keys(REGIONS).map(region => (
-                <div
-                  key={region}
-                  className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
-                  style={{ '--region-color': REGIONS[region].color }}
-                  onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
-                >
-                  <span className="stat-value">{regionCounts[region] || 0}</span>
-                  <span className="stat-label">{region}</span>
-                </div>
-              ))}
-            </div>
             {/* Analytics Dropdown - nests Dashboard, Digest, Reports, Compare */}
             <div
               className={`stat-item stat-analytics-dropdown ${analyticsMenuOpen ? 'open' : ''}`}
