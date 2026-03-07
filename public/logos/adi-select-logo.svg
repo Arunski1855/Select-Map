@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Basketball circle outline -->
+  <circle cx="50" cy="50" r="45" fill="none" stroke="#000000" stroke-width="3"/>
+  <!-- Horizontal line -->
+  <line x1="5" y1="50" x2="95" y2="50" stroke="#000000" stroke-width="2.5"/>
+  <!-- Vertical line -->
+  <line x1="50" y1="5" x2="50" y2="95" stroke="#000000" stroke-width="2.5"/>
+  <!-- Left curve -->
+  <path d="M 50 5 Q 25 25, 25 50 Q 25 75, 50 95" fill="none" stroke="#000000" stroke-width="2.5"/>
+  <!-- Right curve -->
+  <path d="M 50 5 Q 75 25, 75 50 Q 75 75, 50 95" fill="none" stroke="#000000" stroke-width="2.5"/>
+</svg>
