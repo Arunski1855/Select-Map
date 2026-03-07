@@ -10945,3 +10945,467 @@ textarea {
     background: var(--adi-magenta);
   }
 }
+
+/* =============================================== */
+/* PROGRAM CARD - ADI SEL3CT VISUAL SNAPSHOT      */
+/* =============================================== */
+
+.program-card-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  padding: 20px;
+}
+
+.program-card {
+  width: 360px;
+  height: 540px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.program-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.program-card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  /* ADI SEL3CT: Sharp corners, no border-radius */
+  overflow: hidden;
+}
+
+.program-card-front {
+  /* Magenta gradient background - brand-led moment */
+  background: linear-gradient(
+    145deg,
+    var(--adi-magenta) 0%,
+    var(--adi-magenta-dark, #B8007F) 100%
+  );
+  color: var(--adi-white);
+}
+
+.program-card-back {
+  background: linear-gradient(
+    145deg,
+    #1a1a1a 0%,
+    #0a0a0a 100%
+  );
+  color: var(--adi-white);
+  transform: rotateY(180deg);
+}
+
+/* Header with logo and sport badge */
+.program-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 20px 16px;
+}
+
+.program-card-logo-area {
+  width: 72px;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* ADI SEL3CT: Sharp corners */
+}
+
+.program-card-logo {
+  max-width: 60px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.program-card-logo-placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.program-card-sport-badge {
+  /* ADI SEL3CT: Bold Italic, ALL CAPS */
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-style: italic;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px 16px;
+  /* Sharp corners */
+}
+
+/* Program Name Section */
+.program-card-name-section {
+  padding: 0 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.program-card-name {
+  /* ADI SEL3CT: Bold Italic, ALL CAPS headline */
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-style: italic;
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+  line-height: 1.1;
+}
+
+.program-card-location {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 400;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* Achievement Highlight */
+.program-card-highlight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.25);
+  /* Sharp corners */
+}
+
+.program-card-highlight-icon {
+  font-size: 1.25rem;
+}
+
+.program-card-highlight-text {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-style: italic;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Metrics Section */
+.program-card-metrics {
+  flex: 1;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.program-card-metrics-header {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 400;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.program-card-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.program-card-metric-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.program-card-metric-icon {
+  font-size: 0.9rem;
+  width: 20px;
+  text-align: center;
+}
+
+.program-card-metric-label {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-style: italic;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.program-card-metric-value {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.program-card-metric-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  /* Sharp corners */
+  overflow: hidden;
+}
+
+.program-card-metric-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,1));
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Sharp edge - no border-radius */
+}
+
+/* Footer Actions */
+.program-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.program-card-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+  /* Sharp corners */
+}
+
+.program-card-action:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.program-card-flip-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px 12px;
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 400;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.program-card-flip-btn:hover {
+  color: white;
+}
+
+/* BACK OF CARD STYLES */
+
+.program-card-back-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.program-card-back-header .program-card-name {
+  text-align: center;
+}
+
+/* Info Grid */
+.program-card-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 16px 20px;
+}
+
+.program-card-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.program-card-info-label {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 400;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.program-card-info-value {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+/* Historicals Section */
+.program-card-historicals {
+  flex: 1;
+  padding: 0 20px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.program-card-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 400;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 12px;
+}
+
+.program-card-section-icon {
+  font-size: 1rem;
+}
+
+.program-card-historicals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.program-card-historical-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  /* Sharp corners */
+}
+
+.program-card-historical-year {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  color: var(--adi-magenta);
+  min-width: 45px;
+}
+
+.program-card-historical-achievement {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 400;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.program-card-empty {
+  font-size: 0.75rem;
+  opacity: 0.5;
+  text-align: center;
+  padding: 16px;
+}
+
+/* Branding Bar */
+.program-card-branding-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--adi-black);
+  border-top: 2px solid var(--adi-magenta);
+}
+
+.program-card-branding-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.program-card-branding-logo {
+  height: 16px;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.program-card-branding-sport {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 700;
+  font-style: italic;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--adi-magenta);
+  background: var(--adi-white);
+  padding: 4px 10px;
+}
+
+.program-card-branding-right {
+  font-family: var(--font-heading-compressed, var(--font-heading));
+  font-weight: 400;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* Close Button */
+.program-card-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+  /* Sharp corners */
+}
+
+.program-card-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Mobile Responsive */
+@media (max-width: 420px) {
+  .program-card {
+    width: 100%;
+    max-width: 340px;
+    height: 520px;
+  }
+
+  .program-card-name {
+    font-size: 1.3rem;
+  }
+
+  .program-card-metric-label {
+    font-size: 0.7rem;
+  }
+}

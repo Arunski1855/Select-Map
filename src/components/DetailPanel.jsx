@@ -20,6 +20,7 @@ import {
   subscribeToContractHistory,
   updateProgramHistoricals
 } from '../firebase'
+import ProgramCard from './ProgramCard'
 
 // Error boundary to prevent white-screen crashes
 class DetailPanelErrorBoundary extends Component {
@@ -179,6 +180,9 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
   const [isEditingHistoricals, setIsEditingHistoricals] = useState(false)
   const [historicalsForm, setHistoricalsForm] = useState({ '2024': '', '2025': '', '2026': '' })
   const [historicalsLoading, setHistoricalsLoading] = useState(false)
+
+  // Program Card state
+  const [showProgramCard, setShowProgramCard] = useState(false)
 
   useEffect(() => {
     if (!program?.id || !sport || sport === 'events') return
@@ -910,6 +914,14 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                 </svg>
                 Team Report
               </button>
+              <button className="detail-export-btn" onClick={() => setShowProgramCard(true)} style={{ background: 'var(--adi-magenta)', color: 'white' }}>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}>
+                  <rect x="3" y="3" width="14" height="14" rx="0"/>
+                  <line x1="8" y1="3" x2="8" y2="17"/>
+                  <line x1="3" y1="8" x2="17" y2="8"/>
+                </svg>
+                Program Card
+              </button>
             </div>
           </div>
         )}
@@ -1531,6 +1543,15 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
           </div>
         )}
       </div>
+
+      {/* Program Card Modal */}
+      {showProgramCard && (
+        <ProgramCard
+          program={program}
+          sport={sport}
+          onClose={() => setShowProgramCard(false)}
+        />
+      )}
     </div>
   )
 }
