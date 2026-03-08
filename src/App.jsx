@@ -2444,6 +2444,7 @@ function App() {
     return () => unsubscribe()
   }, [activeTab, targetsSport])
 
+
   // Subscribe to all contract details for the current sport (auth-gated)
   useEffect(() => {
     if (!isUserAllowed || activeTab === 'events' || activeTab === 'targets') {
@@ -3686,7 +3687,7 @@ function App() {
               /* NEW: Dashboard View with Hot Targets + Mini Kanban + Activity */
               <div className="td-dashboard">
                 {/* Main Grid: Left (Pipeline + Activity) | Right (Hot Targets) | Form (when open) */}
-                <div className={`td-dashboard-main${isTargetFormOpen && isUserAllowed ? ' with-form' : ''}`}>
+                <div className="td-dashboard-main">
                   {/* Left Column: Pipeline Overview + Activity Feed */}
                   <div className="td-dashboard-left">
                     {/* Mini Pipeline Overview */}
@@ -3727,7 +3728,7 @@ function App() {
                       </div>
                       <div className="td-activity-list">
                         {recentTargetActivity.length > 0 ? (
-                          recentTargetActivity.slice(0, 6).map(activity => (
+                          recentTargetActivity.slice(0, 10).map(activity => (
                             <div
                               key={activity.id}
                               className="td-activity-item"
@@ -3785,7 +3786,7 @@ function App() {
                       </div>
                       <div className="td-hot-cards">
                         {targetKPIs.hotTargets.length > 0 ? (
-                          targetKPIs.hotTargets.slice(0, 6).map(target => (
+                          targetKPIs.hotTargets.slice(0, 10).map(target => (
                             <div
                               key={target.id}
                               className="td-hot-card"
@@ -4127,18 +4128,6 @@ function App() {
               onStatusChange={handleUpdateTargetStatus}
             />
 
-            {/* Target Form Modal */}
-            {isTargetFormOpen && isUserAllowed && (
-              <AddTargetForm
-                isOpen={isTargetFormOpen}
-                onClose={closeTargetForm}
-                onAdd={handleAddTargetProgram}
-                onEdit={handleEditTargetProgram}
-                sport={targetsSport}
-                editTarget={editingTarget}
-                inline={false}
-              />
-            )}
               </>
             )}
           </div>
@@ -4768,17 +4757,14 @@ function App() {
         allPrograms={programs}
       />
 
-      {/* Only show modal form when not in targets dashboard view (inline form is shown there instead) */}
-      {!(activeTab === 'targets' && targetDashboardView === 'dashboard') && (
-        <AddTargetForm
-          isOpen={isTargetFormOpen}
-          onClose={closeTargetForm}
-          onAdd={handleAddTargetProgram}
-          onEdit={handleEditTargetProgram}
-          sport={targetsSport}
-          editTarget={editingTarget}
-        />
-      )}
+      <AddTargetForm
+        isOpen={isTargetFormOpen}
+        onClose={closeTargetForm}
+        onAdd={handleAddTargetProgram}
+        onEdit={handleEditTargetProgram}
+        sport={targetsSport}
+        editTarget={editingTarget}
+      />
 
       {showExportMenu && (
         <div className="modal-overlay" onClick={() => setShowExportMenu(false)}>

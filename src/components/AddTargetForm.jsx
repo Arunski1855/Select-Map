@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import './AddProgramForm.css'
 
 // US States for dropdown
@@ -91,7 +92,7 @@ const initialFormState = {
   notes: ''
 }
 
-function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inline = false }) {
+function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
   const [formData, setFormData] = useState(initialFormState)
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoData, setLogoData] = useState(null)
@@ -251,7 +252,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
   ]
 
   const formContent = (
-    <div className={`modal-content target-form-content${inline ? ' inline-form' : ''}`} onClick={e => e.stopPropagation()}>
+    <div className="modal-content target-form-content" onClick={e => e.stopPropagation()}>
       <button className="modal-close" onClick={onClose}>&times;</button>
       <h2>{isEditMode ? 'Edit Target Program' : 'Add Target Program'}</h2>
 
@@ -617,7 +618,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
             </div>
           )}
 
-          {error && <div className="form-error">{error}</div>}
+          {error && <p className="error-message">{error}</p>}
 
           <div className="form-actions">
             <button type="button" className="cancel-btn" onClick={onClose}>
@@ -628,18 +629,14 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget, inli
             </button>
           </div>
         </form>
-      </div>
+    </div>
   )
 
-  // Return inline or with overlay
-  if (inline) {
-    return formContent
-  }
-
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       {formContent}
-    </div>
+    </div>,
+    document.body
   )
 }
 
