@@ -7029,27 +7029,43 @@ textarea {
 .td-sport-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 10px 18px;
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.6);
   font-family: var(--font-heading-compressed);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-brand);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.25s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle texture overlay on sport buttons */
+.td-sport-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/textures/backdrop-three.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+  pointer-events: none;
 }
 
 .td-sport-btn.active {
   color: var(--adi-white);
-  background: rgba(255, 255, 255, 0.1);
-  background-image: url('/textures/backdrop-three.jpg');
-  background-size: cover;
-  background-position: center;
-  background-blend-mode: overlay;
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom: 2px solid var(--adi-magenta);
+}
+
+.td-sport-btn.active::before {
+  opacity: 0.15;
 }
 
 .td-sport-btn:hover:not(.active) {
@@ -7064,11 +7080,12 @@ textarea {
   height: 28px;
   width: 28px;
   object-fit: contain;
-  border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   padding: 4px;
   opacity: 0.85;
-  transition: opacity var(--transition-fast);
+  transition: all 0.25s ease-out;
+  position: relative;
+  z-index: 1;
 }
 
 .td-sport-btn.active .td-sport-logo {
@@ -7078,6 +7095,11 @@ textarea {
 
 .td-sport-btn:hover .td-sport-logo {
   opacity: 1;
+}
+
+.td-sport-btn span {
+  position: relative;
+  z-index: 1;
 }
 
 .td-view-toggle {
