@@ -2135,10 +2135,10 @@ textarea {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/textures/backdrop-two.jpg');
-  background-size: 250%;
-  background-position: 30% 60%;
-  opacity: 0.4;
+  background-image: url('/textures/backdrop-three.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.25;
   pointer-events: none;
 }
 
