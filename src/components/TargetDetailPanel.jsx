@@ -245,20 +245,25 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
         {/* ── Details Tab ── */}
         {activeTab === 'info' && (
           <div className="tdp-tab-pane">
-            {target.gender && <Row label="Gender" value={target.gender} />}
-            {target.conference && <Row label="Conference" value={target.conference} />}
-            {target.ranking && <Row label="Ranking" value={target.ranking} />}
-            {target.level && <Row label="Target Level" value={target.level} />}
-            {target.targetSignDate && (
-              <Row label="Target Sign Date" value={
-                new Date(target.targetSignDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-              } />
+            {target.headCoach && <Row label="Head Coach" value={target.headCoach} />}
+            {(target.city || target.state) && (
+              <Row label="Location" value={[target.city, target.state].filter(Boolean).join(', ')} />
             )}
-            {target.topProspects && <Row label="Top Prospects" value={target.topProspects} multiline />}
-            {target.website && (
-              <div className="tdp-row">
-                <span className="tdp-label">Website</span>
-                <a href={target.website} target="_blank" rel="noopener noreferrer" className="tdp-link">Visit Site</a>
+            {target.region && <Row label="Region" value={target.region} />}
+            {target.priority && (
+              <Row label="Priority" value={priorityInfo.label} />
+            )}
+            {(target.contactEmail || target.contactPhone) && (
+              <div className="tdp-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                <span className="tdp-label">Contact</span>
+                <div className="tdp-contact-info">
+                  {target.contactEmail && (
+                    <a href={`mailto:${target.contactEmail}`} className="tdp-link">{target.contactEmail}</a>
+                  )}
+                  {target.contactPhone && (
+                    <a href={`tel:${target.contactPhone}`} className="tdp-link">{formatPhone(target.contactPhone)}</a>
+                  )}
+                </div>
               </div>
             )}
             {isUserAllowed && (

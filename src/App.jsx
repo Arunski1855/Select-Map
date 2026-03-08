@@ -2280,7 +2280,7 @@ function App() {
   // Mt Zion team type filter
   const [filterTeamType, setFilterTeamType] = useState('all') // 'Prep', 'National', 'all'
 
-  // Mobile region popup
+  // Region dropdown (unused - kept for mobile compatibility)
   const [showRegionPopup, setShowRegionPopup] = useState(false)
 
   // Mobile UX states
@@ -2300,6 +2300,11 @@ function App() {
 
   // Program comparison modal
   const [isComparisonOpen, setIsComparisonOpen] = useState(false)
+
+  // Analytics dropdown menu (desktop)
+  const [analyticsMenuOpen, setAnalyticsMenuOpen] = useState(false)
+  // Total Programs dropdown menu (desktop)
+  const [totalProgramsMenuOpen, setTotalProgramsMenuOpen] = useState(false)
 
   // Archive modal and state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
@@ -3231,48 +3236,57 @@ function App() {
       {activeTab !== 'events' && activeTab !== 'targets' && user && (
         <div className="dashboard">
           <div className="dashboard-stats">
-            <div className="stat-item stat-total" onClick={() => setShowRegionPopup(!showRegionPopup)}>
+            {/* Total Programs Dropdown - shows region populations */}
+            <div
+              className={`stat-item stat-total-dropdown ${totalProgramsMenuOpen ? 'open' : ''}`}
+              onMouseEnter={() => setTotalProgramsMenuOpen(true)}
+              onMouseLeave={() => setTotalProgramsMenuOpen(false)}
+            >
               <span className="stat-value">{regionCounts.total}</span>
               <span className="stat-label">Total Programs {selectedRegion !== 'all' ? `(${selectedRegion})` : ''}</span>
+              <span className="stat-dropdown-arrow">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3,4.5 6,7.5 9,4.5"/>
+                </svg>
+              </span>
+
+              {/* Dropdown Menu */}
+              <div className="analytics-dropdown-menu total-programs-menu">
+                {Object.keys(REGIONS).map(region => (
+                  <button
+                    key={region}
+                    className={`analytics-dropdown-item ${selectedRegion === region ? 'active' : ''}`}
+                    onClick={() => { setSelectedRegion(selectedRegion === region ? 'all' : region); setTotalProgramsMenuOpen(false) }}
+                  >
+                    <span className="analytics-dropdown-icon">
+                      <span className="region-color-dot" style={{ background: REGIONS[region].color }} />
+                    </span>
+                    <span>{region}</span>
+                    <span className="region-dropdown-count">{regionCounts[region] || 0}</span>
+                  </button>
+                ))}
+                {selectedRegion !== 'all' && (
+                  <button
+                    className="analytics-dropdown-item region-clear-item"
+                    onClick={() => { setSelectedRegion('all'); setTotalProgramsMenuOpen(false) }}
+                  >
+                    <span className="analytics-dropdown-icon">
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="5" y1="5" x2="15" y2="15"/>
+                        <line x1="15" y1="5" x2="5" y2="15"/>
+                      </svg>
+                    </span>
+                    <span>Clear Filter</span>
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="region-stats-desktop">
-              {Object.keys(REGIONS).map(region => (
-                <div
-                  key={region}
-                  className={`stat-item ${selectedRegion === region ? 'active' : ''}`}
-                  style={{ '--region-color': REGIONS[region].color }}
-                  onClick={() => setSelectedRegion(selectedRegion === region ? 'all' : region)}
-                >
-                  <span className="stat-value">{regionCounts[region] || 0}</span>
-                  <span className="stat-label">{region}</span>
-                </div>
-              ))}
-            </div>
-            {showRegionPopup && (
-              <>
-                <div className="region-popup-overlay" onClick={() => setShowRegionPopup(false)} />
-                <div className="region-popup">
-                  {Object.keys(REGIONS).map(region => (
-                    <div
-                      key={region}
-                      className={`region-popup-item ${selectedRegion === region ? 'active' : ''}`}
-                      style={{ '--region-color': REGIONS[region].color }}
-                      onClick={() => { setSelectedRegion(selectedRegion === region ? 'all' : region); setShowRegionPopup(false) }}
-                    >
-                      <span className="region-popup-color" style={{ background: REGIONS[region].color }} />
-                      <span className="region-popup-name">{region}</span>
-                      <span className="region-popup-count">{regionCounts[region] || 0}</span>
-                    </div>
-                  ))}
-                  {selectedRegion !== 'all' && (
-                    <div className="region-popup-item region-popup-clear" onClick={() => { setSelectedRegion('all'); setShowRegionPopup(false) }}>
-                      <span className="region-popup-name">Clear filter</span>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-            <div className="stat-item stat-analytics" onClick={() => setIsAnalyticsOpen(true)}>
+            {/* Analytics Dropdown - nests Dashboard, Digest, Reports, Compare */}
+            <div
+              className={`stat-item stat-analytics-dropdown ${analyticsMenuOpen ? 'open' : ''}`}
+              onMouseEnter={() => setAnalyticsMenuOpen(true)}
+              onMouseLeave={() => setAnalyticsMenuOpen(false)}
+            >
               <span className="stat-icon">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <rect x="2" y="10" width="4" height="8" rx="1"/>
@@ -3281,67 +3295,58 @@ function App() {
                 </svg>
               </span>
               <span className="stat-label">Analytics</span>
-            </div>
-            <div className="stat-item stat-digest" onClick={() => setIsDigestOpen(true)}>
-              <span className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <rect x="3" y="2" width="14" height="16" rx="2"/>
-                  <line x1="6" y1="6" x2="14" y2="6"/>
-                  <line x1="6" y1="10" x2="14" y2="10"/>
-                  <line x1="6" y1="14" x2="10" y2="14"/>
+              <span className="stat-dropdown-arrow">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3,4.5 6,7.5 9,4.5"/>
                 </svg>
               </span>
-              <span className="stat-label">Digest</span>
-            </div>
-            <div className="stat-item stat-reports" onClick={() => setIsReportsOpen(true)}>
-              <span className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <rect x="2" y="2" width="6" height="6" rx="1"/>
-                  <rect x="12" y="2" width="6" height="6" rx="1"/>
-                  <rect x="2" y="12" width="6" height="6" rx="1"/>
-                  <rect x="12" y="12" width="6" height="6" rx="1"/>
-                </svg>
-              </span>
-              <span className="stat-label">Reports</span>
-            </div>
-            <div className="stat-item stat-compare" onClick={() => setIsComparisonOpen(true)}>
-              <span className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <rect x="2" y="4" width="6" height="12" rx="1"/>
-                  <rect x="12" y="4" width="6" height="12" rx="1"/>
-                  <line x1="10" y1="8" x2="10" y2="12"/>
-                  <polyline points="8,10 10,8 12,10"/>
-                  <polyline points="8,10 10,12 12,10"/>
-                </svg>
-              </span>
-              <span className="stat-label">Compare</span>
-            </div>
-            {isUserAllowed && (
-              <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
-                <span className="stat-icon">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="3" width="16" height="4" rx="1"/>
-                    <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
-                    <line x1="8" y1="11" x2="12" y2="11"/>
-                  </svg>
-                </span>
-                <span className="stat-label">Archive ({archivedPrograms.length})</span>
+
+              {/* Dropdown Menu */}
+              <div className="analytics-dropdown-menu">
+                <button className="analytics-dropdown-item" onClick={() => { setIsAnalyticsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="10" width="4" height="8" rx="1"/>
+                      <rect x="8" y="6" width="4" height="12" rx="1"/>
+                      <rect x="14" y="2" width="4" height="16" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Dashboard</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsDigestOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="2" width="14" height="16" rx="2"/>
+                      <line x1="6" y1="6" x2="14" y2="6"/>
+                      <line x1="6" y1="10" x2="14" y2="10"/>
+                      <line x1="6" y1="14" x2="10" y2="14"/>
+                    </svg>
+                  </span>
+                  <span>Digest</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsReportsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="2" width="6" height="6" rx="1"/>
+                      <rect x="12" y="2" width="6" height="6" rx="1"/>
+                      <rect x="2" y="12" width="6" height="6" rx="1"/>
+                      <rect x="12" y="12" width="6" height="6" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Reports</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsComparisonOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="4" width="6" height="12" rx="1"/>
+                      <rect x="12" y="4" width="6" height="12" rx="1"/>
+                    </svg>
+                  </span>
+                  <span>Compare</span>
+                </button>
               </div>
-            )}
-            {isUserAllowed && (
-              <div className="stat-item stat-bulk-edit" onClick={() => setIsBulkEditOpen(true)} title="Bulk edit programs">
-                <span className="stat-icon">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <rect x="2" y="2" width="16" height="16" rx="2"/>
-                    <line x1="2" y1="7" x2="18" y2="7"/>
-                    <line x1="2" y1="12" x2="18" y2="12"/>
-                    <line x1="7" y1="2" x2="7" y2="18"/>
-                    <line x1="13" y1="2" x2="13" y2="18"/>
-                  </svg>
-                </span>
-                <span className="stat-label">Bulk Edit</span>
-              </div>
-            )}
+            </div>
+            {/* Contracts - next to Analytics */}
             {isUserAllowed && activeTab !== 'events' && activeTab !== 'targets' && (
               <div className="stat-item stat-contracts" onClick={() => setIsContractDashboardOpen(true)} title="Contract overview">
                 <span className="stat-icon">
@@ -3358,6 +3363,21 @@ function App() {
                 <span className="stat-label">Contracts</span>
               </div>
             )}
+            {isUserAllowed && (
+              <div className="stat-item stat-bulk-edit" onClick={() => setIsBulkEditOpen(true)} title="Bulk edit programs">
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <rect x="2" y="2" width="16" height="16" rx="2"/>
+                    <line x1="2" y1="7" x2="18" y2="7"/>
+                    <line x1="2" y1="12" x2="18" y2="12"/>
+                    <line x1="7" y1="2" x2="7" y2="18"/>
+                    <line x1="13" y1="2" x2="13" y2="18"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Bulk Edit</span>
+              </div>
+            )}
+            {/* Export */}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
@@ -3372,28 +3392,35 @@ function App() {
               </span>
               <span className="stat-label">Export</span>
             </div>
+            {/* Archive - after Export */}
+            {isUserAllowed && (
+              <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
+                <span className="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="16" height="4" rx="1"/>
+                    <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
+                    <line x1="8" y1="11" x2="12" y2="11"/>
+                  </svg>
+                </span>
+                <span className="stat-label">Archive ({archivedPrograms.length})</span>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* Tab Navigation */}
       <nav className="tabs">
-        {TABS.map(tab => {
-          // Use sport-specific icons for targets tab
-          const tabIcon = tab.id === 'targets'
-            ? (targetsSport === 'football' ? '/logos/mahomes-logo.png' : '/logos/adidas-select-basketball.png')
-            : tab.icon
-          return (
-            <button
-              key={tab.id}
-              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <img src={tabIcon} alt="" className="tab-icon" />
-              <span className="tab-name">{tab.name}</span>
-            </button>
-          )
-        })}
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <img src={tab.icon} alt="" className="tab-icon" />
+            <span className="tab-name">{tab.name}</span>
+          </button>
+        ))}
       </nav>
 
       {/* Search and Filter Bar (programs only, requires login except targets which has its own gate) */}

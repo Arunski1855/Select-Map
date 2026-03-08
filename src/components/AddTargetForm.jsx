@@ -252,7 +252,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
   ]
 
   const formContent = (
-    <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+    <div className="modal-content target-form-content" onClick={e => e.stopPropagation()}>
       <button className="modal-close" onClick={onClose}>&times;</button>
       <h2>{isEditMode ? 'Edit Target Program' : 'Add Target Program'}</h2>
 
