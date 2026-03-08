@@ -309,6 +309,17 @@
   text-decoration: underline;
 }
 
+.tdp-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tdp-contact-info .tdp-link {
+  text-align: left;
+  font-size: 0.85rem;
+}
+
 .tdp-empty {
   font-size: 0.8rem;
   color: #888888;
