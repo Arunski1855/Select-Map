@@ -3351,13 +3351,36 @@ textarea {
 
 /* Footer */
 .footer {
-  background: #1a1a1a;
+  background: #000;
   color: white;
-  padding: 0.75rem;
+  padding: 1rem 1.5rem;
   text-align: center;
-  font-size: 0.85rem;
-  opacity: 0.9;
+  font-size: 0.8rem;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.footer-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: opacity 0.25s ease-out;
+}
+
+.footer-logo:hover {
+  opacity: 1;
+}
+
+.footer p {
+  margin: 0;
+  font-family: var(--font-heading-compressed);
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
 /* Leaflet Controls */
