@@ -905,9 +905,6 @@ textarea {
   gap: 1rem;
   padding: 0.75rem 1rem;
   background: var(--bg-secondary);
-  background-image: url('/textures/backdrop-three.jpg');
-  background-size: cover;
-  background-position: center;
   border-bottom: 1px solid var(--border-color);
   flex-wrap: wrap;
 }
