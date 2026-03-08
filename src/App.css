@@ -9895,7 +9895,6 @@ textarea {
 /* ── Contract Dashboard Modal ────────────────────────────────────── */
 .contract-dashboard-modal {
   background: #fff;
-  border-radius: 12px;
   width: 92vw;
   max-width: 1100px;
   max-height: 88vh;
@@ -9926,8 +9925,12 @@ textarea {
 }
 
 .cd-title {
-  font-size: 1.1rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 1.15rem;
   font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
   margin: 0;
 }
 
@@ -9942,8 +9945,7 @@ textarea {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 10px 16px;
   background: #f3f4f6;
   min-width: 80px;
 }
@@ -9951,16 +9953,22 @@ textarea {
 .dark .cd-summary-item { background: #2a2a2a; }
 
 .cd-summary-value {
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-family: var(--font-heading-compressed);
+  font-size: 1.5rem;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: 0.02em;
 }
 
 .cd-summary-label {
+  font-family: var(--font-heading-compressed);
   font-size: 0.7rem;
+  font-weight: 600;
   color: #6b7280;
-  margin-top: 3px;
+  margin-top: 4px;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
 }
 
 .cd-summary-expiring .cd-summary-value { color: #f97316; }
@@ -9981,14 +9989,16 @@ textarea {
 }
 
 .cd-filter-pill {
-  padding: 4px 12px;
-  border-radius: 20px;
+  padding: 6px 14px;
   border: 1.5px solid #d1d5db;
   background: transparent;
-  font-size: 0.78rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.75rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.25s ease-out;
   color: #374151;
 }
 
@@ -10006,15 +10016,17 @@ textarea {
 
 .cd-export-btn {
   margin-left: auto;
-  padding: 5px 14px;
-  border-radius: 20px;
+  padding: 6px 16px;
   border: 1.5px solid #000;
   background: #000;
   color: #fff;
-  font-size: 0.78rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.75rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.25s ease-out;
 }
 
 .cd-export-btn:hover { background: #222; }
@@ -10037,12 +10049,13 @@ textarea {
   position: sticky;
   top: 0;
   background: #f9fafb;
-  padding: 10px 12px;
+  padding: 12px 14px;
   text-align: left;
+  font-family: var(--font-heading-compressed);
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-brand);
   color: #6b7280;
   border-bottom: 2px solid #e5e7eb;
   white-space: nowrap;
@@ -10085,9 +10098,12 @@ textarea {
 .dark .cd-row-none { border-left-color: #333; }
 
 .cd-td {
-  padding: 9px 12px;
+  padding: 10px 14px;
   vertical-align: middle;
   color: #374151;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
 }
 
 .dark .cd-td { color: #d1d5db; }
@@ -10095,24 +10111,26 @@ textarea {
 .cd-td-name {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
+  gap: 10px;
+  font-weight: 700;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
 }
 
 .cd-logo {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
-  border-radius: 3px;
   flex-shrink: 0;
 }
 
 .cd-td-incentive {
   max-width: 200px;
   white-space: normal;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: #6b7280;
+  letter-spacing: 0.02em;
 }
 
 .dark .cd-td-incentive { color: #9ca3af; }
@@ -10120,10 +10138,12 @@ textarea {
 /* Status badges */
 .cd-status {
   display: inline-block;
-  padding: 2px 9px;
-  border-radius: 12px;
-  font-size: 0.72rem;
+  padding: 4px 10px;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.68rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
   white-space: nowrap;
 }
 
@@ -10139,15 +10159,19 @@ textarea {
   text-align: center;
   padding: 32px;
   color: #9ca3af;
+  font-family: var(--font-heading-compressed);
   font-style: italic;
+  letter-spacing: var(--letter-spacing-brand);
 }
 
 .cd-footer {
-  padding: 10px 20px;
+  padding: 12px 20px;
   border-top: 1px solid #e5e7eb;
-  font-size: 0.78rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.75rem;
   color: #9ca3af;
   flex-shrink: 0;
+  letter-spacing: 0.05em;
 }
 
 .dark .cd-footer { border-color: #2d2d2d; }
@@ -10156,7 +10180,6 @@ textarea {
   .contract-dashboard-modal {
     width: 100vw;
     max-width: 100vw;
-    border-radius: 12px 12px 0 0;
     max-height: 90vh;
   }
 
