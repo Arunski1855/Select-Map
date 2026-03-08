@@ -867,6 +867,9 @@ textarea {
 
 .tab.active {
   background: var(--bg-primary);
+  background-image: url('/textures/backdrop-three.jpg');
+  background-size: cover;
+  background-position: center;
   color: var(--text-primary);
   border-bottom-color: var(--adi-magenta);
   font-weight: 600;
@@ -902,6 +905,9 @@ textarea {
   gap: 1rem;
   padding: 0.75rem 1rem;
   background: var(--bg-secondary);
+  background-image: url('/textures/backdrop-three.jpg');
+  background-size: cover;
+  background-position: center;
   border-bottom: 1px solid var(--border-color);
   flex-wrap: wrap;
 }
@@ -7017,6 +7023,10 @@ textarea {
 .td-sport-btn.active {
   color: var(--adi-white);
   background: rgba(255, 255, 255, 0.1);
+  background-image: url('/textures/backdrop-three.jpg');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: overlay;
 }
 
 .td-sport-btn:hover:not(.active) {
@@ -10975,6 +10985,9 @@ textarea {
   left: 0;
   right: 0;
   background: var(--bg-primary);
+  background-image: url('/textures/backdrop-three.jpg');
+  background-size: cover;
+  background-position: center;
   z-index: 1150;
   max-height: 70vh;
   overflow-y: auto;
