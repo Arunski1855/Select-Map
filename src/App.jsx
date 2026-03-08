@@ -3411,22 +3411,16 @@ function App() {
 
       {/* Tab Navigation */}
       <nav className="tabs">
-        {TABS.map(tab => {
-          // Use sport-specific icons for targets tab
-          const tabIcon = tab.id === 'targets'
-            ? (targetsSport === 'football' ? '/logos/mahomes-logo.png' : '/logos/adidas-select-basketball.png')
-            : tab.icon
-          return (
-            <button
-              key={tab.id}
-              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <img src={tabIcon} alt="" className="tab-icon" />
-              <span className="tab-name">{tab.name}</span>
-            </button>
-          )
-        })}
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <img src={tab.icon} alt="" className="tab-icon" />
+            <span className="tab-name">{tab.name}</span>
+          </button>
+        ))}
       </nav>
 
       {/* Search and Filter Bar (programs only, requires login except targets which has its own gate) */}
