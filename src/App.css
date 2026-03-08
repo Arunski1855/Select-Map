@@ -3000,13 +3000,13 @@ textarea {
 
 .detail-export-btn {
   background: transparent;
-  color: var(--text-primary);
-  border: 2px solid var(--text-primary);
+  color: var(--adi-magenta);
+  border: 2px solid var(--adi-magenta);
 }
 
 .detail-export-btn:hover {
-  background: var(--text-primary);
-  color: var(--bg-primary);
+  background: var(--adi-magenta);
+  color: var(--adi-white);
 }
 
 .detail-export-btn svg {
