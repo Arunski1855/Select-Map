@@ -51,6 +51,8 @@ import AddTargetForm from './components/AddTargetForm'
 import SplashScreen from './components/SplashScreen'
 import DetailPanel from './components/DetailPanel'
 import TargetDetailPanel from './components/TargetDetailPanel'
+import BackupPanel from './components/BackupPanel'
+import { initAutoBackup, isBackupNeeded } from './utils/autoBackup'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 
@@ -2255,6 +2257,8 @@ function App() {
   const [historyProgram, setHistoryProgram] = useState(null)
   const [allowedUsers, setAllowedUsers] = useState([])
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false)
+  const [isBackupPanelOpen, setIsBackupPanelOpen] = useState(false)
+  const [backupReminder, setBackupReminder] = useState(null)
   const [selectedProgram, setSelectedProgram] = useState(null)
   const [selectedMtZionGroup, setSelectedMtZionGroup] = useState(null)
 
@@ -2380,6 +2384,29 @@ function App() {
     const unsubscribe = subscribeToAllowedUsers(setAllowedUsers)
     return () => unsubscribe()
   }, [])
+
+  // Check backup status when user logs in
+  useEffect(() => {
+    if (!user || !isUserAllowed) return
+
+    const checkBackup = async () => {
+      try {
+        const status = await isBackupNeeded()
+        if (status.needed) {
+          setBackupReminder({
+            reason: status.reason,
+            daysSinceBackup: status.daysSinceBackup
+          })
+        }
+      } catch (error) {
+        console.error('Backup check error:', error)
+      }
+    }
+
+    // Check after a short delay to not block initial load
+    const timeout = setTimeout(checkBackup, 3000)
+    return () => clearTimeout(timeout)
+  }, [user, isUserAllowed])
 
   // Subscribe to Firebase for real-time updates (programs)
   useEffect(() => {
@@ -3213,9 +3240,14 @@ function App() {
             <div className="user-menu">
               <span className="user-email">{user.email}</span>
               {isUserAllowed && (
-                <button className="admin-btn" onClick={() => setIsAdminPanelOpen(true)}>
-                  Admin
-                </button>
+                <>
+                  <button className="admin-btn" onClick={() => setIsAdminPanelOpen(true)}>
+                    Admin
+                  </button>
+                  <button className="backup-btn" onClick={() => setIsBackupPanelOpen(true)}>
+                    Backup
+                  </button>
+                </>
               )}
               <button className="logout-btn" onClick={logOut}>Sign Out</button>
             </div>
@@ -3231,6 +3263,36 @@ function App() {
           </button>
         </div>
       </header>
+
+      {/* Backup Reminder Banner */}
+      {backupReminder && isUserAllowed && (
+        <div className="backup-reminder-banner">
+          <div className="backup-reminder-content">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>
+              {backupReminder.reason === 'no_backups'
+                ? 'No backups found. Create your first backup to protect your data.'
+                : `Last backup was ${backupReminder.daysSinceBackup} days ago. Consider creating a new backup.`}
+            </span>
+            <button
+              className="backup-reminder-action"
+              onClick={() => { setIsBackupPanelOpen(true); setBackupReminder(null) }}
+            >
+              Backup Now
+            </button>
+            <button
+              className="backup-reminder-dismiss"
+              onClick={() => setBackupReminder(null)}
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Dashboard Stats (programs only, requires login except targets which has its own gate) */}
       {activeTab !== 'events' && activeTab !== 'targets' && user && (
@@ -4741,6 +4803,12 @@ function App() {
         isOpen={isAdminPanelOpen}
         onClose={() => setIsAdminPanelOpen(false)}
         allowedUsers={allowedUsers}
+      />
+
+      <BackupPanel
+        isOpen={isBackupPanelOpen}
+        onClose={() => setIsBackupPanelOpen(false)}
+        userEmail={user?.email}
       />
 
       <AddEventForm

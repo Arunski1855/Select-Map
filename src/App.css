@@ -2333,6 +2333,453 @@ textarea {
   padding: 1rem;
 }
 
+/* Backup Button */
+.backup-btn {
+  font-family: var(--font-heading);
+  background: rgba(0, 165, 80, 0.2);
+  color: #00a550;
+  border: 1px solid #00a550;
+  padding: 0.5rem 1rem;
+  border-radius: 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.1em;
+}
+
+.backup-btn:hover {
+  background: #00a550;
+  color: white;
+}
+
+/* Backup Panel Modal */
+.backup-modal {
+  background: var(--bg-primary);
+  border-radius: 0;
+  padding: 2rem;
+  width: 95%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  border: 2px solid var(--text-primary);
+}
+
+.backup-modal h2 {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.backup-modal h3 {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.75rem 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.backup-modal h4 {
+  font-family: var(--font-heading-compressed);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  margin: 1.5rem 0 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.backup-stats {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  margin-bottom: 1.5rem;
+  border-left: 3px solid var(--accent-color);
+}
+
+.backup-stats .stat-item {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.backup-stats .stat-item strong {
+  color: var(--text-primary);
+}
+
+.backup-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.backup-tab {
+  font-family: var(--font-heading-compressed);
+  background: none;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.backup-tab:hover {
+  color: var(--text-primary);
+}
+
+.backup-tab.active {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.backup-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-color);
+}
+
+.backup-message {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+}
+
+.backup-message.success {
+  background: rgba(0, 165, 80, 0.1);
+  color: #00a550;
+  border-left: 3px solid #00a550;
+}
+
+.backup-message.error {
+  background: rgba(212, 0, 42, 0.1);
+  color: #d4002a;
+  border-left: 3px solid #d4002a;
+}
+
+.backup-section {
+  padding: 0.5rem 0;
+}
+
+.backup-description {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.backup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.backup-btn.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  padding: 1rem 1.5rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backup-btn.primary:hover {
+  background: var(--accent-color);
+}
+
+.backup-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.backup-btn.secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--text-primary);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backup-btn.secondary:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.sport-backup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.backup-btn.sport-btn {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backup-btn.sport-btn:hover {
+  border-color: var(--accent-color);
+  background: rgba(229, 0, 164, 0.05);
+}
+
+.backup-info {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.backup-info h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.backup-info ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.backup-info li {
+  margin-bottom: 0.25rem;
+}
+
+.loading-text {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+.no-backups {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-secondary);
+}
+
+.backup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.backup-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--border-color);
+  transition: border-color 0.2s;
+}
+
+.backup-item:hover {
+  border-left-color: var(--accent-color);
+}
+
+.backup-item-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.backup-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.backup-type {
+  font-family: var(--font-heading-compressed);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+.backup-type.manual {
+  background: rgba(229, 0, 164, 0.1);
+  color: var(--accent-color);
+}
+
+.backup-type.scheduled {
+  background: rgba(0, 165, 80, 0.1);
+  color: #00a550;
+}
+
+.backup-type.pre-delete {
+  background: rgba(212, 0, 42, 0.1);
+  color: #d4002a;
+}
+
+.backup-size {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.backup-user {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.backup-btn.small {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--text-primary);
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-heading-compressed);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backup-btn.small:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.backup-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.backup-tip {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--accent-color);
+}
+
+/* Backup Reminder Banner */
+.backup-reminder-banner {
+  background: linear-gradient(90deg, rgba(229, 0, 164, 0.1), rgba(229, 0, 164, 0.05));
+  border-bottom: 1px solid rgba(229, 0, 164, 0.3);
+  padding: 0.75rem 1rem;
+}
+
+.backup-reminder-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.backup-reminder-content svg {
+  flex-shrink: 0;
+  color: var(--accent-color);
+}
+
+.backup-reminder-content > span {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+}
+
+.backup-reminder-action {
+  font-family: var(--font-heading-compressed);
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backup-reminder-action:hover {
+  background: var(--adi-magenta-dark);
+}
+
+.backup-reminder-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.2s;
+}
+
+.backup-reminder-dismiss:hover {
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .backup-reminder-content {
+    flex-wrap: wrap;
+  }
+
+  .backup-reminder-content > span {
+    flex-basis: calc(100% - 3rem);
+    order: 1;
+  }
+
+  .backup-reminder-content svg {
+    order: 0;
+  }
+
+  .backup-reminder-action {
+    order: 2;
+    margin-left: 2rem;
+  }
+
+  .backup-reminder-dismiss {
+    order: 0;
+    position: absolute;
+    right: 0.5rem;
+  }
+}
+
 /* Events Split Layout */
 .events-split-layout {
   display: flex;
