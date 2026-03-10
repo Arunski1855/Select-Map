@@ -43,7 +43,8 @@ import {
   subscribeToCompetitorEvents,
   addCompetitorEvent,
   updateCompetitorEvent,
-  deleteCompetitorEvent
+  deleteCompetitorEvent,
+  getBackupPin
 } from './firebase'
 import AddProgramForm from './components/AddProgramForm'
 import AddEventForm from './components/AddEventForm'
@@ -2312,6 +2313,11 @@ function App() {
   // Data dropdown menu (desktop) - Archive & Backup
   const [dataMenuOpen, setDataMenuOpen] = useState(false)
 
+  // Backup PIN modal state
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false)
+  const [pinInput, setPinInput] = useState('')
+  const [pinError, setPinError] = useState(false)
+
   // Archive modal and state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
   const [archivedPrograms, setArchivedPrograms] = useState([])
@@ -2374,6 +2380,26 @@ function App() {
 
   // Check if current user is allowed to edit
   const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
+
+  // Handle backup access with PIN verification
+  const handleBackupAccess = useCallback(() => {
+    setPinInput('')
+    setPinError(false)
+    setIsPinModalOpen(true)
+  }, [])
+
+  const handlePinSubmit = useCallback(() => {
+    getBackupPin((correctPin) => {
+      if (pinInput === correctPin) {
+        setIsPinModalOpen(false)
+        setPinInput('')
+        setPinError(false)
+        setIsBackupPanelOpen(true)
+      } else {
+        setPinError(true)
+      }
+    })
+  }, [pinInput])
 
   // Subscribe to auth state
   useEffect(() => {
@@ -3277,7 +3303,7 @@ function App() {
             </span>
             <button
               className="backup-reminder-action"
-              onClick={() => { setIsBackupPanelOpen(true); setBackupReminder(null) }}
+              onClick={() => { handleBackupAccess(); setBackupReminder(null) }}
             >
               Backup Now
             </button>
@@ -3484,7 +3510,7 @@ function App() {
                     </span>
                     <span>Archive ({archivedPrograms.length})</span>
                   </button>
-                  <button className="analytics-dropdown-item" onClick={() => { setIsBackupPanelOpen(true); setDataMenuOpen(false) }}>
+                  <button className="analytics-dropdown-item" onClick={() => { handleBackupAccess(); setDataMenuOpen(false) }}>
                     <span className="analytics-dropdown-icon">
                       <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" transform="scale(0.85) translate(1,1)"/>
@@ -4835,6 +4861,33 @@ function App() {
         onClose={() => setIsAdminPanelOpen(false)}
         allowedUsers={allowedUsers}
       />
+
+      {/* Backup PIN Modal */}
+      {isPinModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsPinModalOpen(false)}>
+          <div className="pin-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setIsPinModalOpen(false)}>&times;</button>
+            <h2>Enter Backup PIN</h2>
+            <p className="pin-description">Enter the PIN to access backup features.</p>
+            <div className="pin-input-container">
+              <input
+                type="password"
+                className={`pin-input ${pinError ? 'error' : ''}`}
+                value={pinInput}
+                onChange={(e) => { setPinInput(e.target.value); setPinError(false) }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handlePinSubmit() }}
+                placeholder="Enter PIN"
+                maxLength={10}
+                autoFocus
+              />
+              {pinError && <span className="pin-error-text">Incorrect PIN</span>}
+            </div>
+            <button className="pin-submit-btn" onClick={handlePinSubmit}>
+              Access Backup
+            </button>
+          </div>
+        </div>
+      )}
 
       <BackupPanel
         isOpen={isBackupPanelOpen}

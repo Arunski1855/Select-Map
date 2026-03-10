@@ -742,4 +742,18 @@ export const restoreProgramFromBackup = async (sport, backupId, programId) => {
   })
 }
 
+// Backup PIN functions
+export const getBackupPin = (callback) => {
+  const pinRef = ref(database, 'settings/backupPin')
+  return onValue(pinRef, (snapshot) => {
+    const pin = snapshot.val()
+    callback(pin || '1234') // Default PIN if not set
+  }, { onlyOnce: true })
+}
+
+export const setBackupPin = async (newPin) => {
+  const pinRef = ref(database, 'settings/backupPin')
+  await set(pinRef, newPin)
+}
+
 export { database, auth, sanitizeEmailForKey }
