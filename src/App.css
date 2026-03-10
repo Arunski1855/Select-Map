@@ -2333,25 +2333,6 @@ textarea {
   padding: 1rem;
 }
 
-/* Backup Button */
-.backup-btn {
-  font-family: var(--font-heading);
-  background: rgba(0, 165, 80, 0.2);
-  color: #00a550;
-  border: 1px solid #00a550;
-  padding: 0.5rem 1rem;
-  border-radius: 0;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.1em;
-}
-
-.backup-btn:hover {
-  background: #00a550;
-  color: white;
-}
-
 /* Backup Panel Modal */
 .backup-modal {
   background: var(--bg-primary);

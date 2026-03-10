@@ -2309,6 +2309,8 @@ function App() {
   const [analyticsMenuOpen, setAnalyticsMenuOpen] = useState(false)
   // Total Programs dropdown menu (desktop)
   const [totalProgramsMenuOpen, setTotalProgramsMenuOpen] = useState(false)
+  // Data dropdown menu (desktop) - Archive & Backup
+  const [dataMenuOpen, setDataMenuOpen] = useState(false)
 
   // Archive modal and state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false)
@@ -3240,14 +3242,9 @@ function App() {
             <div className="user-menu">
               <span className="user-email">{user.email}</span>
               {isUserAllowed && (
-                <>
-                  <button className="admin-btn" onClick={() => setIsAdminPanelOpen(true)}>
-                    Admin
-                  </button>
-                  <button className="backup-btn" onClick={() => setIsBackupPanelOpen(true)}>
-                    Backup
-                  </button>
-                </>
+                <button className="admin-btn" onClick={() => setIsAdminPanelOpen(true)}>
+                  Admin
+                </button>
               )}
               <button className="logout-btn" onClick={logOut}>Sign Out</button>
             </div>
@@ -3454,17 +3451,51 @@ function App() {
               </span>
               <span className="stat-label">Export</span>
             </div>
-            {/* Archive - after Export */}
+            {/* Data Dropdown - Archive & Backup (logged in users only) */}
             {isUserAllowed && (
-              <div className="stat-item stat-archive" onClick={() => setIsArchiveModalOpen(true)}>
+              <div
+                className={`stat-item stat-analytics-dropdown stat-data-dropdown ${dataMenuOpen ? 'open' : ''}`}
+                onMouseEnter={() => setDataMenuOpen(true)}
+                onMouseLeave={() => setDataMenuOpen(false)}
+              >
                 <span className="stat-icon">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="3" width="16" height="4" rx="1"/>
-                    <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
-                    <line x1="8" y1="11" x2="12" y2="11"/>
+                    <ellipse cx="10" cy="5" rx="7" ry="3"/>
+                    <path d="M3 5v10c0 1.66 3.13 3 7 3s7-1.34 7-3V5"/>
+                    <path d="M3 10c0 1.66 3.13 3 7 3s7-1.34 7-3"/>
                   </svg>
                 </span>
-                <span className="stat-label">Archive ({archivedPrograms.length})</span>
+                <span className="stat-label">Data</span>
+                <span className="stat-dropdown-arrow">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="3,4.5 6,7.5 9,4.5"/>
+                  </svg>
+                </span>
+
+                {/* Dropdown Menu */}
+                <div className="analytics-dropdown-menu">
+                  <button className="analytics-dropdown-item" onClick={() => { setIsArchiveModalOpen(true); setDataMenuOpen(false) }}>
+                    <span className="analytics-dropdown-icon">
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="3" width="16" height="4" rx="1"/>
+                        <path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/>
+                        <line x1="8" y1="11" x2="12" y2="11"/>
+                      </svg>
+                    </span>
+                    <span>Archive ({archivedPrograms.length})</span>
+                  </button>
+                  <button className="analytics-dropdown-item" onClick={() => { setIsBackupPanelOpen(true); setDataMenuOpen(false) }}>
+                    <span className="analytics-dropdown-icon">
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" transform="scale(0.85) translate(1,1)"/>
+                        <polyline points="14,2 14,8 20,8" transform="scale(0.85) translate(1,1)"/>
+                        <line x1="8" y1="13" x2="14" y2="13" transform="scale(0.85) translate(1,1)"/>
+                        <line x1="8" y1="17" x2="14" y2="17" transform="scale(0.85) translate(1,1)"/>
+                      </svg>
+                    </span>
+                    <span>Backup</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
