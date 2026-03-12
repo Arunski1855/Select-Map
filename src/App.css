@@ -3876,6 +3876,14 @@ textarea {
   gap: 0.75rem;
 }
 
+.footer-logo-wrapper {
+  background-image: url('/textures/backdrop-three.jpg');
+  background-color: #000000;
+  background-size: cover;
+  background-position: center;
+  padding: 8px 16px;
+}
+
 .footer-logo {
   height: 32px;
   width: auto;
