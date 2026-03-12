@@ -4822,7 +4822,7 @@ function App() {
       </nav>
 
       <footer className="footer">
-        <img src="/logos/s-tier.png" alt="S-Tier" className="footer-logo" />
+        <img src="/logos/s-tier.svg" alt="S-Tier" className="footer-logo" />
         <p>
           {activeTab === 'events'
             ? `${events.length} events`
