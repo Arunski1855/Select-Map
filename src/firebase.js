@@ -25,7 +25,18 @@ const firebaseConfig = {
 
 // Validate required config
 if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
-  logger.error('Firebase configuration missing. Please check your .env.local file.')
+  console.error('Firebase configuration missing. Please check your .env.local file or Vercel environment variables.')
+  // Show user-friendly error instead of crashing
+  document.body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:20px;">
+      <div>
+        <h1 style="color:#E500A4;">Configuration Error</h1>
+        <p>Firebase environment variables are not configured.</p>
+        <p style="color:#666;font-size:14px;">Please add VITE_FIREBASE_* variables in Vercel.</p>
+      </div>
+    </div>
+  `
+  throw new Error('Firebase configuration missing')
 }
 
 // Initialize Firebase
