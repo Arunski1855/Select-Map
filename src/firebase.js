@@ -37,6 +37,33 @@ const DEFAULT_ALLOWED_USERS = [
   'bo.rodriguez@adidas.com'
 ]
 
+// Sanitize email for use as Firebase key (replace '.' with ',')
+const sanitizeEmailForKey = (email) => {
+  return email.toLowerCase().replace(/\./g, ',')
+}
+
+// Sync allowedEmailLookup table for security rules validation
+const syncAllowedEmailLookup = async (emails) => {
+  const lookupRef = ref(database, 'allowedEmailLookup')
+
+  // Build lookup object with sanitized email keys
+  const lookupData = {}
+  emails.forEach(email => {
+    const key = sanitizeEmailForKey(email)
+    lookupData[key] = {
+      email: email.toLowerCase(),
+      addedAt: Date.now()
+    }
+  })
+
+  try {
+    await set(lookupRef, lookupData)
+  } catch (error) {
+    // Silently fail if user doesn't have permission yet
+    console.log('Email lookup sync pending authentication')
+  }
+}
+
 // Initialize default allowed users on app start
 const initializeAllowedUsers = async () => {
   const allowedRef = ref(database, 'allowedUsers')
@@ -51,6 +78,10 @@ const initializeAllowedUsers = async () => {
         await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
       }
     }
+
+    // Sync the lookup table for security rules
+    const allEmails = [...new Set([...existingEmails, ...DEFAULT_ALLOWED_USERS.map(e => e.toLowerCase())])]
+    await syncAllowedEmailLookup(allEmails)
   }, { onlyOnce: true })
 }
 
@@ -149,23 +180,35 @@ export const subscribeToAllowedUsers = (callback) => {
 }
 
 export const addAllowedUser = async (email) => {
+  const normalizedEmail = email.toLowerCase()
   const allowedRef = ref(database, 'allowedUsers')
   const newRef = push(allowedRef)
-  await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
+  await set(newRef, { email: normalizedEmail, addedAt: Date.now() })
+
+  // Also add to lookup table for security rules
+  const lookupRef = ref(database, `allowedEmailLookup/${sanitizeEmailForKey(normalizedEmail)}`)
+  await set(lookupRef, { email: normalizedEmail, addedAt: Date.now() })
 }
 
 export const removeAllowedUser = async (email) => {
+  const normalizedEmail = email.toLowerCase()
   const allowedRef = ref(database, 'allowedUsers')
+
   return new Promise((resolve) => {
-    onValue(allowedRef, (snapshot) => {
+    onValue(allowedRef, async (snapshot) => {
       const data = snapshot.val()
       if (data) {
         Object.entries(data).forEach(([key, value]) => {
-          if (value.email.toLowerCase() === email.toLowerCase()) {
+          if (value.email.toLowerCase() === normalizedEmail) {
             remove(ref(database, `allowedUsers/${key}`))
           }
         })
       }
+
+      // Also remove from lookup table
+      const lookupRef = ref(database, `allowedEmailLookup/${sanitizeEmailForKey(normalizedEmail)}`)
+      await remove(lookupRef)
+
       resolve()
     }, { onlyOnce: true })
   })
@@ -639,4 +682,78 @@ export const deleteCompetitorEvent = async (eventId) => {
   await remove(eventRef)
 }
 
-export { database, auth }
+// Create a pre-delete backup snapshot for a program
+export const createProgramBackup = async (sport, programId, userEmail) => {
+  const programRef = ref(database, `programs/${sport}/${programId}`)
+  const backupRef = ref(database, `programBackups/${sport}/${programId}`)
+
+  return new Promise((resolve, reject) => {
+    onValue(programRef, async (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        const backupEntry = push(backupRef)
+        await set(backupEntry, {
+          id: backupEntry.key,
+          programData: data,
+          backedUpAt: Date.now(),
+          backedUpBy: userEmail,
+          reason: 'pre-delete'
+        })
+        resolve(backupEntry.key)
+      } else {
+        reject(new Error('Program not found'))
+      }
+    }, { onlyOnce: true })
+  })
+}
+
+// Get program backup history
+export const subscribeToProgramBackups = (sport, programId, callback) => {
+  const backupRef = ref(database, `programBackups/${sport}/${programId}`)
+  return onValue(backupRef, (snapshot) => {
+    const data = snapshot.val()
+    const backups = data ? Object.values(data).sort((a, b) => b.backedUpAt - a.backedUpAt) : []
+    callback(backups)
+  }, (error) => {
+    console.error('Firebase program backups error:', error)
+    callback([])
+  })
+}
+
+// Restore a program from backup
+export const restoreProgramFromBackup = async (sport, backupId, programId) => {
+  const backupRef = ref(database, `programBackups/${sport}/${programId}/${backupId}`)
+
+  return new Promise((resolve, reject) => {
+    onValue(backupRef, async (snapshot) => {
+      const backup = snapshot.val()
+      if (backup && backup.programData) {
+        const programRef = ref(database, `programs/${sport}/${programId}`)
+        await set(programRef, {
+          ...backup.programData,
+          restoredAt: Date.now(),
+          restoredFromBackup: backupId
+        })
+        resolve()
+      } else {
+        reject(new Error('Backup not found'))
+      }
+    }, { onlyOnce: true })
+  })
+}
+
+// Backup PIN functions
+export const getBackupPin = (callback) => {
+  const pinRef = ref(database, 'settings/backupPin')
+  return onValue(pinRef, (snapshot) => {
+    const pin = snapshot.val()
+    callback(pin || '1234') // Default PIN if not set
+  }, { onlyOnce: true })
+}
+
+export const setBackupPin = async (newPin) => {
+  const pinRef = ref(database, 'settings/backupPin')
+  await set(pinRef, newPin)
+}
+
+export { database, auth, sanitizeEmailForKey }
