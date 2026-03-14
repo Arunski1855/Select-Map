@@ -2,7 +2,7 @@
   "rules": {
     // ================================================================
     // ADIDAS SELECT MAP - ENHANCED SECURITY RULES
-    // Last updated: 2026-03-09
+    // Last updated: 2026-03-13
     // ================================================================
 
     // Whitelist lookup table (email sanitized as key for O(1) validation)

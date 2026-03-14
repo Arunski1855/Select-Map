@@ -67,6 +67,17 @@ const REGIONS = {
   'West': { color: '#00a550', states: ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI'] }
 }
 
+// HTML escape utility to prevent XSS
+const escapeHtml = (str) => {
+  if (!str) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
 const iconCache = new Map()
 const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true) => {
@@ -74,11 +85,12 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
   const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
   const eliteClass = isSelect === false ? ' elite-tier' : ''
+  const safeName = escapeHtml(name)
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${eliteClass}" title="${name}${isSelect === false ? ' (Elite)' : ''}">
-        <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${eliteClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
+        <img src="${escapeHtml(logoUrl)}" alt="${safeName}" onerror="this.style.display='none'" />
         ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
       </div>
     `,
@@ -95,8 +107,10 @@ const createLogoViewIcon = (logoUrl, name, isSelect = true) => {
   const cacheKey = `logoview2|${logoUrl}|${name}|${isSelect}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
 
-  // Short name for label
-  const shortName = name.length > 12 ? name.split(' ')[0].substring(0, 12) + '...' : name
+  // Short name for label (escaped for safety)
+  const safeName = escapeHtml(name)
+  const shortName = escapeHtml(name.length > 12 ? name.split(' ')[0].substring(0, 12) + '...' : name)
+  const safeInitial = escapeHtml(name.charAt(0))
   const eliteClass = isSelect === false ? ' lv-elite-tier' : ''
 
   const icon = L.divIcon({
@@ -104,7 +118,8 @@ const createLogoViewIcon = (logoUrl, name, isSelect = true) => {
     html: `
       <div class="lv-wrapper${eliteClass}">
         <div class="lv-logo">
-          <img src="${logoUrl}" alt="${name}" onerror="this.parentElement.innerHTML='<span class=\\'lv-fallback\\'>${name.charAt(0)}</span>'" />
+          <img src="${escapeHtml(logoUrl)}" alt="${safeName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+          <span class="lv-fallback" style="display:none">${safeInitial}</span>
         </div>
         <div class="lv-label">${shortName}${isSelect === false ? ' (E)' : ''}</div>
         <div class="lv-line"></div>
@@ -4822,7 +4837,9 @@ function App() {
       </nav>
 
       <footer className="footer">
-        <img src="/logos/s-tier.png" alt="S-Tier" className="footer-logo" />
+        <div className="footer-logo-wrapper">
+          <img src="/logos/s-tier.png" alt="S-Tier" className="footer-logo" />
+        </div>
         <p>
           {activeTab === 'events'
             ? `${events.length} events`
