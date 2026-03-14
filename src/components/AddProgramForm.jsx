@@ -118,6 +118,7 @@ const initialFormState = {
   conference: '',
   maxprepsUrl: '',
   tcaStoreUrl: '',
+  adiCustomUrl: '',
   level: '',
   primaryColor: '',
   secondaryColor: '',
@@ -160,6 +161,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         conference: editProgram.conference || '',
         maxprepsUrl: editProgram.maxprepsUrl || '',
         tcaStoreUrl: editProgram.tcaStoreUrl || '',
+        adiCustomUrl: editProgram.adiCustomUrl || '',
         level: editProgram.level || '',
         primaryColor: editProgram.primaryColor || '',
         secondaryColor: editProgram.secondaryColor || '',
@@ -338,6 +340,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         conference: formData.conference || '',
         maxprepsUrl: formData.maxprepsUrl || '',
         tcaStoreUrl: formData.tcaStoreUrl || '',
+        adiCustomUrl: formData.adiCustomUrl || '',
         level: formData.level || '',
         primaryColor: formData.primaryColor || '',
         secondaryColor: formData.secondaryColor || '',
@@ -754,6 +757,18 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
               id="tcaStoreUrl"
               name="tcaStoreUrl"
               value={formData.tcaStoreUrl}
+              onChange={handleInputChange}
+              placeholder="https://..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="adiCustomUrl">adiCustom Uniform URL</label>
+            <input
+              type="url"
+              id="adiCustomUrl"
+              name="adiCustomUrl"
+              value={formData.adiCustomUrl}
               onChange={handleInputChange}
               placeholder="https://..."
             />

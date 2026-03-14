@@ -858,6 +858,11 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   TCA Store
                 </a>
               )}
+              {program.adiCustomUrl && (
+                <a href={program.adiCustomUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-adicustom">
+                  adiCustom Uniform
+                </a>
+              )}
               {program.brandGuide && (
                 <a href={program.brandGuide} download={program.brandGuideName || 'brand-guidelines.pdf'} className="detail-link-btn detail-link-brand">
                   Brand Guidelines

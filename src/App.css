@@ -3469,6 +3469,17 @@ textarea {
   background: #333333;
 }
 
+.detail-link-adicustom {
+  background: #000000;
+  color: white;
+  border-color: #E500A4;
+}
+
+.detail-link-adicustom:hover {
+  background: #1a1a1a;
+  border-color: #ff1ab8;
+}
+
 .detail-link-brand {
   background: #c0392b;
   color: white;
