@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react'
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import 'leaflet.markercluster'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import {
   subscribeToPrograms,
   addProgram,
@@ -327,20 +330,51 @@ function HistoryModal({ isOpen, onClose, program, sport }) {
   )
 }
 
+// High-quality tile providers with retina support
+const TILE_PROVIDERS = {
+  // Stadia Maps - Premium quality, free tier available
+  stadia: {
+    light: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
+    dark: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  },
+  // Mapbox - Requires API key in VITE_MAPBOX_TOKEN env var
+  mapbox: {
+    light: `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || ''}`,
+    dark: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || ''}`,
+    attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  },
+  // CartoDB fallback
+  carto: {
+    light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }
+}
+
+// Select provider: Mapbox if token exists, otherwise Stadia, fallback to Carto
+const getActiveProvider = () => {
+  if (import.meta.env.VITE_MAPBOX_TOKEN) return TILE_PROVIDERS.mapbox
+  return TILE_PROVIDERS.stadia
+}
+
 // Dynamic tile layer that swaps without remounting the map
 function DynamicTileLayer({ darkMode }) {
   const map = useMap()
-  const url = darkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+  const provider = getActiveProvider()
+  const url = darkMode ? provider.dark : provider.light
 
   useEffect(() => {
     const tileLayer = L.tileLayer(url, {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      attribution: provider.attribution,
+      maxZoom: 19,
+      tileSize: 512,
+      zoomOffset: -1,
+      detectRetina: true
     })
     tileLayer.addTo(map)
     return () => { map.removeLayer(tileLayer) }
-  }, [url, map])
+  }, [url, map, provider.attribution])
 
   return null
 }
@@ -457,9 +491,92 @@ function FlyToMarker({ position }) {
   const map = useMap()
   useEffect(() => {
     if (position) {
-      map.panTo(position, { duration: 0.3 })
+      map.panTo(position, { duration: 0.5, easeLinearity: 0.25 })
     }
   }, [position, map])
+  return null
+}
+
+// MarkerClusterGroup component for grouping nearby markers
+function MarkerClusterGroup({ children, onMarkerClick }) {
+  const map = useMap()
+  const clusterGroupRef = useRef(null)
+  const markersRef = useRef([])
+
+  useEffect(() => {
+    // Create cluster group with ADI SEL3CT brand styling
+    const clusterGroup = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: true,
+      disableClusteringAtZoom: 10,
+      animate: true,
+      animateAddingMarkers: true,
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount()
+        let size = 'small'
+        let diameter = 36
+        if (count >= 10) { size = 'medium'; diameter = 44 }
+        if (count >= 25) { size = 'large'; diameter = 52 }
+
+        return L.divIcon({
+          html: `<div class="cluster-marker cluster-${size}"><span>${count}</span></div>`,
+          className: 'marker-cluster-custom',
+          iconSize: L.point(diameter, diameter)
+        })
+      }
+    })
+
+    clusterGroupRef.current = clusterGroup
+    map.addLayer(clusterGroup)
+
+    return () => {
+      map.removeLayer(clusterGroup)
+    }
+  }, [map])
+
+  // Update markers when children change
+  useEffect(() => {
+    if (!clusterGroupRef.current) return
+
+    const clusterGroup = clusterGroupRef.current
+
+    // Clear existing markers
+    clusterGroup.clearLayers()
+    markersRef.current = []
+
+    // Add new markers from children
+    const childArray = Array.isArray(children) ? children.flat() : [children]
+    childArray.forEach(child => {
+      if (!child || !child.props) return
+
+      const { position, icon, eventHandlers } = child.props
+      if (!position) return
+
+      const marker = L.marker(position, { icon })
+
+      if (eventHandlers?.click) {
+        marker.on('click', eventHandlers.click)
+      }
+      if (onMarkerClick) {
+        marker.on('click', onMarkerClick)
+      }
+
+      // Add hover effect
+      marker.on('mouseover', () => {
+        const el = marker.getElement()
+        if (el) el.style.transform = el.style.transform.replace('scale(1)', '') + ' scale(1.15)'
+      })
+      marker.on('mouseout', () => {
+        const el = marker.getElement()
+        if (el) el.style.transform = el.style.transform.replace(' scale(1.15)', '')
+      })
+
+      clusterGroup.addLayer(marker)
+      markersRef.current.push(marker)
+    })
+  }, [children, onMarkerClick])
+
   return null
 }
 
@@ -4219,26 +4336,28 @@ function App() {
                   <DynamicTileLayer darkMode={darkMode} />
                   <MapViewPreserver />
                   <StateLabels />
-                  {filteredTargetPrograms.map(target => (
-                    target && target.coordinates && (
-                      <Marker
-                        key={target.id}
-                        position={target.coordinates}
-                        icon={L.divIcon({
-                          className: 'target-marker',
-                          html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
-                            ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
-                          </div>`,
-                          iconSize: [32, 32],
-                          iconAnchor: [16, 32],
-                          popupAnchor: [0, -32]
-                        })}
-                        eventHandlers={{
-                          click: () => setSelectedTargetProgram(target)
-                        }}
-                      />
-                    )
-                  ))}
+                  <MarkerClusterGroup>
+                    {filteredTargetPrograms.map(target => (
+                      target && target.coordinates && (
+                        <Marker
+                          key={target.id}
+                          position={target.coordinates}
+                          icon={L.divIcon({
+                            className: 'target-marker',
+                            html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
+                              ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
+                            </div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 32],
+                            popupAnchor: [0, -32]
+                          })}
+                          eventHandlers={{
+                            click: () => setSelectedTargetProgram(target)
+                          }}
+                        />
+                      )
+                    ))}
+                  </MarkerClusterGroup>
                 </MapContainer>
               </div>
             )}
@@ -4582,21 +4701,23 @@ function App() {
                   <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
                 )}
 
-                {displayPrograms.map(program => (
-                  program && program.coordinates && (
-                    <Marker
-                      key={program.id}
-                      position={adjustedPositions[program.id] || program.coordinates}
-                      icon={programIcons[program.id]}
-                      eventHandlers={{
-                        click: () => {
-                          setSelectedProgram(program)
-                          setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
-                        }
-                      }}
-                    />
-                  )
-                ))}
+                <MarkerClusterGroup>
+                  {displayPrograms.map(program => (
+                    program && program.coordinates && (
+                      <Marker
+                        key={program.id}
+                        position={adjustedPositions[program.id] || program.coordinates}
+                        icon={programIcons[program.id]}
+                        eventHandlers={{
+                          click: () => {
+                            setSelectedProgram(program)
+                            setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
+                          }
+                        }}
+                      />
+                    )
+                  ))}
+                </MarkerClusterGroup>
               </MapContainer>
             )}
 
