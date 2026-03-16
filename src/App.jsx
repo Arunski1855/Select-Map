@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react'
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import 'leaflet.markercluster'
-import 'leaflet.markercluster/dist/MarkerCluster.css'
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import {
   subscribeToPrograms,
   addProgram,
@@ -496,89 +493,6 @@ function FlyToMarker({ position }) {
       map.panTo(position, { duration: 0.5, easeLinearity: 0.25 })
     }
   }, [position, map])
-  return null
-}
-
-// MarkerClusterGroup component for grouping nearby markers
-function MarkerClusterGroup({ children, onMarkerClick }) {
-  const map = useMap()
-  const clusterGroupRef = useRef(null)
-  const markersRef = useRef([])
-
-  useEffect(() => {
-    // Create cluster group with ADI SEL3CT brand styling
-    const clusterGroup = L.markerClusterGroup({
-      showCoverageOnHover: false,
-      maxClusterRadius: 50,
-      spiderfyOnMaxZoom: true,
-      disableClusteringAtZoom: 10,
-      animate: true,
-      animateAddingMarkers: true,
-      iconCreateFunction: (cluster) => {
-        const count = cluster.getChildCount()
-        let size = 'small'
-        let diameter = 36
-        if (count >= 10) { size = 'medium'; diameter = 44 }
-        if (count >= 25) { size = 'large'; diameter = 52 }
-
-        return L.divIcon({
-          html: `<div class="cluster-marker cluster-${size}"><span>${count}</span></div>`,
-          className: 'marker-cluster-custom',
-          iconSize: L.point(diameter, diameter)
-        })
-      }
-    })
-
-    clusterGroupRef.current = clusterGroup
-    map.addLayer(clusterGroup)
-
-    return () => {
-      map.removeLayer(clusterGroup)
-    }
-  }, [map])
-
-  // Update markers when children change
-  useEffect(() => {
-    if (!clusterGroupRef.current) return
-
-    const clusterGroup = clusterGroupRef.current
-
-    // Clear existing markers
-    clusterGroup.clearLayers()
-    markersRef.current = []
-
-    // Add new markers from children
-    const childArray = Array.isArray(children) ? children.flat() : [children]
-    childArray.forEach(child => {
-      if (!child || !child.props) return
-
-      const { position, icon, eventHandlers } = child.props
-      if (!position) return
-
-      const marker = L.marker(position, { icon })
-
-      if (eventHandlers?.click) {
-        marker.on('click', eventHandlers.click)
-      }
-      if (onMarkerClick) {
-        marker.on('click', onMarkerClick)
-      }
-
-      // Add hover effect
-      marker.on('mouseover', () => {
-        const el = marker.getElement()
-        if (el) el.style.transform = el.style.transform.replace('scale(1)', '') + ' scale(1.15)'
-      })
-      marker.on('mouseout', () => {
-        const el = marker.getElement()
-        if (el) el.style.transform = el.style.transform.replace(' scale(1.15)', '')
-      })
-
-      clusterGroup.addLayer(marker)
-      markersRef.current.push(marker)
-    })
-  }, [children, onMarkerClick])
-
   return null
 }
 
@@ -4338,28 +4252,26 @@ function App() {
                   <DynamicTileLayer darkMode={darkMode} />
                   <MapViewPreserver />
                   <StateLabels />
-                  <MarkerClusterGroup>
-                    {filteredTargetPrograms.map(target => (
-                      target && target.coordinates && (
-                        <Marker
-                          key={target.id}
-                          position={target.coordinates}
-                          icon={L.divIcon({
-                            className: 'target-marker',
-                            html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
-                              ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
-                            </div>`,
-                            iconSize: [32, 32],
-                            iconAnchor: [16, 32],
-                            popupAnchor: [0, -32]
-                          })}
-                          eventHandlers={{
-                            click: () => setSelectedTargetProgram(target)
-                          }}
-                        />
-                      )
-                    ))}
-                  </MarkerClusterGroup>
+                  {filteredTargetPrograms.map(target => (
+                    target && target.coordinates && (
+                      <Marker
+                        key={target.id}
+                        position={target.coordinates}
+                        icon={L.divIcon({
+                          className: 'target-marker',
+                          html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
+                            ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
+                          </div>`,
+                          iconSize: [32, 32],
+                          iconAnchor: [16, 32],
+                          popupAnchor: [0, -32]
+                        })}
+                        eventHandlers={{
+                          click: () => setSelectedTargetProgram(target)
+                        }}
+                      />
+                    )
+                  ))}
                 </MapContainer>
               </div>
             )}
@@ -4703,23 +4615,21 @@ function App() {
                   <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
                 )}
 
-                <MarkerClusterGroup>
-                  {displayPrograms.map(program => (
-                    program && program.coordinates && (
-                      <Marker
-                        key={program.id}
-                        position={adjustedPositions[program.id] || program.coordinates}
-                        icon={programIcons[program.id]}
-                        eventHandlers={{
-                          click: () => {
-                            setSelectedProgram(program)
-                            setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
-                          }
-                        }}
-                      />
-                    )
-                  ))}
-                </MarkerClusterGroup>
+                {displayPrograms.map(program => (
+                  program && program.coordinates && (
+                    <Marker
+                      key={program.id}
+                      position={adjustedPositions[program.id] || program.coordinates}
+                      icon={programIcons[program.id]}
+                      eventHandlers={{
+                        click: () => {
+                          setSelectedProgram(program)
+                          setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
+                        }
+                      }}
+                    />
+                  )
+                ))}
               </MapContainer>
             )}
 
