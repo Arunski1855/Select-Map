@@ -113,38 +113,6 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
   return icon
 }
 
-// Logo View marker with connector line and label (G League style)
-const createLogoViewIcon = (logoUrl, name, isSelect = true) => {
-  const cacheKey = `logoview2|${logoUrl}|${name}|${isSelect}`
-  if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
-
-  // Short name for label (escaped for safety)
-  const safeName = escapeHtml(name)
-  const shortName = escapeHtml(name.length > 12 ? name.split(' ')[0].substring(0, 12) + '...' : name)
-  const safeInitial = escapeHtml(name.charAt(0))
-  const eliteClass = isSelect === false ? ' lv-elite-tier' : ''
-
-  const icon = L.divIcon({
-    className: 'logo-view-marker',
-    html: `
-      <div class="lv-wrapper${eliteClass}">
-        <div class="lv-logo">
-          <img src="${escapeHtml(logoUrl)}" alt="${safeName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-          <span class="lv-fallback" style="display:none">${safeInitial}</span>
-        </div>
-        <div class="lv-label">${shortName}${isSelect === false ? ' (E)' : ''}</div>
-        <div class="lv-line"></div>
-        <div class="lv-dot"></div>
-      </div>
-    `,
-    iconSize: [50, 85],
-    iconAnchor: [25, 85],
-    popupAnchor: [0, -85]
-  })
-  iconCache.set(cacheKey, icon)
-  return icon
-}
-
 // Tab configuration
 const TABS = [
   { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
@@ -2449,9 +2417,6 @@ function App() {
   const [showContractMapLayer, setShowContractMapLayer] = useState(false)
   const [isContractDashboardOpen, setIsContractDashboardOpen] = useState(false)
 
-  // Logo view mode
-  const [showLogoView, setShowLogoView] = useState(false)
-
   // Hover preview state
   const [hoveredProgram, setHoveredProgram] = useState(null)
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
@@ -2697,43 +2662,38 @@ function App() {
   const programIcons = useMemo(() => {
     const icons = {}
     const currentYear = new Date().getFullYear()
-    filteredPrograms.forEach((program, index) => {
+    filteredPrograms.forEach((program) => {
       if (program && program.id) {
-        if (showLogoView) {
-          // Logo View mode - show logos with connector lines
-          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name, program.isSelect)
-        } else {
-          // Normal mode with optional contract status and gradient
-          let contractStatus = null
-          let contractYearsRemaining = null
-          let contractTier = null
-          if (showContractMapLayer && isUserAllowed) {
-            const contract = allContractDetails[program.id]
-            if (contract) {
-              const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
-              const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
-              const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
-              contractStatus = isExpiring ? 'expiring' : 'active'
-              // Calculate years remaining for gradient
-              if (termEndYear) {
-                contractYearsRemaining = Math.max(0, termEndYear - currentYear)
-              }
-              // Determine contract tier based on product allotment value
-              const allotment = contract.productAllotment?.replace(/[^0-9]/g, '')
-              const allotmentValue = allotment ? parseInt(allotment, 10) : 0
-              if (allotmentValue >= 50000) contractTier = 'premium'
-              else if (allotmentValue >= 25000) contractTier = 'standard'
-              else if (allotmentValue > 0) contractTier = 'basic'
-            } else {
-              contractStatus = 'none'
+        // Normal mode with optional contract status and gradient
+        let contractStatus = null
+        let contractYearsRemaining = null
+        let contractTier = null
+        if (showContractMapLayer && isUserAllowed) {
+          const contract = allContractDetails[program.id]
+          if (contract) {
+            const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+            const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+            const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
+            contractStatus = isExpiring ? 'expiring' : 'active'
+            // Calculate years remaining for gradient
+            if (termEndYear) {
+              contractYearsRemaining = Math.max(0, termEndYear - currentYear)
             }
+            // Determine contract tier based on product allotment value
+            const allotment = contract.productAllotment?.replace(/[^0-9]/g, '')
+            const allotmentValue = allotment ? parseInt(allotment, 10) : 0
+            if (allotmentValue >= 50000) contractTier = 'premium'
+            else if (allotmentValue >= 25000) contractTier = 'standard'
+            else if (allotmentValue > 0) contractTier = 'basic'
+          } else {
+            contractStatus = 'none'
           }
-          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier)
         }
+        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier)
       }
     })
     return icons
-  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed, showLogoView])
+  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
@@ -3694,16 +3654,6 @@ function App() {
           </div>
         )}
 
-
-        {activeTab !== 'targets' && activeTab !== 'events' && (
-          <button
-            className={`logo-view-toggle-btn${showLogoView ? ' active' : ''}`}
-            onClick={() => setShowLogoView(v => !v)}
-            title="Toggle logo view"
-          >
-            {showLogoView ? 'Logo View On' : 'Logo View'}
-          </button>
-        )}
 
         {isUserAllowed && activeTab !== 'targets' && (
           <button
@@ -4715,7 +4665,7 @@ function App() {
               </MapContainer>
             )}
 
-            {showContractMapLayer && isUserAllowed && (
+            {showContractMapLayer && isUserAllowed && !selectedProgram && (
               <div className="contract-map-legend">
                 <div className="cml-section">
                   <span className="cml-section-title">YEARS REMAINING</span>
@@ -4907,19 +4857,6 @@ function App() {
               <line x1="16" y1="16" x2="22" y2="22"/>
             </svg>
             <span>Search</span>
-          </button>
-          <button
-            className={`mobile-nav-btn${showLogoView ? ' active' : ''}`}
-            onClick={() => setShowLogoView(v => !v)}
-            title="Logo View"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            <span>Logos</span>
           </button>
           <button
             className="mobile-nav-btn mobile-nav-btn-primary"

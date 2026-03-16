@@ -10602,131 +10602,6 @@ textarea {
 .contract-layer-dot-active   { background: #22c55e; }
 .contract-layer-dot-none     { background: #9ca3af; }
 
-/* ── Logo View Toggle ─────────────────────────────────────────────── */
-.logo-view-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: #f3f4f6;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.dark .logo-view-toggle-btn {
-  background: #2d2d2d;
-  border-color: #444;
-  color: #ccc;
-}
-
-.logo-view-toggle-btn:hover {
-  background: #e5e5e5;
-}
-
-.logo-view-toggle-btn.active {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-}
-
-.dark .logo-view-toggle-btn.active {
-  background: #fff;
-  color: #000;
-}
-
-/* ── Logo View Markers (G League style) ─────────────────────────── */
-.logo-view-marker {
-  overflow: visible !important;
-}
-
-.lv-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 50px;
-  height: 85px;
-}
-
-.lv-logo {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.lv-logo img {
-  width: 85%;
-  height: 85%;
-  object-fit: contain;
-}
-
-.lv-fallback {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #333;
-}
-
-.lv-label {
-  margin-top: 2px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: white;
-  text-shadow:
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000,
-    0 0 4px rgba(0,0,0,0.8);
-  white-space: nowrap;
-  text-align: center;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lv-line {
-  width: 1px;
-  height: 28px;
-  background: rgba(255,255,255,0.6);
-  flex-shrink: 0;
-}
-
-.lv-dot {
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 0 3px rgba(0,0,0,0.5);
-  flex-shrink: 0;
-}
-
-/* Logo View Elite Tier styling */
-.lv-wrapper.lv-elite-tier .lv-logo {
-  border: 2px dashed #666666;
-  background: #f5f5f5;
-}
-
-.lv-wrapper.lv-elite-tier .lv-line {
-  background: rgba(102, 102, 102, 0.6);
-  border-left: 1px dashed #666;
-  width: 0;
-}
-
-.lv-wrapper.lv-elite-tier .lv-dot {
-  background: #666666;
-}
-
 /* ── Contract Map Legend ─────────────────────────────────────────── */
 .contract-map-legend {
   position: absolute;
@@ -12151,7 +12026,6 @@ textarea {
 
 [data-compact="true"] .gender-pill,
 [data-compact="true"] .filter-toggle-btn,
-[data-compact="true"] .logo-view-toggle-btn,
 [data-compact="true"] .contract-layer-toggle-btn {
   padding: 0.3rem 0.5rem;
   font-size: 0.65rem;
@@ -12215,7 +12089,6 @@ textarea {
 
   .gender-pill,
   .filter-toggle-btn,
-  .logo-view-toggle-btn,
   .contract-layer-toggle-btn,
   .clear-filters {
     min-height: 44px;
