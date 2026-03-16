@@ -4837,9 +4837,6 @@ function App() {
       </nav>
 
       <footer className="footer">
-        <div className="footer-logo-wrapper">
-          <img src="/logos/s-tier.png" alt="S-Tier" className="footer-logo" />
-        </div>
         <p>
           {activeTab === 'events'
             ? `${events.length} events`
