@@ -3907,6 +3907,39 @@ textarea {
   opacity: 1;
 }
 
+/* S-Tier Banner - ADI SEL3CT Brand */
+.stier-banner {
+  background-image: url('/textures/backdrop-one.jpg');
+  background-color: #000000;
+  background-size: cover;
+  background-position: center;
+  padding: 12px 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stier-text {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 1.5rem;
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .stier-banner {
+    padding: 8px 16px;
+  }
+
+  .stier-text {
+    font-size: 1rem;
+  }
+}
+
 .footer p {
   margin: 0;
   font-family: var(--font-heading-compressed);

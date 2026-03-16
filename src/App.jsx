@@ -4837,6 +4837,11 @@ function App() {
       </nav>
 
       <footer className="footer">
+        {(activeTab === 'basketball' || activeTab === 'football') && (
+          <div className="stier-banner">
+            <span className="stier-text">WELCOME TO THE S-TIER</span>
+          </div>
+        )}
         <p>
           {activeTab === 'events'
             ? `${events.length} events`
