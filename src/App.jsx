@@ -496,6 +496,52 @@ function FlyToMarker({ position }) {
   return null
 }
 
+// Hover Preview Card - shows on marker hover
+function HoverPreviewCard({ program, position, regionColor }) {
+  if (!program) return null
+
+  // Position card near cursor but keep it on screen
+  const style = {
+    left: Math.min(position.x + 15, window.innerWidth - 280),
+    top: Math.max(position.y - 60, 10)
+  }
+
+  return (
+    <div className="hover-preview-card" style={style}>
+      <div className="hpc-header" style={{ borderLeftColor: regionColor || '#000' }}>
+        {program.logo && (
+          <img src={program.logo} alt="" className="hpc-logo" />
+        )}
+        <div className="hpc-title">
+          <span className="hpc-name">{program.name}</span>
+          <span className="hpc-location">{program.city}, {program.state}</span>
+        </div>
+      </div>
+      <div className="hpc-body">
+        {program.teamType && (
+          <div className="hpc-row">
+            <span className="hpc-label">TYPE</span>
+            <span className="hpc-value">{program.teamType}</span>
+          </div>
+        )}
+        {program.headCoach && (
+          <div className="hpc-row">
+            <span className="hpc-label">COACH</span>
+            <span className="hpc-value">{program.headCoach}</span>
+          </div>
+        )}
+        {program.conference && (
+          <div className="hpc-row">
+            <span className="hpc-label">CONF</span>
+            <span className="hpc-value">{program.conference}</span>
+          </div>
+        )}
+      </div>
+      <div className="hpc-footer">Click for details</div>
+    </div>
+  )
+}
+
 // DetailPanel is now imported from ./components/DetailPanel
 
 // Admin Panel Component for managing allowed users
@@ -2394,6 +2440,10 @@ function App() {
 
   // Logo view mode
   const [showLogoView, setShowLogoView] = useState(false)
+
+  // Hover preview state
+  const [hoveredProgram, setHoveredProgram] = useState(null)
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
 
   // Competitor events
   const [competitorEvents, setCompetitorEvents] = useState([])
@@ -4625,6 +4675,15 @@ function App() {
                         click: () => {
                           setSelectedProgram(program)
                           setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
+                          setHoveredProgram(null)
+                        },
+                        mouseover: (e) => {
+                          const { clientX, clientY } = e.originalEvent
+                          setHoverPosition({ x: clientX, y: clientY })
+                          setHoveredProgram(program)
+                        },
+                        mouseout: () => {
+                          setHoveredProgram(null)
                         }
                       }}
                     />
@@ -4639,6 +4698,14 @@ function App() {
                 <div className="cml-item"><span className="cml-dot cml-dot-active" /> Active</div>
                 <div className="cml-item"><span className="cml-dot cml-dot-none" /> No Data</div>
               </div>
+            )}
+
+            {hoveredProgram && !selectedProgram && (
+              <HoverPreviewCard
+                program={hoveredProgram}
+                position={hoverPosition}
+                regionColor={REGIONS[hoveredProgram.region]?.color}
+              />
             )}
 
             <DetailPanel

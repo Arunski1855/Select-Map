@@ -1420,6 +1420,48 @@ textarea {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
+/* ── Marker Pulse/Glow Animations ─────────────────────────────────── */
+@keyframes marker-pulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 8px rgba(229, 0, 164, 0.3);
+  }
+}
+
+@keyframes marker-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(229, 0, 164, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(229, 0, 164, 0.6));
+  }
+}
+
+.logo-marker {
+  animation: marker-pulse 2.5s ease-in-out infinite;
+}
+
+.logo-marker:hover {
+  animation: none;
+}
+
+/* Accent glow on hover */
+.custom-logo-marker:hover .logo-marker {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(229, 0, 164, 0.4);
+}
+
+/* Dark mode pulse with magenta glow */
+[data-theme="dark"] .logo-marker {
+  animation: marker-glow 2.5s ease-in-out infinite;
+}
+
+[data-theme="dark"] .logo-marker:hover {
+  animation: none;
+  filter: drop-shadow(0 0 10px rgba(229, 0, 164, 0.5));
+}
+
 .logo-marker.selected {
   transform: scale(1.3);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
@@ -1561,6 +1603,125 @@ textarea {
 .leaflet-popup-close-button:hover {
   background: var(--bg-secondary) !important;
   color: var(--text-primary) !important;
+}
+
+/* ── Hover Preview Card ───────────────────────────────────────────── */
+.hover-preview-card {
+  position: fixed;
+  z-index: 10000;
+  width: 260px;
+  background: var(--bg-primary);
+  border: 2px solid var(--adi-black);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  animation: hpc-fade-in 150ms ease-out;
+}
+
+@keyframes hpc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hpc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--adi-black);
+  border-left: 4px solid var(--adi-magenta);
+}
+
+.hpc-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.hpc-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.hpc-name {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--adi-white);
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hpc-location {
+  font-family: var(--font-heading-compressed);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+}
+
+.hpc-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hpc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-heading-compressed);
+  font-size: 12px;
+  letter-spacing: var(--letter-spacing-brand);
+}
+
+.hpc-label {
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.hpc-value {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: right;
+}
+
+.hpc-footer {
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  font-family: var(--font-heading-compressed);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-brand);
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .hover-preview-card {
+  border-color: var(--adi-white);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(229, 0, 164, 0.15);
+}
+
+[data-theme="dark"] .hpc-header {
+  background: var(--adi-black);
+  border-left-color: var(--adi-magenta);
 }
 
 /* Popup Card Design */
