@@ -80,18 +80,29 @@ const escapeHtml = (str) => {
 
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
 const iconCache = new Map()
-const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true) => {
-  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}`
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
   const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
   const eliteClass = isSelect === false ? ' elite-tier' : ''
+  // Years remaining gradient class: 0=urgent, 1=warning, 2=caution, 3+=healthy
+  let yearsClass = ''
+  if (yearsRemaining !== null && contractStatus !== 'none') {
+    if (yearsRemaining === 0) yearsClass = ' contract-years-0'
+    else if (yearsRemaining === 1) yearsClass = ' contract-years-1'
+    else if (yearsRemaining === 2) yearsClass = ' contract-years-2'
+    else yearsClass = ' contract-years-3plus'
+  }
+  // Contract tier class for intensity
+  const tierClass = contractTier ? ` contract-tier-${contractTier}` : ''
   const safeName = escapeHtml(name)
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${eliteClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
         <img src="${escapeHtml(logoUrl)}" alt="${safeName}" onerror="this.style.display='none'" />
         ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
+        ${contractTier === 'premium' ? '<span class="tier-badge">★</span>' : ''}
       </div>
     `,
     iconSize: [28, 34],
@@ -2692,8 +2703,10 @@ function App() {
           // Logo View mode - show logos with connector lines
           icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name, program.isSelect)
         } else {
-          // Normal mode with optional contract status
+          // Normal mode with optional contract status and gradient
           let contractStatus = null
+          let contractYearsRemaining = null
+          let contractTier = null
           if (showContractMapLayer && isUserAllowed) {
             const contract = allContractDetails[program.id]
             if (contract) {
@@ -2701,11 +2714,21 @@ function App() {
               const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
               const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
               contractStatus = isExpiring ? 'expiring' : 'active'
+              // Calculate years remaining for gradient
+              if (termEndYear) {
+                contractYearsRemaining = Math.max(0, termEndYear - currentYear)
+              }
+              // Determine contract tier based on product allotment value
+              const allotment = contract.productAllotment?.replace(/[^0-9]/g, '')
+              const allotmentValue = allotment ? parseInt(allotment, 10) : 0
+              if (allotmentValue >= 50000) contractTier = 'premium'
+              else if (allotmentValue >= 25000) contractTier = 'standard'
+              else if (allotmentValue > 0) contractTier = 'basic'
             } else {
               contractStatus = 'none'
             }
           }
-          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect)
+          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier)
         }
       }
     })
@@ -4694,9 +4717,20 @@ function App() {
 
             {showContractMapLayer && isUserAllowed && (
               <div className="contract-map-legend">
-                <div className="cml-item"><span className="cml-dot cml-dot-expiring" /> Expiring {new Date().getFullYear()}</div>
-                <div className="cml-item"><span className="cml-dot cml-dot-active" /> Active</div>
-                <div className="cml-item"><span className="cml-dot cml-dot-none" /> No Data</div>
+                <div className="cml-section">
+                  <span className="cml-section-title">YEARS REMAINING</span>
+                  <div className="cml-gradient">
+                    <div className="cml-item"><span className="cml-dot cml-dot-urgent" /> 0 (Urgent)</div>
+                    <div className="cml-item"><span className="cml-dot cml-dot-warning" /> 1 Year</div>
+                    <div className="cml-item"><span className="cml-dot cml-dot-caution" /> 2 Years</div>
+                    <div className="cml-item"><span className="cml-dot cml-dot-healthy" /> 3+ Years</div>
+                  </div>
+                </div>
+                <div className="cml-section">
+                  <span className="cml-section-title">STATUS</span>
+                  <div className="cml-item"><span className="cml-dot cml-dot-none" /> No Data</div>
+                  <div className="cml-item"><span className="cml-star">★</span> Premium Tier</div>
+                </div>
               </div>
             )}
 

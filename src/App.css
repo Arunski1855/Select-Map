@@ -10420,6 +10420,120 @@ textarea {
   opacity: 0.45;
 }
 
+/* ── Contract Status Gradient (Years Remaining) ───────────────────── */
+/* 0 years = urgent red, pulsing */
+.logo-marker.contract-years-0 {
+  outline-color: #ef4444 !important;
+  animation: contract-urgent-pulse 1s ease-in-out infinite !important;
+}
+
+@keyframes contract-urgent-pulse {
+  0%, 100% {
+    outline-width: 3px;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    outline-width: 4px;
+    box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* 1 year = warning orange */
+.logo-marker.contract-years-1 {
+  outline-color: #f97316 !important;
+  box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.4);
+}
+
+/* 2 years = caution yellow */
+.logo-marker.contract-years-2 {
+  outline-color: #eab308 !important;
+  box-shadow: 0 0 6px 1px rgba(234, 179, 8, 0.3);
+}
+
+/* 3+ years = healthy green */
+.logo-marker.contract-years-3plus {
+  outline-color: #22c55e !important;
+  box-shadow: 0 0 6px 1px rgba(34, 197, 94, 0.3);
+}
+
+/* ── Contract Tier Styling (Value-based) ──────────────────────────── */
+/* Premium tier: enhanced glow */
+.logo-marker.contract-tier-premium {
+  outline-width: 4px !important;
+}
+
+.logo-marker.contract-tier-premium::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(229, 0, 164, 0.3), rgba(34, 197, 94, 0.3));
+  z-index: -1;
+  animation: tier-premium-glow 3s ease-in-out infinite;
+}
+
+@keyframes tier-premium-glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* Standard tier: subtle enhancement */
+.logo-marker.contract-tier-standard {
+  outline-width: 3px !important;
+}
+
+/* Basic tier: default styling */
+.logo-marker.contract-tier-basic {
+  outline-width: 2px !important;
+}
+
+/* Premium tier badge */
+.tier-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 15;
+}
+
+/* Dark mode contract gradient adjustments */
+[data-theme="dark"] .logo-marker.contract-years-0 {
+  box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.5);
+}
+
+[data-theme="dark"] .logo-marker.contract-years-1 {
+  box-shadow: 0 0 12px 3px rgba(249, 115, 22, 0.5);
+}
+
+[data-theme="dark"] .logo-marker.contract-years-2 {
+  box-shadow: 0 0 10px 2px rgba(234, 179, 8, 0.4);
+}
+
+[data-theme="dark"] .logo-marker.contract-years-3plus {
+  box-shadow: 0 0 10px 2px rgba(34, 197, 94, 0.4);
+}
+
+[data-theme="dark"] .logo-marker.contract-tier-premium::before {
+  background: linear-gradient(135deg, rgba(229, 0, 164, 0.5), rgba(34, 197, 94, 0.5));
+}
+
 /* ── Elite Tier (Non-Select) Markers ─────────────────────────────── */
 .logo-marker.elite-tier {
   border: 2px dashed #666666;
@@ -10619,32 +10733,56 @@ textarea {
   bottom: 28px;
   right: 10px;
   z-index: 9999;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 2px solid var(--adi-black);
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
   pointer-events: none;
 }
 
-.dark .contract-map-legend {
-  background: rgba(30, 30, 30, 0.95);
-  border-color: #374151;
+[data-theme="dark"] .contract-map-legend {
+  background: var(--bg-secondary);
+  border-color: var(--adi-white);
+}
+
+.cml-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cml-section-title {
+  font-family: var(--font-heading-compressed);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: var(--letter-spacing-brand);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.cml-gradient {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .cml-item {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 0.73rem;
+  gap: 8px;
+  font-family: var(--font-heading-compressed);
+  font-size: 11px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-secondary);
+  letter-spacing: var(--letter-spacing-brand);
 }
-
-.dark .cml-item { color: #d1d5db; }
 
 .cml-dot {
   display: inline-block;
@@ -10652,11 +10790,41 @@ textarea {
   height: 12px;
   border-radius: 3px;
   flex-shrink: 0;
+  box-shadow: 0 0 4px rgba(0,0,0,0.2);
 }
 
+/* Gradient colors */
+.cml-dot-urgent {
+  background: #ef4444;
+  animation: legend-pulse 1s ease-in-out infinite;
+}
+
+@keyframes legend-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.8); }
+}
+
+.cml-dot-warning { background: #f97316; }
+.cml-dot-caution { background: #eab308; }
+.cml-dot-healthy { background: #22c55e; }
+.cml-dot-none { background: #9ca3af; opacity: 0.5; }
+
+/* Legacy colors */
 .cml-dot-expiring { background: #f97316; }
 .cml-dot-active   { background: #22c55e; }
-.cml-dot-none     { background: #9ca3af; opacity: 0.5; }
+
+.cml-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #000;
+  font-size: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
 /* ── Contracts Stat Item ─────────────────────────────────────────── */
 .stat-contracts {
