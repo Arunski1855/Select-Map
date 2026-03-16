@@ -332,30 +332,31 @@ function HistoryModal({ isOpen, onClose, program, sport }) {
 
 // High-quality tile providers with retina support
 const TILE_PROVIDERS = {
-  // Stadia Maps - Premium quality, free tier available
-  stadia: {
-    light: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
-    dark: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  },
-  // Mapbox - Requires API key in VITE_MAPBOX_TOKEN env var
+  // Mapbox - Requires API key in VITE_MAPBOX_TOKEN env var (best quality)
   mapbox: {
     light: `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || ''}`,
     dark: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || ''}`,
     attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   },
-  // CartoDB fallback
+  // Stadia Maps - Requires API key in VITE_STADIA_TOKEN env var
+  stadia: {
+    light: `https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIA_TOKEN || ''}`,
+    dark: `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIA_TOKEN || ''}`,
+    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  },
+  // CartoDB Voyager - No auth required, clean modern style
   carto: {
-    light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
   }
 }
 
-// Select provider: Mapbox if token exists, otherwise Stadia, fallback to Carto
+// Select provider: Mapbox > Stadia (if keys exist), otherwise CartoDB Voyager
 const getActiveProvider = () => {
   if (import.meta.env.VITE_MAPBOX_TOKEN) return TILE_PROVIDERS.mapbox
-  return TILE_PROVIDERS.stadia
+  if (import.meta.env.VITE_STADIA_TOKEN) return TILE_PROVIDERS.stadia
+  return TILE_PROVIDERS.carto
 }
 
 // Dynamic tile layer that swaps without remounting the map
@@ -363,18 +364,19 @@ function DynamicTileLayer({ darkMode }) {
   const map = useMap()
   const provider = getActiveProvider()
   const url = darkMode ? provider.dark : provider.light
+  const isMapbox = import.meta.env.VITE_MAPBOX_TOKEN
 
   useEffect(() => {
     const tileLayer = L.tileLayer(url, {
       attribution: provider.attribution,
       maxZoom: 19,
-      tileSize: 512,
-      zoomOffset: -1,
+      // Mapbox uses 512px tiles, others use 256px
+      ...(isMapbox ? { tileSize: 512, zoomOffset: -1 } : {}),
       detectRetina: true
     })
     tileLayer.addTo(map)
     return () => { map.removeLayer(tileLayer) }
-  }, [url, map, provider.attribution])
+  }, [url, map, provider.attribution, isMapbox])
 
   return null
 }
