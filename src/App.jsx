@@ -1059,7 +1059,7 @@ function DigestModal({ isOpen, onClose, programs, events, sport }) {
 }
 
 // Reports Modal Component
-function ReportsModal({ isOpen, onClose, programs, events, sport }) {
+function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDetails = {} }) {
   const [reportType, setReportType] = useState('overview')
   const [filterGender, setFilterGender] = useState('all')
   const [filterLevel, setFilterLevel] = useState('all')
@@ -1105,6 +1105,17 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
     }
   }
 
+  const currentYear = new Date().getFullYear()
+
+  const getContractStatus = (programId) => {
+    const contract = allContractDetails[programId]
+    if (!contract) return 'none'
+    const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+    const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+    const isExpiring = contract[`contractExpiring${currentYear}`] || termEndYear === currentYear
+    return isExpiring ? 'expiring' : 'active'
+  }
+
   const getColValue = (item, col) => {
     switch (col) {
       case 'name': return item.name || ''
@@ -1118,6 +1129,10 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
       case 'conference': return item.conference || ''
       case 'coach': return item.headCoach || ''
       case 'contact': return item.contactEmail || item.contactPhone || ''
+      case 'contractStatus': {
+        const statusOrder = { 'expiring': 0, 'active': 1, 'none': 2 }
+        return statusOrder[getContractStatus(item.id)] ?? 2
+      }
       default: return item.name || ''
     }
   }
@@ -1126,7 +1141,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
     for (const { col, dir } of sortCols) {
       const aVal = getColValue(a, col)
       const bVal = getColValue(b, col)
-      const cmp = col === 'level' ? aVal - bVal : String(aVal).localeCompare(String(bVal))
+      const cmp = (col === 'level' || col === 'contractStatus') ? aVal - bVal : String(aVal).localeCompare(String(bVal))
       if (cmp !== 0) return dir === 'asc' ? cmp : -cmp
     }
     return 0
@@ -1325,10 +1340,13 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                     <SortTh col="conference">Conference</SortTh>
                     <SortTh col="coach">Coach</SortTh>
                     <SortTh col="contact">Contact</SortTh>
+                    <SortTh col="contractStatus">Contract Status</SortTh>
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedFiltered.map(p => (
+                  {sortedFiltered.map(p => {
+                    const contractStatus = getContractStatus(p.id)
+                    return (
                     <tr key={p.id}>
                       <td className="report-program-name">{p.logo && <img src={p.logo} alt="" className="report-program-logo" />}{p.name}</td>
                       <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
@@ -1338,8 +1356,10 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                       <td>{p.conference || '-'}</td>
                       <td>{p.headCoach || '-'}</td>
                       <td>{p.contactEmail || p.contactPhone || '-'}</td>
+                      <td><span className={`cd-status cd-status-${contractStatus}`}>{contractStatus === 'expiring' ? 'Expiring' : contractStatus === 'active' ? 'Active' : 'No Contract'}</span></td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -5071,6 +5091,7 @@ function App() {
         programs={programs}
         events={events}
         sport={activeTab}
+        allContractDetails={allContractDetails}
       />
 
       <ComparisonModal
