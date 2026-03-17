@@ -1133,6 +1133,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
         const statusOrder = { 'expiring': 0, 'active': 1, 'none': 2 }
         return statusOrder[getContractStatus(item.id)] ?? 2
       }
+      case 'tcaStore': return item.tcaStoreUrl ? 0 : 1
       default: return item.name || ''
     }
   }
@@ -1141,7 +1142,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
     for (const { col, dir } of sortCols) {
       const aVal = getColValue(a, col)
       const bVal = getColValue(b, col)
-      const cmp = (col === 'level' || col === 'contractStatus') ? aVal - bVal : String(aVal).localeCompare(String(bVal))
+      const cmp = (col === 'level' || col === 'contractStatus' || col === 'tcaStore') ? aVal - bVal : String(aVal).localeCompare(String(bVal))
       if (cmp !== 0) return dir === 'asc' ? cmp : -cmp
     }
     return 0
@@ -1341,6 +1342,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
                     <SortTh col="coach">Coach</SortTh>
                     <SortTh col="contact">Contact</SortTh>
                     <SortTh col="contractStatus">Contract Status</SortTh>
+                    <SortTh col="tcaStore">TCA Store</SortTh>
                   </tr>
                 </thead>
                 <tbody>
@@ -1357,6 +1359,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
                       <td>{p.headCoach || '-'}</td>
                       <td>{p.contactEmail || p.contactPhone || '-'}</td>
                       <td><span className={`cd-status cd-status-${contractStatus}`}>{contractStatus === 'expiring' ? 'Expiring' : contractStatus === 'active' ? 'Active' : 'No Contract'}</span></td>
+                      <td>{p.tcaStoreUrl ? <a href={p.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="bulk-edit-tca-yes">Yes</a> : '-'}</td>
                     </tr>
                     )
                   })}
