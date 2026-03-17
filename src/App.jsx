@@ -1066,6 +1066,8 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterConf, setFilterConf] = useState('all')
   const [sortCols, setSortCols] = useState([{ col: 'name', dir: 'asc' }])
+  const [programPage, setProgramPage] = useState(0)
+  const PAGE_SIZE = 25
 
   if (!isOpen) return null
 
@@ -1103,6 +1105,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
         setSortCols([{ col, dir: 'asc' }])
       }
     }
+    setProgramPage(0)
   }
 
   const currentYear = new Date().getFullYear()
@@ -1226,20 +1229,20 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
 
         {(reportType === 'overview' || reportType === 'programs') && (
           <div className="reports-filters">
-            <select value={filterGender} onChange={e => setFilterGender(e.target.value)}>
+            <select value={filterGender} onChange={e => { setFilterGender(e.target.value); setProgramPage(0) }}>
               <option value="all">All Genders</option>
               <option value="Boys">Boys</option>
               <option value="Girls">Girls</option>
             </select>
-            <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}>
+            <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value); setProgramPage(0) }}>
               <option value="all">All Levels</option>
               {uniqueLevels.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
-            <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
+            <select value={filterRegion} onChange={e => { setFilterRegion(e.target.value); setProgramPage(0) }}>
               <option value="all">All Regions</option>
               {Object.keys(REGIONS).map(r => <option key={r} value={r}>{r}</option>)}
             </select>
-            <select value={filterConf} onChange={e => setFilterConf(e.target.value)}>
+            <select value={filterConf} onChange={e => { setFilterConf(e.target.value); setProgramPage(0) }}>
               <option value="all">All Conferences</option>
               {uniqueConfs.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -1327,9 +1330,22 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
             </div>
           )}
 
-          {reportType === 'programs' && (
+          {reportType === 'programs' && (() => {
+            const totalPages = Math.ceil(sortedFiltered.length / PAGE_SIZE)
+            const safePage = Math.min(programPage, Math.max(0, totalPages - 1))
+            const pageRows = sortedFiltered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+            return (
             <div className="report-programs">
-              <p className="report-count">{filtered.length} programs</p>
+              <div className="report-programs-header">
+                <p className="report-count">{sortedFiltered.length} programs</p>
+                {totalPages > 1 && (
+                  <div className="report-pagination">
+                    <button className="report-page-btn" onClick={() => setProgramPage(p => Math.max(0, p - 1))} disabled={safePage === 0}>&#8593;</button>
+                    <span className="report-page-info">{safePage + 1} / {totalPages}</span>
+                    <button className="report-page-btn" onClick={() => setProgramPage(p => Math.min(totalPages - 1, p + 1))} disabled={safePage === totalPages - 1}>&#8595;</button>
+                  </div>
+                )}
+              </div>
               <table className="report-table report-table-full">
                 <thead>
                   <tr>
@@ -1346,7 +1362,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedFiltered.map(p => {
+                  {pageRows.map(p => {
                     const contractStatus = getContractStatus(p.id)
                     return (
                     <tr key={p.id}>
@@ -1365,8 +1381,16 @@ function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDet
                   })}
                 </tbody>
               </table>
+              {totalPages > 1 && (
+                <div className="report-pagination report-pagination-bottom">
+                  <button className="report-page-btn" onClick={() => setProgramPage(p => Math.max(0, p - 1))} disabled={safePage === 0}>&#8593;</button>
+                  <span className="report-page-info">{safePage + 1} / {totalPages}</span>
+                  <button className="report-page-btn" onClick={() => setProgramPage(p => Math.min(totalPages - 1, p + 1))} disabled={safePage === totalPages - 1}>&#8595;</button>
+                </div>
+              )}
             </div>
-          )}
+            )
+          })()}
 
           {reportType === 'events' && (
             <div className="report-events">
