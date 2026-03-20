@@ -54,18 +54,10 @@ import DetailPanel from './components/DetailPanel'
 import TargetDetailPanel from './components/TargetDetailPanel'
 import BackupPanel from './components/BackupPanel'
 import { initAutoBackup, isBackupNeeded } from './utils/autoBackup'
+import { REGIONS, REGION_LIST, LEVEL_COLORS, TABS, PIPELINE_STATUSES, PRIORITIES } from './constants'
+import logger from './utils/logger'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
-
-// Region definitions with colors
-const REGIONS = {
-  'Canada': { color: '#d4002a', states: ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'ON', 'PE', 'QC', 'SK'] },
-  'Mid Atlantic': { color: '#005eb8', states: ['NY', 'NJ', 'PA', 'DE', 'MD', 'DC', 'VA', 'WV'] },
-  'South': { color: '#ff6b00', states: ['FL', 'GA', 'SC', 'NC', 'TN', 'AL', 'MS', 'LA', 'AR', 'KY', 'TX', 'OK'] },
-  'Midwest': { color: '#7d2d8e', states: ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'] },
-  'North': { color: '#1a9fc9', states: ['ME', 'NH', 'VT', 'MA', 'CT', 'RI'] },
-  'West': { color: '#00a550', states: ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI'] }
-}
 
 // HTML escape utility to prevent XSS
 const escapeHtml = (str) => {
@@ -79,6 +71,7 @@ const escapeHtml = (str) => {
 }
 
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
+const ICON_CACHE_MAX = 200
 const iconCache = new Map()
 const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null) => {
   const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}`
@@ -109,35 +102,13 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
     iconAnchor: [14, 34],
     popupAnchor: [0, -34]
   })
+  if (iconCache.size >= ICON_CACHE_MAX) {
+    // Evict oldest entry (Map preserves insertion order)
+    iconCache.delete(iconCache.keys().next().value)
+  }
   iconCache.set(cacheKey, icon)
   return icon
 }
-
-// Tab configuration
-const TABS = [
-  { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
-  { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' },
-  { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' },
-  { id: 'targets', name: 'Target Programs', icon: '/logos/adidas-logo.png' }
-]
-
-// Pipeline status configuration
-const PIPELINE_STATUSES = [
-  { id: 'identified', label: 'Identified', description: 'On our radar', color: '#6b7280' },
-  { id: 'contacted', label: 'Contacted', description: 'Initial outreach made', color: '#3b82f6' },
-  { id: 'in_discussion', label: 'In Discussion', description: 'Active conversations', color: '#8b5cf6' },
-  { id: 'proposal_sent', label: 'Proposal Sent', description: 'Offer extended', color: '#f59e0b' },
-  { id: 'negotiating', label: 'Negotiating', description: 'Working terms', color: '#ec4899' },
-  { id: 'signed', label: 'Signed', description: 'Won', color: '#10b981' },
-  { id: 'lost', label: 'Lost', description: 'Went elsewhere', color: '#ef4444' }
-]
-
-// Priority configuration
-const PRIORITIES = [
-  { id: 'high', label: 'High', description: 'Must-have programs', color: '#ef4444' },
-  { id: 'medium', label: 'Medium', description: 'Strong targets', color: '#f59e0b' },
-  { id: 'low', label: 'Low', description: 'Nice to have', color: '#6b7280' }
-]
 
 // Auth Modal Component
 function AuthModal({ isOpen, onClose, onSuccess }) {
@@ -880,14 +851,6 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
   )
 }
 
-// Level color mapping
-const LEVEL_COLORS = {
-  'Mahomes': '#e31837',
-  'Gold': '#c9a84c',
-  'Silver': '#8a8d8f',
-  'Bronze': '#a0714f',
-  'Regional': '#005eb8'
-}
 
 // Digest Modal Component
 function DigestModal({ isOpen, onClose, programs, events, sport }) {
@@ -1665,7 +1628,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
       setProgramsToDelete(new Set())
       onClose()
     } catch (err) {
-      console.error('Error saving:', err)
+      logger.error('Error saving:', err)
       alert('Error saving changes. Please try again.')
     } finally {
       setSaving(false)
@@ -2056,7 +2019,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
       }
       resetForm()
     } catch (err) {
-      console.error('Error saving competitor event:', err)
+      logger.error('Error saving competitor event:', err)
       alert('Failed to save event. Please try again.')
     }
   }
@@ -2082,7 +2045,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
     try {
       await onDelete(eventId)
     } catch (err) {
-      console.error('Error deleting competitor event:', err)
+      logger.error('Error deleting competitor event:', err)
     }
   }
 
@@ -2096,7 +2059,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
       let added = 0
       for (const event of eventsToAdd) {
         if (!event.name || !event.date) {
-          console.warn('Skipping event missing name or date:', event)
+          logger.warn('Skipping event missing name or date:', event)
           continue
         }
         await onAdd({
@@ -2120,7 +2083,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
         setBulkImportStatus(null)
       }, 1500)
     } catch (err) {
-      console.error('Bulk import error:', err)
+      logger.error('Bulk import error:', err)
       setBulkImportStatus({ type: 'error', message: `Error: ${err.message}` })
     }
   }
@@ -2491,7 +2454,7 @@ function App() {
       link.href = dataUrl
       link.click()
     } catch (err) {
-      console.error('Export failed:', err)
+      logger.error('Export failed:', err)
     }
     setIsExporting(false)
   }, [activeTab, isExporting])
@@ -2561,7 +2524,7 @@ function App() {
           })
         }
       } catch (error) {
-        console.error('Backup check error:', error)
+        logger.error('Backup check error:', error)
       }
     }
 
@@ -2935,7 +2898,7 @@ function App() {
     try {
       await addEvent(eventData)
     } catch (err) {
-      console.error('Error adding event:', err)
+      logger.error('Error adding event:', err)
       alert('Could not add event. Please try again.')
     }
   }
@@ -2944,7 +2907,7 @@ function App() {
     try {
       await editEvent(eventData)
     } catch (err) {
-      console.error('Error editing event:', err)
+      logger.error('Error editing event:', err)
       alert('Could not update event. Please try again.')
     }
   }
@@ -2954,7 +2917,7 @@ function App() {
       try {
         await deleteEvent(eventId)
       } catch (err) {
-        console.error('Error deleting event:', err)
+        logger.error('Error deleting event:', err)
         alert('Could not remove event. Please try again.')
       }
     }
@@ -2978,7 +2941,7 @@ function App() {
         await addProgramHistory(activeTab, newProgram.id, 'created', user.email)
       }
     } catch (err) {
-      console.error('Error adding program:', err)
+      logger.error('Error adding program:', err)
       alert('Could not add program. Please try again.')
     }
   }
@@ -2993,7 +2956,7 @@ function App() {
         await archiveProgram(activeTab, programId)
         setSelectedProgram(null)
       } catch (err) {
-        console.error('Error archiving program:', err)
+        logger.error('Error archiving program:', err)
         alert(`Could not archive program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
       }
     }
@@ -3007,7 +2970,7 @@ function App() {
       }
       await archiveProgram(activeTab, programId)
     } catch (err) {
-      console.error('Error archiving program:', err)
+      logger.error('Error archiving program:', err)
       throw err // Re-throw to be caught by bulk edit modal
     }
   }
@@ -3020,7 +2983,7 @@ function App() {
         await addProgramHistory(sport, programId, 'restored', user.email)
       }
     } catch (err) {
-      console.error('Error restoring program:', err)
+      logger.error('Error restoring program:', err)
       alert('Could not restore program. Please try again.')
     }
   }
@@ -3034,7 +2997,7 @@ function App() {
         }
         await deleteProgram(sport, programId)
       } catch (err) {
-        console.error('Error deleting program:', err)
+        logger.error('Error deleting program:', err)
         alert('Could not delete program. Please try again.')
       }
     }
@@ -3050,7 +3013,7 @@ function App() {
       })
       setIsTargetFormOpen(false)
     } catch (err) {
-      console.error('Error adding target program:', err)
+      logger.error('Error adding target program:', err)
       alert('Could not add target program. Please try again.')
     }
   }
@@ -3075,7 +3038,7 @@ function App() {
         setSelectedTargetProgram(targetData)
       }
     } catch (err) {
-      console.error('Error editing target program:', err)
+      logger.error('Error editing target program:', err)
       alert('Could not update target program. Please try again.')
     }
   }
@@ -3088,7 +3051,7 @@ function App() {
           setSelectedTargetProgram(null)
         }
       } catch (err) {
-        console.error('Error deleting target program:', err)
+        logger.error('Error deleting target program:', err)
         alert('Could not delete target program. Please try again.')
       }
     }
@@ -3108,11 +3071,11 @@ function App() {
           setSelectedTargetProgram({ ...target, status: newStatus })
         }
       } catch (err) {
-        console.error('Error updating target status:', err)
+        logger.error('Error updating target status:', err)
         alert('Could not update target status. Please try again.')
       }
     } else {
-      console.error('Target not found for status update:', targetId)
+      logger.error('Target not found for status update:', targetId)
       alert('Could not update target status. Please close and reopen the target.')
     }
   }
@@ -3308,7 +3271,7 @@ function App() {
 
       setShowExportMenu(false)
     } catch (err) {
-      console.error('PDF export error:', err)
+      logger.error('PDF export error:', err)
       alert(`Could not generate PDF: ${err.message || 'Unknown error'}. Try exporting CSV instead.`)
     }
   }, [activeTab, filteredPrograms])
@@ -3345,7 +3308,7 @@ function App() {
         await addProgramHistory(activeTab, updatedProgram.id, 'edited', user.email)
       }
     } catch (err) {
-      console.error('Error editing program:', err)
+      logger.error('Error editing program:', err)
       alert(`Could not update program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
     }
   }

@@ -1,53 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import './AddProgramForm.css'
-
-// US States for dropdown
-const US_STATES = [
-  { abbr: 'AL', name: 'Alabama' }, { abbr: 'AK', name: 'Alaska' }, { abbr: 'AZ', name: 'Arizona' },
-  { abbr: 'AR', name: 'Arkansas' }, { abbr: 'CA', name: 'California' }, { abbr: 'CO', name: 'Colorado' },
-  { abbr: 'CT', name: 'Connecticut' }, { abbr: 'DE', name: 'Delaware' }, { abbr: 'FL', name: 'Florida' },
-  { abbr: 'GA', name: 'Georgia' }, { abbr: 'HI', name: 'Hawaii' }, { abbr: 'ID', name: 'Idaho' },
-  { abbr: 'IL', name: 'Illinois' }, { abbr: 'IN', name: 'Indiana' }, { abbr: 'IA', name: 'Iowa' },
-  { abbr: 'KS', name: 'Kansas' }, { abbr: 'KY', name: 'Kentucky' }, { abbr: 'LA', name: 'Louisiana' },
-  { abbr: 'ME', name: 'Maine' }, { abbr: 'MD', name: 'Maryland' }, { abbr: 'MA', name: 'Massachusetts' },
-  { abbr: 'MI', name: 'Michigan' }, { abbr: 'MN', name: 'Minnesota' }, { abbr: 'MS', name: 'Mississippi' },
-  { abbr: 'MO', name: 'Missouri' }, { abbr: 'MT', name: 'Montana' }, { abbr: 'NE', name: 'Nebraska' },
-  { abbr: 'NV', name: 'Nevada' }, { abbr: 'NH', name: 'New Hampshire' }, { abbr: 'NJ', name: 'New Jersey' },
-  { abbr: 'NM', name: 'New Mexico' }, { abbr: 'NY', name: 'New York' }, { abbr: 'NC', name: 'North Carolina' },
-  { abbr: 'ND', name: 'North Dakota' }, { abbr: 'OH', name: 'Ohio' }, { abbr: 'OK', name: 'Oklahoma' },
-  { abbr: 'OR', name: 'Oregon' }, { abbr: 'PA', name: 'Pennsylvania' }, { abbr: 'RI', name: 'Rhode Island' },
-  { abbr: 'SC', name: 'South Carolina' }, { abbr: 'SD', name: 'South Dakota' }, { abbr: 'TN', name: 'Tennessee' },
-  { abbr: 'TX', name: 'Texas' }, { abbr: 'UT', name: 'Utah' }, { abbr: 'VT', name: 'Vermont' },
-  { abbr: 'VA', name: 'Virginia' }, { abbr: 'WA', name: 'Washington' }, { abbr: 'WV', name: 'West Virginia' },
-  { abbr: 'WI', name: 'Wisconsin' }, { abbr: 'WY', name: 'Wyoming' }
-]
-
-// Canadian Provinces for dropdown
-const CA_PROVINCES = [
-  { abbr: 'AB', name: 'Alberta' }, { abbr: 'BC', name: 'British Columbia' },
-  { abbr: 'MB', name: 'Manitoba' }, { abbr: 'NB', name: 'New Brunswick' },
-  { abbr: 'NL', name: 'Newfoundland and Labrador' }, { abbr: 'NS', name: 'Nova Scotia' },
-  { abbr: 'ON', name: 'Ontario' }, { abbr: 'PE', name: 'Prince Edward Island' },
-  { abbr: 'QC', name: 'Quebec' }, { abbr: 'SK', name: 'Saskatchewan' }
-]
-
-const REGIONS = ['Canada', 'Mid Atlantic', 'North', 'South', 'Midwest', 'West']
-
-const PIPELINE_STATUSES = [
-  { id: 'identified', label: 'Identified', description: 'On our radar' },
-  { id: 'contacted', label: 'Contacted', description: 'Initial outreach made' },
-  { id: 'in_discussion', label: 'In Discussion', description: 'Active conversations' },
-  { id: 'proposal_sent', label: 'Proposal Sent', description: 'Offer extended' },
-  { id: 'negotiating', label: 'Negotiating', description: 'Working terms' },
-  { id: 'signed', label: 'Signed', description: 'Won' },
-  { id: 'lost', label: 'Lost', description: 'Went elsewhere' }
-]
-
-const PRIORITIES = [
-  { id: 'high', label: 'High', description: 'Must-have programs' },
-  { id: 'medium', label: 'Medium', description: 'Strong targets' },
-  { id: 'low', label: 'Low', description: 'Nice to have' }
+import { US_STATES, CA_PROVINCES, REGION_LIST, PIPELINE_STATUSES, PRIORITIES } from '../constants'
 ]
 
 const COMPETITION_OPTIONS = ['Nike', 'Under Armour', 'Jordan', 'New Balance', 'Puma', 'None/Unknown', 'Other']
@@ -349,7 +303,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
                     onChange={handleInputChange}
                   >
                     <option value="">Auto-detected</option>
-                    {REGIONS.map(r => (
+                    {REGION_LIST.map(r => (
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
