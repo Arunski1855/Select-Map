@@ -501,6 +501,7 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
   const [newEmail, setNewEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { toast } = useToast()
 
   const handleAddUser = async (e) => {
     e.preventDefault()
@@ -673,8 +674,6 @@ function EventCalendar({ events, onSelectDate, selectedDate }) {
 
 // Analytics Modal Component
 function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
-  if (!isOpen) return null
-
   // Region distribution
   const regionData = useMemo(() => {
     const counts = {}
@@ -726,6 +725,8 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
   }, [events])
 
   const maxEventMonth = Math.max(...eventsByMonth.map(m => m.count), 1)
+
+  if (!isOpen) return null
 
   // Summary stats
   const totalPrograms = programs.length
@@ -857,6 +858,7 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
 // Digest Modal Component
 function DigestModal({ isOpen, onClose, programs, events, sport }) {
   const [digestRange, setDigestRange] = useState('week')
+  const { toast } = useToast()
 
   if (!isOpen) return null
 
@@ -1550,6 +1552,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
   const [programsToDelete, setProgramsToDelete] = useState(new Set())
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState('all') // 'all', 'missing-coach', 'missing-contact'
+  const { toast } = useToast()
 
   useEffect(() => {
     if (isOpen) {
@@ -1966,6 +1969,7 @@ const COMPETITOR_BRANDS = {
 const EVENT_TYPES = ['Circuit', 'Camp', 'Showcase', 'Combine', 'Tournament', 'Other']
 
 function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDelete, isUserAllowed, userEmail }) {
+  const { toast } = useToast()
   const [filterBrand, setFilterBrand] = useState('all')
   const [isAdding, setIsAdding] = useState(false)
   const [isBulkImporting, setIsBulkImporting] = useState(false)

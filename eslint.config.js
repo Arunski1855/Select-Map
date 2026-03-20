@@ -33,6 +33,9 @@ export default [
         Blob: 'readonly',
         alert: 'readonly',
         confirm: 'readonly',
+        navigator: 'readonly',
+        FileReader: 'readonly',
+        Image: 'readonly',
         // Vite globals
         import: 'readonly'
       }
