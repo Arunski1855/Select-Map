@@ -2511,6 +2511,11 @@ function App() {
 
   const handlePinSubmit = useCallback(() => {
     getBackupPin((correctPin) => {
+      if (!correctPin) {
+        // No PIN has been configured — deny access rather than allow anything in
+        setPinError(true)
+        return
+      }
       if (pinInput === correctPin) {
         setIsPinModalOpen(false)
         setPinInput('')

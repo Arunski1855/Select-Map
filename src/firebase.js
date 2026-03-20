@@ -27,15 +27,25 @@ const firebaseConfig = {
 if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
   console.error('Firebase configuration missing. Please check your .env.local file or Vercel environment variables.')
   // Show user-friendly error instead of crashing
-  document.body.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:20px;">
-      <div>
-        <h1 style="color:#E500A4;">Configuration Error</h1>
-        <p>Firebase environment variables are not configured.</p>
-        <p style="color:#666;font-size:14px;">Please add VITE_FIREBASE_* variables in Vercel.</p>
-      </div>
-    </div>
-  `
+  const overlay = document.createElement('div')
+  Object.assign(overlay.style, { display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'#000', color:'#fff', fontFamily:'sans-serif', textAlign:'center', padding:'20px' })
+
+  const inner = document.createElement('div')
+
+  const heading = document.createElement('h1')
+  heading.style.color = '#E500A4'
+  heading.textContent = 'Configuration Error'
+
+  const msg1 = document.createElement('p')
+  msg1.textContent = 'Firebase environment variables are not configured.'
+
+  const msg2 = document.createElement('p')
+  Object.assign(msg2.style, { color:'#666', fontSize:'14px' })
+  msg2.textContent = 'Please add VITE_FIREBASE_* variables in Vercel.'
+
+  inner.append(heading, msg1, msg2)
+  overlay.appendChild(inner)
+  document.body.replaceChildren(overlay)
   throw new Error('Firebase configuration missing')
 }
 
@@ -761,7 +771,7 @@ export const getBackupPin = (callback) => {
   const pinRef = ref(database, 'settings/backupPin')
   return onValue(pinRef, (snapshot) => {
     const pin = snapshot.val()
-    callback(pin || '1234') // Default PIN if not set
+    callback(pin || null) // null if no PIN configured — caller must handle
   }, { onlyOnce: true })
 }
 
