@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
@@ -100,7 +100,7 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
     className: 'custom-logo-marker',
     html: `
       <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
-        <img src="${escapeHtml(logoUrl)}" alt="${safeName}" onerror="this.style.display='none'" />
+        <img src="${escapeHtml(logoUrl)}" alt="${safeName}" />
         ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
         ${contractTier === 'premium' ? '<span class="tier-badge">★</span>' : ''}
       </div>
@@ -2405,9 +2405,6 @@ function App() {
   // Mt Zion team type filter
   const [filterTeamType, setFilterTeamType] = useState('all') // 'Prep', 'National', 'all'
 
-  // Region dropdown (unused - kept for mobile compatibility)
-  const [showRegionPopup, setShowRegionPopup] = useState(false)
-
   // Mobile UX states
   const [compactMode, setCompactMode] = useState(() => localStorage.getItem('compactMode') === 'true')
   const [mobileNavExpanded, setMobileNavExpanded] = useState(false)
@@ -2531,6 +2528,17 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthChange(setUser)
     return () => unsubscribe()
+  }, [])
+
+  // Hide broken marker images without inline onerror handlers (capture phase so error events reach us)
+  useEffect(() => {
+    const handleImgError = (e) => {
+      if (e.target.tagName === 'IMG' && e.target.closest('.custom-logo-marker')) {
+        e.target.style.display = 'none'
+      }
+    }
+    document.addEventListener('error', handleImgError, true)
+    return () => document.removeEventListener('error', handleImgError, true)
   }, [])
 
   // Subscribe to allowed users list
