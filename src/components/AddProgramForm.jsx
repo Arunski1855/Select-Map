@@ -1,108 +1,12 @@
 import { useState, useEffect } from 'react'
 import { addRankingMetric } from '../firebase'
 import './AddProgramForm.css'
-
-// US States for dropdown
-const US_STATES = [
-  { abbr: 'AL', name: 'Alabama' }, { abbr: 'AK', name: 'Alaska' }, { abbr: 'AZ', name: 'Arizona' },
-  { abbr: 'AR', name: 'Arkansas' }, { abbr: 'CA', name: 'California' }, { abbr: 'CO', name: 'Colorado' },
-  { abbr: 'CT', name: 'Connecticut' }, { abbr: 'DE', name: 'Delaware' }, { abbr: 'FL', name: 'Florida' },
-  { abbr: 'GA', name: 'Georgia' }, { abbr: 'HI', name: 'Hawaii' }, { abbr: 'ID', name: 'Idaho' },
-  { abbr: 'IL', name: 'Illinois' }, { abbr: 'IN', name: 'Indiana' }, { abbr: 'IA', name: 'Iowa' },
-  { abbr: 'KS', name: 'Kansas' }, { abbr: 'KY', name: 'Kentucky' }, { abbr: 'LA', name: 'Louisiana' },
-  { abbr: 'ME', name: 'Maine' }, { abbr: 'MD', name: 'Maryland' }, { abbr: 'MA', name: 'Massachusetts' },
-  { abbr: 'MI', name: 'Michigan' }, { abbr: 'MN', name: 'Minnesota' }, { abbr: 'MS', name: 'Mississippi' },
-  { abbr: 'MO', name: 'Missouri' }, { abbr: 'MT', name: 'Montana' }, { abbr: 'NE', name: 'Nebraska' },
-  { abbr: 'NV', name: 'Nevada' }, { abbr: 'NH', name: 'New Hampshire' }, { abbr: 'NJ', name: 'New Jersey' },
-  { abbr: 'NM', name: 'New Mexico' }, { abbr: 'NY', name: 'New York' }, { abbr: 'NC', name: 'North Carolina' },
-  { abbr: 'ND', name: 'North Dakota' }, { abbr: 'OH', name: 'Ohio' }, { abbr: 'OK', name: 'Oklahoma' },
-  { abbr: 'OR', name: 'Oregon' }, { abbr: 'PA', name: 'Pennsylvania' }, { abbr: 'RI', name: 'Rhode Island' },
-  { abbr: 'SC', name: 'South Carolina' }, { abbr: 'SD', name: 'South Dakota' }, { abbr: 'TN', name: 'Tennessee' },
-  { abbr: 'TX', name: 'Texas' }, { abbr: 'UT', name: 'Utah' }, { abbr: 'VT', name: 'Vermont' },
-  { abbr: 'VA', name: 'Virginia' }, { abbr: 'WA', name: 'Washington' }, { abbr: 'WV', name: 'West Virginia' },
-  { abbr: 'WI', name: 'Wisconsin' }, { abbr: 'WY', name: 'Wyoming' }
-]
-
-// Canadian Provinces for dropdown
-const CA_PROVINCES = [
-  { abbr: 'AB', name: 'Alberta' }, { abbr: 'BC', name: 'British Columbia' },
-  { abbr: 'MB', name: 'Manitoba' }, { abbr: 'NB', name: 'New Brunswick' },
-  { abbr: 'NL', name: 'Newfoundland and Labrador' }, { abbr: 'NS', name: 'Nova Scotia' },
-  { abbr: 'ON', name: 'Ontario' }, { abbr: 'PE', name: 'Prince Edward Island' },
-  { abbr: 'QC', name: 'Quebec' }, { abbr: 'SK', name: 'Saskatchewan' }
-]
-
-// Bahamas Islands for dropdown
-const BS_ISLANDS = [
-  { abbr: 'BS-NP', name: 'Nassau / New Providence' }, { abbr: 'BS-GBI', name: 'Grand Bahama' },
-  { abbr: 'BS-AB', name: 'Abaco' }, { abbr: 'BS-EL', name: 'Eleuthera' },
-  { abbr: 'BS-EX', name: 'Exuma' }, { abbr: 'BS-AN', name: 'Andros' },
-  { abbr: 'BS-BI', name: 'Bimini' }, { abbr: 'BS-LI', name: 'Long Island' }
-]
-
-const REGIONS = ['Canada', 'Mid Atlantic', 'North', 'South', 'Midwest', 'West']
-
-// Auto-detect region from state/province
-const determineRegion = (state) => {
-  const regionMap = {
-    'Canada': ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'ON', 'PE', 'QC', 'SK'],
-    'Mid Atlantic': ['NY', 'NJ', 'PA', 'DE', 'MD', 'DC', 'VA', 'WV'],
-    'South': ['FL', 'GA', 'SC', 'NC', 'TN', 'AL', 'MS', 'LA', 'AR', 'KY', 'TX', 'OK'],
-    'Midwest': ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'],
-    'North': ['ME', 'NH', 'VT', 'MA', 'CT', 'RI'],
-    'West': ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI']
-  }
-  // Bahamas goes to South region
-  if (state?.startsWith('BS-')) return 'South'
-  for (const [region, states] of Object.entries(regionMap)) {
-    if (states.includes(state)) return region
-  }
-  return ''
-}
-
-const PROGRAM_LEVELS = ['Gold', 'Silver', 'Bronze', 'Regional']
-
-// Mahomes tier only available for football
-const FOOTBALL_PROGRAM_LEVELS = ['Mahomes', 'Gold', 'Silver', 'Bronze', 'Regional']
-
-const GENDER_OPTIONS = ['Boys', 'Girls']
-
-const TEAM_TYPE_OPTIONS = ['Prep', 'National']
-
-// Basic team colors
-// adidas Zone Graphic color palette
-const TEAM_COLORS = [
-  // Primary Colors
-  { name: 'Black', hex: '#000000' },
-  { name: 'White', hex: '#FFFFFF' },
-  { name: 'Team Maroon', hex: '#5C1F35' },
-  { name: 'Team Burgundy', hex: '#6D2C3B' },
-  { name: 'Team Power Red', hex: '#BF0D3E' },
-  { name: 'Team Orange', hex: '#E35205' },
-  { name: 'Team Collegiate Gold', hex: '#CC8A00' },
-  { name: 'Team Gold', hex: '#FFB81C' },
-  { name: 'Bright Yellow', hex: '#FFFF00' },
-  { name: 'Solar Yellow', hex: '#FFF200' },
-  { name: 'Team Solar Green', hex: '#C4D600' },
-  { name: 'Team Kelly Green', hex: '#009639' },
-  { name: 'Team Dark Green', hex: '#00573F' },
-  { name: 'Team Forest Green', hex: '#0D381E' },
-  // Secondary Colors
-  { name: 'Teal', hex: '#00857D' },
-  { name: 'Team Shock Blue', hex: '#009FDF' },
-  { name: 'Team Royal Blue', hex: '#0065BD' },
-  { name: 'Team Collegiate Royal', hex: '#002F87' },
-  { name: 'Team Navy Blue', hex: '#001F5B' },
-  { name: 'Team College Purple', hex: '#512D6D' },
-  { name: 'Team Purple', hex: '#6D2077' },
-  { name: 'Team Pink', hex: '#E31C79' },
-  { name: 'Team Light Grey', hex: '#A2AAAD' },
-  { name: 'Team Sand', hex: '#C5B9A0' },
-  { name: 'Dark Grey Heather', hex: '#5C6670' },
-  { name: 'Orange Rush', hex: '#FF6720' },
-  { name: 'Red Rush', hex: '#ED174C' },
-  { name: 'Blue Rush', hex: '#0033A0' }
-]
+import {
+  US_STATES, CA_PROVINCES, BS_ISLANDS,
+  REGION_LIST, PROGRAM_LEVELS, FOOTBALL_PROGRAM_LEVELS,
+  GENDER_OPTIONS, TEAM_TYPE_OPTIONS, TEAM_COLORS,
+  determineRegion
+} from '../constants'
 
 const initialFormState = {
   name: '',
@@ -516,7 +420,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
                 onChange={handleInputChange}
               >
                 <option value="">Select Region</option>
-                {REGIONS.map(region => (
+                {REGION_LIST.map(region => (
                   <option key={region} value={region}>{region}</option>
                 ))}
               </select>
