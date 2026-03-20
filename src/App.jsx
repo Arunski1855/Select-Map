@@ -53,6 +53,8 @@ import SplashScreen from './components/SplashScreen'
 import DetailPanel from './components/DetailPanel'
 import TargetDetailPanel from './components/TargetDetailPanel'
 import BackupPanel from './components/BackupPanel'
+import ToastContainer from './components/ToastContainer'
+import { useToast } from './hooks/useToast'
 import { initAutoBackup, isBackupNeeded } from './utils/autoBackup'
 import { REGIONS, REGION_LIST, LEVEL_COLORS, TABS, PIPELINE_STATUSES, PRIORITIES } from './constants'
 import logger from './utils/logger'
@@ -522,7 +524,7 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
       try {
         await removeAllowedUser(email)
       } catch (err) {
-        alert('Failed to remove user')
+        toast.error('Failed to remove user')
       }
     }
   }
@@ -920,7 +922,7 @@ function DigestModal({ isOpen, onClose, programs, events, sport }) {
       })
     }
     navigator.clipboard.writeText(lines.join('\n')).then(() => {
-      alert('Digest copied to clipboard!')
+      toast.success('Digest copied to clipboard!')
     }).catch(() => {
       // Fallback: select text
       const ta = document.createElement('textarea')
@@ -929,7 +931,7 @@ function DigestModal({ isOpen, onClose, programs, events, sport }) {
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      alert('Digest copied to clipboard!')
+      toast.success('Digest copied to clipboard!')
     })
   }
 
@@ -1629,7 +1631,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
       onClose()
     } catch (err) {
       logger.error('Error saving:', err)
-      alert('Error saving changes. Please try again.')
+      toast.error('Error saving changes. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -2020,7 +2022,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
       resetForm()
     } catch (err) {
       logger.error('Error saving competitor event:', err)
-      alert('Failed to save event. Please try again.')
+      toast.error('Failed to save event. Please try again.')
     }
   }
 
@@ -2325,6 +2327,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
 }
 
 function App() {
+  const { toasts, toast, dismiss } = useToast()
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
   const [programs, setPrograms] = useState([])
@@ -2899,7 +2902,7 @@ function App() {
       await addEvent(eventData)
     } catch (err) {
       logger.error('Error adding event:', err)
-      alert('Could not add event. Please try again.')
+      toast.error('Could not add event. Please try again.')
     }
   }
 
@@ -2908,7 +2911,7 @@ function App() {
       await editEvent(eventData)
     } catch (err) {
       logger.error('Error editing event:', err)
-      alert('Could not update event. Please try again.')
+      toast.error('Could not update event. Please try again.')
     }
   }
 
@@ -2918,7 +2921,7 @@ function App() {
         await deleteEvent(eventId)
       } catch (err) {
         logger.error('Error deleting event:', err)
-        alert('Could not remove event. Please try again.')
+        toast.error('Could not remove event. Please try again.')
       }
     }
   }
@@ -2942,7 +2945,7 @@ function App() {
       }
     } catch (err) {
       logger.error('Error adding program:', err)
-      alert('Could not add program. Please try again.')
+      toast.error('Could not add program. Please try again.')
     }
   }
 
@@ -2957,7 +2960,7 @@ function App() {
         setSelectedProgram(null)
       } catch (err) {
         logger.error('Error archiving program:', err)
-        alert(`Could not archive program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
+        toast.error(`Could not archive program: ${err.code || err.message || 'Unknown error'}`)
       }
     }
   }
@@ -2984,7 +2987,7 @@ function App() {
       }
     } catch (err) {
       logger.error('Error restoring program:', err)
-      alert('Could not restore program. Please try again.')
+      toast.error('Could not restore program. Please try again.')
     }
   }
 
@@ -2998,7 +3001,7 @@ function App() {
         await deleteProgram(sport, programId)
       } catch (err) {
         logger.error('Error deleting program:', err)
-        alert('Could not delete program. Please try again.')
+        toast.error('Could not delete program. Please try again.')
       }
     }
   }
@@ -3014,7 +3017,7 @@ function App() {
       setIsTargetFormOpen(false)
     } catch (err) {
       logger.error('Error adding target program:', err)
-      alert('Could not add target program. Please try again.')
+      toast.error('Could not add target program. Please try again.')
     }
   }
 
@@ -3039,7 +3042,7 @@ function App() {
       }
     } catch (err) {
       logger.error('Error editing target program:', err)
-      alert('Could not update target program. Please try again.')
+      toast.error('Could not update target program. Please try again.')
     }
   }
 
@@ -3052,7 +3055,7 @@ function App() {
         }
       } catch (err) {
         logger.error('Error deleting target program:', err)
-        alert('Could not delete target program. Please try again.')
+        toast.error('Could not delete target program. Please try again.')
       }
     }
   }
@@ -3072,11 +3075,11 @@ function App() {
         }
       } catch (err) {
         logger.error('Error updating target status:', err)
-        alert('Could not update target status. Please try again.')
+        toast.error('Could not update target status. Please try again.')
       }
     } else {
       logger.error('Target not found for status update:', targetId)
-      alert('Could not update target status. Please close and reopen the target.')
+      toast.error('Could not update target status. Please close and reopen the target.')
     }
   }
 
@@ -3264,7 +3267,7 @@ function App() {
         link.click()
         document.body.removeChild(link)
         setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
-        alert('PDF ready! Check your Downloads or tap the download icon in your browser.')
+        toast.success('PDF ready! Check your Downloads or tap the download icon in your browser.')
       } else {
         doc.save(filename)
       }
@@ -3272,7 +3275,7 @@ function App() {
       setShowExportMenu(false)
     } catch (err) {
       logger.error('PDF export error:', err)
-      alert(`Could not generate PDF: ${err.message || 'Unknown error'}. Try exporting CSV instead.`)
+      toast.error(`Could not generate PDF: ${err.message || 'Unknown error'}. Try exporting CSV instead.`)
     }
   }, [activeTab, filteredPrograms])
 
@@ -3309,7 +3312,7 @@ function App() {
       }
     } catch (err) {
       logger.error('Error editing program:', err)
-      alert(`Could not update program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
+      toast.error(`Could not update program: ${err.code || err.message || 'Unknown error'}`)
     }
   }
 
@@ -3330,7 +3333,7 @@ function App() {
     if (!user) {
       setIsAuthModalOpen(true)
     } else if (!isUserAllowed) {
-      alert('Your account is not authorized. Please contact an administrator.')
+      toast.error('Your account is not authorized. Please contact an administrator.')
     } else if (activeTab === 'events') {
       setIsEventFormOpen(true)
     } else {
@@ -3351,6 +3354,7 @@ function App() {
 
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
       <header className="header">
         <div className="header-content">
           <div className="title-row">
@@ -4512,7 +4516,7 @@ function App() {
                             e.preventDefault()
                             const now = new Date().toISOString().split('T')[0]
                             const upcoming = events.filter(ev => ev.date >= now)
-                            if (upcoming.length === 0) { alert('No upcoming events.'); return }
+                            if (upcoming.length === 0) { toast.info('No upcoming events.'); return }
                             const icsEvents = upcoming.map(ev => {
                               const start = ev.date.replace(/-/g, '')
                               const end = ev.endDate

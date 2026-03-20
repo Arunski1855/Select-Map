@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import * as Sentry from '@sentry/react'
 import logger from '../utils/logger'
 
 /**
@@ -23,6 +24,7 @@ class ErrorBoundary extends Component {
     logger.error('Application error caught by ErrorBoundary:', error)
     logger.error('Component stack:', errorInfo?.componentStack)
     this.setState({ errorInfo })
+    Sentry.captureException(error, { extra: { componentStack: errorInfo?.componentStack } })
   }
 
   handleReload = () => {
