@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import './AddProgramForm.css'
 import { US_STATES, CA_PROVINCES, REGION_LIST, PIPELINE_STATUSES, PRIORITIES } from '../constants'
-]
 
 const COMPETITION_OPTIONS = ['Nike', 'Under Armour', 'Jordan', 'New Balance', 'Puma', 'None/Unknown', 'Other']
 
