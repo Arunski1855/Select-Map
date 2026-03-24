@@ -88,29 +88,39 @@ const syncAllowedEmailLookup = async (emails) => {
   }
 }
 
-// Initialize default allowed users on app start
+// Initialize default allowed users — only runs when a user is authenticated
 const initializeAllowedUsers = async () => {
+  if (!auth.currentUser) return
+
   const allowedRef = ref(database, 'allowedUsers')
   onValue(allowedRef, async (snapshot) => {
     const data = snapshot.val()
     const existingEmails = data ? Object.values(data).map(u => u.email.toLowerCase()) : []
 
-    // Add default users if they don't exist
-    for (const email of DEFAULT_ALLOWED_USERS) {
-      if (!existingEmails.includes(email.toLowerCase())) {
-        const newRef = push(allowedRef)
-        await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
+    try {
+      // Add default users if they don't exist
+      for (const email of DEFAULT_ALLOWED_USERS) {
+        if (!existingEmails.includes(email.toLowerCase())) {
+          const newRef = push(allowedRef)
+          await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
+        }
       }
-    }
 
-    // Sync the lookup table for security rules
-    const allEmails = [...new Set([...existingEmails, ...DEFAULT_ALLOWED_USERS.map(e => e.toLowerCase())])]
-    await syncAllowedEmailLookup(allEmails)
-  }, { onlyOnce: true })
+      // Sync the lookup table for security rules
+      const allEmails = [...new Set([...existingEmails, ...DEFAULT_ALLOWED_USERS.map(e => e.toLowerCase())])]
+      await syncAllowedEmailLookup(allEmails)
+    } catch (error) {
+      logger.error('initializeAllowedUsers error:', error)
+    }
+  }, { onlyOnce: true }, (error) => {
+    logger.error('initializeAllowedUsers read error:', error)
+  })
 }
 
-// Run initialization
-initializeAllowedUsers()
+// Run initialization once auth state is known
+onAuthStateChanged(auth, (user) => {
+  if (user) initializeAllowedUsers()
+})
 
 // Add a program to Firebase
 export const addProgram = async (sport, program) => {
@@ -200,6 +210,9 @@ export const subscribeToAllowedUsers = (callback) => {
     const data = snapshot.val()
     const emails = data ? Object.values(data).map(u => u.email.toLowerCase()) : []
     callback(emails)
+  }, (error) => {
+    logger.error('Firebase allowedUsers error:', error)
+    callback([])
   })
 }
 
