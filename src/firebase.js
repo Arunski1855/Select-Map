@@ -4,9 +4,7 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup
+  onAuthStateChanged
 } from 'firebase/auth'
 import logger from './utils/logger'
 
@@ -52,8 +50,6 @@ if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
 const auth = getAuth(app)
-const googleProvider = new GoogleAuthProvider()
-
 // Default allowed users from environment (always have access)
 const DEFAULT_ALLOWED_USERS = (import.meta.env.VITE_DEFAULT_ALLOWED_USERS || '')
   .split(',')
@@ -184,10 +180,6 @@ export const subscribeToPrograms = (sport, callback) => {
 // Authentication functions
 export const signIn = (email, password) => {
   return signInWithEmailAndPassword(auth, email, password)
-}
-
-export const signInWithGoogle = () => {
-  return signInWithPopup(auth, googleProvider)
 }
 
 export const logOut = () => {
