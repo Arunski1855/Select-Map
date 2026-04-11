@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
@@ -7,8 +7,6 @@ import {
   deleteProgram,
   editProgram,
   signIn,
-  signUp,
-  signInWithGoogle,
   logOut,
   onAuthChange,
   addProgramHistory,
@@ -53,101 +51,67 @@ import SplashScreen from './components/SplashScreen'
 import DetailPanel from './components/DetailPanel'
 import TargetDetailPanel from './components/TargetDetailPanel'
 import BackupPanel from './components/BackupPanel'
+import ToastContainer from './components/ToastContainer'
+import { useToast } from './hooks/useToast'
 import { initAutoBackup, isBackupNeeded } from './utils/autoBackup'
+import { REGIONS, REGION_LIST, LEVEL_COLORS, TABS, PIPELINE_STATUSES, PRIORITIES } from './constants'
+import logger from './utils/logger'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 
-// Region definitions with colors
-const REGIONS = {
-  'Canada': { color: '#d4002a', states: ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'ON', 'PE', 'QC', 'SK'] },
-  'Mid Atlantic': { color: '#005eb8', states: ['NY', 'NJ', 'PA', 'DE', 'MD', 'DC', 'VA', 'WV'] },
-  'South': { color: '#ff6b00', states: ['FL', 'GA', 'SC', 'NC', 'TN', 'AL', 'MS', 'LA', 'AR', 'KY', 'TX', 'OK'] },
-  'Midwest': { color: '#7d2d8e', states: ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'] },
-  'North': { color: '#1a9fc9', states: ['ME', 'NH', 'VT', 'MA', 'CT', 'RI'] },
-  'West': { color: '#00a550', states: ['WA', 'OR', 'CA', 'NV', 'AZ', 'UT', 'CO', 'NM', 'ID', 'MT', 'WY', 'AK', 'HI'] }
+// HTML escape utility to prevent XSS
+const escapeHtml = (str) => {
+  if (!str) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
+const ICON_CACHE_MAX = 200
 const iconCache = new Map()
-const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true) => {
-  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}`
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
   const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
   const eliteClass = isSelect === false ? ' elite-tier' : ''
+  // Years remaining gradient class: 0=urgent, 1=warning, 2=caution, 3+=healthy
+  let yearsClass = ''
+  if (yearsRemaining !== null && contractStatus !== 'none') {
+    if (yearsRemaining === 0) yearsClass = ' contract-years-0'
+    else if (yearsRemaining === 1) yearsClass = ' contract-years-1'
+    else if (yearsRemaining === 2) yearsClass = ' contract-years-2'
+    else yearsClass = ' contract-years-3plus'
+  }
+  // Contract tier class for intensity
+  const tierClass = contractTier ? ` contract-tier-${contractTier}` : ''
+  const safeName = escapeHtml(name)
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${eliteClass}" title="${name}${isSelect === false ? ' (Elite)' : ''}">
-        <img src="${logoUrl}" alt="${name}" onerror="this.style.display='none'" />
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
+        <img src="${escapeHtml(logoUrl)}" alt="${safeName}" />
         ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
+        ${contractTier === 'premium' ? '<span class="tier-badge">★</span>' : ''}
       </div>
     `,
     iconSize: [28, 34],
     iconAnchor: [14, 34],
     popupAnchor: [0, -34]
   })
+  if (iconCache.size >= ICON_CACHE_MAX) {
+    // Evict oldest entry (Map preserves insertion order)
+    iconCache.delete(iconCache.keys().next().value)
+  }
   iconCache.set(cacheKey, icon)
   return icon
 }
-
-// Logo View marker with connector line and label (G League style)
-const createLogoViewIcon = (logoUrl, name, isSelect = true) => {
-  const cacheKey = `logoview2|${logoUrl}|${name}|${isSelect}`
-  if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
-
-  // Short name for label
-  const shortName = name.length > 12 ? name.split(' ')[0].substring(0, 12) + '...' : name
-  const eliteClass = isSelect === false ? ' lv-elite-tier' : ''
-
-  const icon = L.divIcon({
-    className: 'logo-view-marker',
-    html: `
-      <div class="lv-wrapper${eliteClass}">
-        <div class="lv-logo">
-          <img src="${logoUrl}" alt="${name}" onerror="this.parentElement.innerHTML='<span class=\\'lv-fallback\\'>${name.charAt(0)}</span>'" />
-        </div>
-        <div class="lv-label">${shortName}${isSelect === false ? ' (E)' : ''}</div>
-        <div class="lv-line"></div>
-        <div class="lv-dot"></div>
-      </div>
-    `,
-    iconSize: [50, 85],
-    iconAnchor: [25, 85],
-    popupAnchor: [0, -85]
-  })
-  iconCache.set(cacheKey, icon)
-  return icon
-}
-
-// Tab configuration
-const TABS = [
-  { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
-  { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' },
-  { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' },
-  { id: 'targets', name: 'Target Programs', icon: '/logos/adidas-logo.png' }
-]
-
-// Pipeline status configuration
-const PIPELINE_STATUSES = [
-  { id: 'identified', label: 'Identified', description: 'On our radar', color: '#6b7280' },
-  { id: 'contacted', label: 'Contacted', description: 'Initial outreach made', color: '#3b82f6' },
-  { id: 'in_discussion', label: 'In Discussion', description: 'Active conversations', color: '#8b5cf6' },
-  { id: 'proposal_sent', label: 'Proposal Sent', description: 'Offer extended', color: '#f59e0b' },
-  { id: 'negotiating', label: 'Negotiating', description: 'Working terms', color: '#ec4899' },
-  { id: 'signed', label: 'Signed', description: 'Won', color: '#10b981' },
-  { id: 'lost', label: 'Lost', description: 'Went elsewhere', color: '#ef4444' }
-]
-
-// Priority configuration
-const PRIORITIES = [
-  { id: 'high', label: 'High', description: 'Must-have programs', color: '#ef4444' },
-  { id: 'medium', label: 'Medium', description: 'Strong targets', color: '#f59e0b' },
-  { id: 'low', label: 'Low', description: 'Nice to have', color: '#6b7280' }
-]
 
 // Auth Modal Component
 function AuthModal({ isOpen, onClose, onSuccess }) {
-  const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -159,25 +123,7 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
     setLoading(true)
 
     try {
-      if (isLogin) {
-        await signIn(email, password)
-      } else {
-        await signUp(email, password)
-      }
-      onSuccess()
-      onClose()
-    } catch (err) {
-      setError(err.message.replace('Firebase: ', ''))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleGoogleSignIn = async () => {
-    setError('')
-    setLoading(true)
-    try {
-      await signInWithGoogle()
+      await signIn(email, password)
       onSuccess()
       onClose()
     } catch (err) {
@@ -193,7 +139,7 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="auth-modal" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>&times;</button>
-        <h2>{isLogin ? 'Sign In' : 'Create Account'}</h2>
+        <h2>Sign In</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -221,30 +167,10 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
           {error && <p className="error-message">{error}</p>}
 
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? 'Please wait...' : 'Sign In'}
           </button>
         </form>
 
-        <div className="auth-divider">
-          <span>or</span>
-        </div>
-
-        <button className="google-btn" onClick={handleGoogleSignIn} disabled={loading}>
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Continue with Google
-        </button>
-
-        <p className="auth-toggle">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? 'Sign up' : 'Sign in'}
-          </button>
-        </p>
       </div>
     </div>
   )
@@ -312,20 +238,53 @@ function HistoryModal({ isOpen, onClose, program, sport }) {
   )
 }
 
+// High-quality tile providers with retina support
+const TILE_PROVIDERS = {
+  // Mapbox - Requires API key in VITE_MAPBOX_TOKEN env var (best quality)
+  mapbox: {
+    light: `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || ''}`,
+    dark: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || ''}`,
+    attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  },
+  // Stadia Maps - Requires API key in VITE_STADIA_TOKEN env var
+  stadia: {
+    light: `https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIA_TOKEN || ''}`,
+    dark: `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIA_TOKEN || ''}`,
+    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  },
+  // CartoDB Voyager - No auth required, clean modern style
+  carto: {
+    light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }
+}
+
+// Select provider: Mapbox > Stadia (if keys exist), otherwise CartoDB Voyager
+const getActiveProvider = () => {
+  if (import.meta.env.VITE_MAPBOX_TOKEN) return TILE_PROVIDERS.mapbox
+  if (import.meta.env.VITE_STADIA_TOKEN) return TILE_PROVIDERS.stadia
+  return TILE_PROVIDERS.carto
+}
+
 // Dynamic tile layer that swaps without remounting the map
 function DynamicTileLayer({ darkMode }) {
   const map = useMap()
-  const url = darkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+  const provider = getActiveProvider()
+  const url = darkMode ? provider.dark : provider.light
+  const isMapbox = import.meta.env.VITE_MAPBOX_TOKEN
 
   useEffect(() => {
     const tileLayer = L.tileLayer(url, {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      attribution: provider.attribution,
+      maxZoom: 19,
+      // Mapbox uses 512px tiles, others use 256px
+      ...(isMapbox ? { tileSize: 512, zoomOffset: -1 } : {}),
+      detectRetina: true
     })
     tileLayer.addTo(map)
     return () => { map.removeLayer(tileLayer) }
-  }, [url, map])
+  }, [url, map, provider.attribution, isMapbox])
 
   return null
 }
@@ -442,10 +401,56 @@ function FlyToMarker({ position }) {
   const map = useMap()
   useEffect(() => {
     if (position) {
-      map.panTo(position, { duration: 0.3 })
+      map.panTo(position, { duration: 0.5, easeLinearity: 0.25 })
     }
   }, [position, map])
   return null
+}
+
+// Hover Preview Card - shows on marker hover
+function HoverPreviewCard({ program, position, regionColor }) {
+  if (!program) return null
+
+  // Position card near cursor but keep it on screen
+  const style = {
+    left: Math.min(position.x + 15, window.innerWidth - 280),
+    top: Math.max(position.y - 60, 10)
+  }
+
+  return (
+    <div className="hover-preview-card" style={style}>
+      <div className="hpc-header" style={{ borderLeftColor: regionColor || '#000' }}>
+        {program.logo && (
+          <img src={program.logo} alt="" className="hpc-logo" />
+        )}
+        <div className="hpc-title">
+          <span className="hpc-name">{program.name}</span>
+          <span className="hpc-location">{program.city}, {program.state}</span>
+        </div>
+      </div>
+      <div className="hpc-body">
+        {program.teamType && (
+          <div className="hpc-row">
+            <span className="hpc-label">TYPE</span>
+            <span className="hpc-value">{program.teamType}</span>
+          </div>
+        )}
+        {program.headCoach && (
+          <div className="hpc-row">
+            <span className="hpc-label">COACH</span>
+            <span className="hpc-value">{program.headCoach}</span>
+          </div>
+        )}
+        {program.conference && (
+          <div className="hpc-row">
+            <span className="hpc-label">CONF</span>
+            <span className="hpc-value">{program.conference}</span>
+          </div>
+        )}
+      </div>
+      <div className="hpc-footer">Click for details</div>
+    </div>
+  )
 }
 
 // DetailPanel is now imported from ./components/DetailPanel
@@ -455,6 +460,7 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
   const [newEmail, setNewEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { toast } = useToast()
 
   const handleAddUser = async (e) => {
     e.preventDefault()
@@ -478,7 +484,7 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
       try {
         await removeAllowedUser(email)
       } catch (err) {
-        alert('Failed to remove user')
+        toast.error('Failed to remove user')
       }
     }
   }
@@ -627,8 +633,6 @@ function EventCalendar({ events, onSelectDate, selectedDate }) {
 
 // Analytics Modal Component
 function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
-  if (!isOpen) return null
-
   // Region distribution
   const regionData = useMemo(() => {
     const counts = {}
@@ -680,6 +684,8 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
   }, [events])
 
   const maxEventMonth = Math.max(...eventsByMonth.map(m => m.count), 1)
+
+  if (!isOpen) return null
 
   // Summary stats
   const totalPrograms = programs.length
@@ -807,18 +813,11 @@ function AnalyticsModal({ isOpen, onClose, programs, events, sport }) {
   )
 }
 
-// Level color mapping
-const LEVEL_COLORS = {
-  'Mahomes': '#e31837',
-  'Gold': '#c9a84c',
-  'Silver': '#8a8d8f',
-  'Bronze': '#a0714f',
-  'Regional': '#005eb8'
-}
 
 // Digest Modal Component
 function DigestModal({ isOpen, onClose, programs, events, sport }) {
   const [digestRange, setDigestRange] = useState('week')
+  const { toast } = useToast()
 
   if (!isOpen) return null
 
@@ -884,7 +883,7 @@ function DigestModal({ isOpen, onClose, programs, events, sport }) {
       })
     }
     navigator.clipboard.writeText(lines.join('\n')).then(() => {
-      alert('Digest copied to clipboard!')
+      toast.success('Digest copied to clipboard!')
     }).catch(() => {
       // Fallback: select text
       const ta = document.createElement('textarea')
@@ -893,7 +892,7 @@ function DigestModal({ isOpen, onClose, programs, events, sport }) {
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      alert('Digest copied to clipboard!')
+      toast.success('Digest copied to clipboard!')
     })
   }
 
@@ -986,13 +985,15 @@ function DigestModal({ isOpen, onClose, programs, events, sport }) {
 }
 
 // Reports Modal Component
-function ReportsModal({ isOpen, onClose, programs, events, sport }) {
+function ReportsModal({ isOpen, onClose, programs, events, sport, allContractDetails = {} }) {
   const [reportType, setReportType] = useState('overview')
   const [filterGender, setFilterGender] = useState('all')
   const [filterLevel, setFilterLevel] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterConf, setFilterConf] = useState('all')
   const [sortCols, setSortCols] = useState([{ col: 'name', dir: 'asc' }])
+  const [programPage, setProgramPage] = useState(0)
+  const PAGE_SIZE = 25
 
   if (!isOpen) return null
 
@@ -1030,6 +1031,18 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
         setSortCols([{ col, dir: 'asc' }])
       }
     }
+    setProgramPage(0)
+  }
+
+  const currentYear = new Date().getFullYear()
+
+  const getContractStatus = (programId) => {
+    const contract = allContractDetails[programId]
+    if (!contract) return 'none'
+    const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+    const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+    const isExpiring = contract[`contractExpiring${currentYear}`] || termEndYear === currentYear
+    return isExpiring ? 'expiring' : 'active'
   }
 
   const getColValue = (item, col) => {
@@ -1045,6 +1058,11 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
       case 'conference': return item.conference || ''
       case 'coach': return item.headCoach || ''
       case 'contact': return item.contactEmail || item.contactPhone || ''
+      case 'contractStatus': {
+        const statusOrder = { 'expiring': 0, 'active': 1, 'none': 2 }
+        return statusOrder[getContractStatus(item.id)] ?? 2
+      }
+      case 'tcaStore': return item.tcaStoreUrl ? 0 : 1
       default: return item.name || ''
     }
   }
@@ -1053,7 +1071,7 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
     for (const { col, dir } of sortCols) {
       const aVal = getColValue(a, col)
       const bVal = getColValue(b, col)
-      const cmp = col === 'level' ? aVal - bVal : String(aVal).localeCompare(String(bVal))
+      const cmp = (col === 'level' || col === 'contractStatus' || col === 'tcaStore') ? aVal - bVal : String(aVal).localeCompare(String(bVal))
       if (cmp !== 0) return dir === 'asc' ? cmp : -cmp
     }
     return 0
@@ -1137,20 +1155,20 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
 
         {(reportType === 'overview' || reportType === 'programs') && (
           <div className="reports-filters">
-            <select value={filterGender} onChange={e => setFilterGender(e.target.value)}>
+            <select value={filterGender} onChange={e => { setFilterGender(e.target.value); setProgramPage(0) }}>
               <option value="all">All Genders</option>
               <option value="Boys">Boys</option>
               <option value="Girls">Girls</option>
             </select>
-            <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}>
+            <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value); setProgramPage(0) }}>
               <option value="all">All Levels</option>
               {uniqueLevels.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
-            <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
+            <select value={filterRegion} onChange={e => { setFilterRegion(e.target.value); setProgramPage(0) }}>
               <option value="all">All Regions</option>
               {Object.keys(REGIONS).map(r => <option key={r} value={r}>{r}</option>)}
             </select>
-            <select value={filterConf} onChange={e => setFilterConf(e.target.value)}>
+            <select value={filterConf} onChange={e => { setFilterConf(e.target.value); setProgramPage(0) }}>
               <option value="all">All Conferences</option>
               {uniqueConfs.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -1238,9 +1256,22 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
             </div>
           )}
 
-          {reportType === 'programs' && (
+          {reportType === 'programs' && (() => {
+            const totalPages = Math.ceil(sortedFiltered.length / PAGE_SIZE)
+            const safePage = Math.min(programPage, Math.max(0, totalPages - 1))
+            const pageRows = sortedFiltered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+            return (
             <div className="report-programs">
-              <p className="report-count">{filtered.length} programs</p>
+              <div className="report-programs-header">
+                <p className="report-count">{sortedFiltered.length} programs</p>
+                {totalPages > 1 && (
+                  <div className="report-pagination">
+                    <button className="report-page-btn" onClick={() => setProgramPage(p => Math.max(0, p - 1))} disabled={safePage === 0}>&#8593;</button>
+                    <span className="report-page-info">{safePage + 1} / {totalPages}</span>
+                    <button className="report-page-btn" onClick={() => setProgramPage(p => Math.min(totalPages - 1, p + 1))} disabled={safePage === totalPages - 1}>&#8595;</button>
+                  </div>
+                )}
+              </div>
               <table className="report-table report-table-full">
                 <thead>
                   <tr>
@@ -1252,10 +1283,14 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                     <SortTh col="conference">Conference</SortTh>
                     <SortTh col="coach">Coach</SortTh>
                     <SortTh col="contact">Contact</SortTh>
+                    <SortTh col="contractStatus">Contract Status</SortTh>
+                    <SortTh col="tcaStore">TCA Store</SortTh>
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedFiltered.map(p => (
+                  {pageRows.map(p => {
+                    const contractStatus = getContractStatus(p.id)
+                    return (
                     <tr key={p.id}>
                       <td className="report-program-name">{p.logo && <img src={p.logo} alt="" className="report-program-logo" />}{p.name}</td>
                       <td><span className={`report-gender-chip ${(p.gender || 'Boys') === 'Girls' ? 'girls' : 'boys'}`}>{p.gender || 'Boys'}</span></td>
@@ -1265,12 +1300,23 @@ function ReportsModal({ isOpen, onClose, programs, events, sport }) {
                       <td>{p.conference || '-'}</td>
                       <td>{p.headCoach || '-'}</td>
                       <td>{p.contactEmail || p.contactPhone || '-'}</td>
+                      <td><span className={`cd-status cd-status-${contractStatus}`}>{contractStatus === 'expiring' ? 'Expiring' : contractStatus === 'active' ? 'Active' : 'No Contract'}</span></td>
+                      <td>{p.tcaStoreUrl ? <a href={p.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="bulk-edit-tca-yes">Yes</a> : '-'}</td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
+              {totalPages > 1 && (
+                <div className="report-pagination report-pagination-bottom">
+                  <button className="report-page-btn" onClick={() => setProgramPage(p => Math.max(0, p - 1))} disabled={safePage === 0}>&#8593;</button>
+                  <span className="report-page-info">{safePage + 1} / {totalPages}</span>
+                  <button className="report-page-btn" onClick={() => setProgramPage(p => Math.min(totalPages - 1, p + 1))} disabled={safePage === totalPages - 1}>&#8595;</button>
+                </div>
+              )}
             </div>
-          )}
+            )
+          })()}
 
           {reportType === 'events' && (
             <div className="report-events">
@@ -1465,6 +1511,7 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
   const [programsToDelete, setProgramsToDelete] = useState(new Set())
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState('all') // 'all', 'missing-coach', 'missing-contact'
+  const { toast } = useToast()
 
   useEffect(() => {
     if (isOpen) {
@@ -1545,8 +1592,8 @@ function BulkEditModal({ isOpen, onClose, programs, onSave, onDelete, sport }) {
       setProgramsToDelete(new Set())
       onClose()
     } catch (err) {
-      console.error('Error saving:', err)
-      alert('Error saving changes. Please try again.')
+      logger.error('Error saving:', err)
+      toast.error('Error saving changes. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -1881,6 +1928,7 @@ const COMPETITOR_BRANDS = {
 const EVENT_TYPES = ['Circuit', 'Camp', 'Showcase', 'Combine', 'Tournament', 'Other']
 
 function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDelete, isUserAllowed, userEmail }) {
+  const { toast } = useToast()
   const [filterBrand, setFilterBrand] = useState('all')
   const [isAdding, setIsAdding] = useState(false)
   const [isBulkImporting, setIsBulkImporting] = useState(false)
@@ -1936,8 +1984,8 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
       }
       resetForm()
     } catch (err) {
-      console.error('Error saving competitor event:', err)
-      alert('Failed to save event. Please try again.')
+      logger.error('Error saving competitor event:', err)
+      toast.error('Failed to save event. Please try again.')
     }
   }
 
@@ -1962,7 +2010,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
     try {
       await onDelete(eventId)
     } catch (err) {
-      console.error('Error deleting competitor event:', err)
+      logger.error('Error deleting competitor event:', err)
     }
   }
 
@@ -1976,7 +2024,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
       let added = 0
       for (const event of eventsToAdd) {
         if (!event.name || !event.date) {
-          console.warn('Skipping event missing name or date:', event)
+          logger.warn('Skipping event missing name or date:', event)
           continue
         }
         await onAdd({
@@ -2000,7 +2048,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
         setBulkImportStatus(null)
       }, 1500)
     } catch (err) {
-      console.error('Bulk import error:', err)
+      logger.error('Bulk import error:', err)
       setBulkImportStatus({ type: 'error', message: `Error: ${err.message}` })
     }
   }
@@ -2242,6 +2290,7 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
 }
 
 function App() {
+  const { toasts, toast, dismiss } = useToast()
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('basketball')
   const [programs, setPrograms] = useState([])
@@ -2284,9 +2333,6 @@ function App() {
 
   // Mt Zion team type filter
   const [filterTeamType, setFilterTeamType] = useState('all') // 'Prep', 'National', 'all'
-
-  // Region dropdown (unused - kept for mobile compatibility)
-  const [showRegionPopup, setShowRegionPopup] = useState(false)
 
   // Mobile UX states
   const [compactMode, setCompactMode] = useState(() => localStorage.getItem('compactMode') === 'true')
@@ -2344,8 +2390,9 @@ function App() {
   const [showContractMapLayer, setShowContractMapLayer] = useState(false)
   const [isContractDashboardOpen, setIsContractDashboardOpen] = useState(false)
 
-  // Logo view mode
-  const [showLogoView, setShowLogoView] = useState(false)
+  // Hover preview state
+  const [hoveredProgram, setHoveredProgram] = useState(null)
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
 
   // Competitor events
   const [competitorEvents, setCompetitorEvents] = useState([])
@@ -2373,7 +2420,7 @@ function App() {
       link.href = dataUrl
       link.click()
     } catch (err) {
-      console.error('Export failed:', err)
+      logger.error('Export failed:', err)
     }
     setIsExporting(false)
   }, [activeTab, isExporting])
@@ -2390,6 +2437,11 @@ function App() {
 
   const handlePinSubmit = useCallback(() => {
     getBackupPin((correctPin) => {
+      if (!correctPin) {
+        // No PIN has been configured — deny access rather than allow anything in
+        setPinError(true)
+        return
+      }
       if (pinInput === correctPin) {
         setIsPinModalOpen(false)
         setPinInput('')
@@ -2405,6 +2457,17 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthChange(setUser)
     return () => unsubscribe()
+  }, [])
+
+  // Hide broken marker images without inline onerror handlers (capture phase so error events reach us)
+  useEffect(() => {
+    const handleImgError = (e) => {
+      if (e.target.tagName === 'IMG' && e.target.closest('.custom-logo-marker')) {
+        e.target.style.display = 'none'
+      }
+    }
+    document.addEventListener('error', handleImgError, true)
+    return () => document.removeEventListener('error', handleImgError, true)
   }, [])
 
   // Subscribe to allowed users list
@@ -2427,7 +2490,7 @@ function App() {
           })
         }
       } catch (error) {
-        console.error('Backup check error:', error)
+        logger.error('Backup check error:', error)
       }
     }
 
@@ -2588,31 +2651,38 @@ function App() {
   const programIcons = useMemo(() => {
     const icons = {}
     const currentYear = new Date().getFullYear()
-    filteredPrograms.forEach((program, index) => {
+    filteredPrograms.forEach((program) => {
       if (program && program.id) {
-        if (showLogoView) {
-          // Logo View mode - show logos with connector lines
-          icons[program.id] = createLogoViewIcon(program.photo || program.logo, program.name, program.isSelect)
-        } else {
-          // Normal mode with optional contract status
-          let contractStatus = null
-          if (showContractMapLayer && isUserAllowed) {
-            const contract = allContractDetails[program.id]
-            if (contract) {
-              const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
-              const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
-              const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
-              contractStatus = isExpiring ? 'expiring' : 'active'
-            } else {
-              contractStatus = 'none'
+        // Normal mode with optional contract status and gradient
+        let contractStatus = null
+        let contractYearsRemaining = null
+        let contractTier = null
+        if (showContractMapLayer && isUserAllowed) {
+          const contract = allContractDetails[program.id]
+          if (contract) {
+            const termYears = contract.term?.match(/\b(20\d{2})\b/g)?.map(Number) || []
+            const termEndYear = termYears.length > 0 ? Math.max(...termYears) : null
+            const isExpiring = contract.contractExpiring2026 || termEndYear === currentYear
+            contractStatus = isExpiring ? 'expiring' : 'active'
+            // Calculate years remaining for gradient
+            if (termEndYear) {
+              contractYearsRemaining = Math.max(0, termEndYear - currentYear)
             }
+            // Determine contract tier based on product allotment value
+            const allotment = contract.productAllotment?.replace(/[^0-9]/g, '')
+            const allotmentValue = allotment ? parseInt(allotment, 10) : 0
+            if (allotmentValue >= 50000) contractTier = 'premium'
+            else if (allotmentValue >= 25000) contractTier = 'standard'
+            else if (allotmentValue > 0) contractTier = 'basic'
+          } else {
+            contractStatus = 'none'
           }
-          icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect)
         }
+        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier)
       }
     })
     return icons
-  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed, showLogoView])
+  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
@@ -2794,8 +2864,8 @@ function App() {
     try {
       await addEvent(eventData)
     } catch (err) {
-      console.error('Error adding event:', err)
-      alert('Could not add event. Please try again.')
+      logger.error('Error adding event:', err)
+      toast.error('Could not add event. Please try again.')
     }
   }
 
@@ -2803,8 +2873,8 @@ function App() {
     try {
       await editEvent(eventData)
     } catch (err) {
-      console.error('Error editing event:', err)
-      alert('Could not update event. Please try again.')
+      logger.error('Error editing event:', err)
+      toast.error('Could not update event. Please try again.')
     }
   }
 
@@ -2813,8 +2883,8 @@ function App() {
       try {
         await deleteEvent(eventId)
       } catch (err) {
-        console.error('Error deleting event:', err)
-        alert('Could not remove event. Please try again.')
+        logger.error('Error deleting event:', err)
+        toast.error('Could not remove event. Please try again.')
       }
     }
   }
@@ -2837,8 +2907,8 @@ function App() {
         await addProgramHistory(activeTab, newProgram.id, 'created', user.email)
       }
     } catch (err) {
-      console.error('Error adding program:', err)
-      alert('Could not add program. Please try again.')
+      logger.error('Error adding program:', err)
+      toast.error('Could not add program. Please try again.')
     }
   }
 
@@ -2852,8 +2922,8 @@ function App() {
         await archiveProgram(activeTab, programId)
         setSelectedProgram(null)
       } catch (err) {
-        console.error('Error archiving program:', err)
-        alert(`Could not archive program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
+        logger.error('Error archiving program:', err)
+        toast.error(`Could not archive program: ${err.code || err.message || 'Unknown error'}`)
       }
     }
   }
@@ -2866,7 +2936,7 @@ function App() {
       }
       await archiveProgram(activeTab, programId)
     } catch (err) {
-      console.error('Error archiving program:', err)
+      logger.error('Error archiving program:', err)
       throw err // Re-throw to be caught by bulk edit modal
     }
   }
@@ -2879,8 +2949,8 @@ function App() {
         await addProgramHistory(sport, programId, 'restored', user.email)
       }
     } catch (err) {
-      console.error('Error restoring program:', err)
-      alert('Could not restore program. Please try again.')
+      logger.error('Error restoring program:', err)
+      toast.error('Could not restore program. Please try again.')
     }
   }
 
@@ -2893,8 +2963,8 @@ function App() {
         }
         await deleteProgram(sport, programId)
       } catch (err) {
-        console.error('Error deleting program:', err)
-        alert('Could not delete program. Please try again.')
+        logger.error('Error deleting program:', err)
+        toast.error('Could not delete program. Please try again.')
       }
     }
   }
@@ -2909,8 +2979,8 @@ function App() {
       })
       setIsTargetFormOpen(false)
     } catch (err) {
-      console.error('Error adding target program:', err)
-      alert('Could not add target program. Please try again.')
+      logger.error('Error adding target program:', err)
+      toast.error('Could not add target program. Please try again.')
     }
   }
 
@@ -2934,8 +3004,8 @@ function App() {
         setSelectedTargetProgram(targetData)
       }
     } catch (err) {
-      console.error('Error editing target program:', err)
-      alert('Could not update target program. Please try again.')
+      logger.error('Error editing target program:', err)
+      toast.error('Could not update target program. Please try again.')
     }
   }
 
@@ -2947,8 +3017,8 @@ function App() {
           setSelectedTargetProgram(null)
         }
       } catch (err) {
-        console.error('Error deleting target program:', err)
-        alert('Could not delete target program. Please try again.')
+        logger.error('Error deleting target program:', err)
+        toast.error('Could not delete target program. Please try again.')
       }
     }
   }
@@ -2967,12 +3037,12 @@ function App() {
           setSelectedTargetProgram({ ...target, status: newStatus })
         }
       } catch (err) {
-        console.error('Error updating target status:', err)
-        alert('Could not update target status. Please try again.')
+        logger.error('Error updating target status:', err)
+        toast.error('Could not update target status. Please try again.')
       }
     } else {
-      console.error('Target not found for status update:', targetId)
-      alert('Could not update target status. Please close and reopen the target.')
+      logger.error('Target not found for status update:', targetId)
+      toast.error('Could not update target status. Please close and reopen the target.')
     }
   }
 
@@ -3160,15 +3230,15 @@ function App() {
         link.click()
         document.body.removeChild(link)
         setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
-        alert('PDF ready! Check your Downloads or tap the download icon in your browser.')
+        toast.success('PDF ready! Check your Downloads or tap the download icon in your browser.')
       } else {
         doc.save(filename)
       }
 
       setShowExportMenu(false)
     } catch (err) {
-      console.error('PDF export error:', err)
-      alert(`Could not generate PDF: ${err.message || 'Unknown error'}. Try exporting CSV instead.`)
+      logger.error('PDF export error:', err)
+      toast.error(`Could not generate PDF: ${err.message || 'Unknown error'}. Try exporting CSV instead.`)
     }
   }, [activeTab, filteredPrograms])
 
@@ -3204,8 +3274,8 @@ function App() {
         await addProgramHistory(activeTab, updatedProgram.id, 'edited', user.email)
       }
     } catch (err) {
-      console.error('Error editing program:', err)
-      alert(`Could not update program: ${err.code || err.message || 'Unknown error'}. Check console for details.`)
+      logger.error('Error editing program:', err)
+      toast.error(`Could not update program: ${err.code || err.message || 'Unknown error'}`)
     }
   }
 
@@ -3226,7 +3296,7 @@ function App() {
     if (!user) {
       setIsAuthModalOpen(true)
     } else if (!isUserAllowed) {
-      alert('Your account is not authorized. Please contact an administrator.')
+      toast.error('Your account is not authorized. Please contact an administrator.')
     } else if (activeTab === 'events') {
       setIsEventFormOpen(true)
     } else {
@@ -3247,6 +3317,7 @@ function App() {
 
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
       <header className="header">
         <div className="header-content">
           <div className="title-row">
@@ -3573,16 +3644,6 @@ function App() {
           </div>
         )}
 
-
-        {activeTab !== 'targets' && activeTab !== 'events' && (
-          <button
-            className={`logo-view-toggle-btn${showLogoView ? ' active' : ''}`}
-            onClick={() => setShowLogoView(v => !v)}
-            title="Toggle logo view"
-          >
-            {showLogoView ? 'Logo View On' : 'Logo View'}
-          </button>
-        )}
 
         {isUserAllowed && activeTab !== 'targets' && (
           <button
@@ -4418,7 +4479,7 @@ function App() {
                             e.preventDefault()
                             const now = new Date().toISOString().split('T')[0]
                             const upcoming = events.filter(ev => ev.date >= now)
-                            if (upcoming.length === 0) { alert('No upcoming events.'); return }
+                            if (upcoming.length === 0) { toast.info('No upcoming events.'); return }
                             const icsEvents = upcoming.map(ev => {
                               const start = ev.date.replace(/-/g, '')
                               const end = ev.endDate
@@ -4577,6 +4638,15 @@ function App() {
                         click: () => {
                           setSelectedProgram(program)
                           setSelectedMtZionGroup(mtZionGroupMap[program.id] || null)
+                          setHoveredProgram(null)
+                        },
+                        mouseover: (e) => {
+                          const { clientX, clientY } = e.originalEvent
+                          setHoverPosition({ x: clientX, y: clientY })
+                          setHoveredProgram(program)
+                        },
+                        mouseout: () => {
+                          setHoveredProgram(null)
                         }
                       }}
                     />
@@ -4585,12 +4655,31 @@ function App() {
               </MapContainer>
             )}
 
-            {showContractMapLayer && isUserAllowed && (
+            {showContractMapLayer && isUserAllowed && !selectedProgram && (
               <div className="contract-map-legend">
-                <div className="cml-item"><span className="cml-dot cml-dot-expiring" /> Expiring {new Date().getFullYear()}</div>
-                <div className="cml-item"><span className="cml-dot cml-dot-active" /> Active</div>
-                <div className="cml-item"><span className="cml-dot cml-dot-none" /> No Data</div>
+                <div className="cml-section">
+                  <span className="cml-section-title">YEARS REMAINING</span>
+                  <div className="cml-gradient">
+                    <div className="cml-item"><span className="cml-dot cml-dot-urgent" /> 0 (Urgent)</div>
+                    <div className="cml-item"><span className="cml-dot cml-dot-warning" /> 1 Year</div>
+                    <div className="cml-item"><span className="cml-dot cml-dot-caution" /> 2 Years</div>
+                    <div className="cml-item"><span className="cml-dot cml-dot-healthy" /> 3+ Years</div>
+                  </div>
+                </div>
+                <div className="cml-section">
+                  <span className="cml-section-title">STATUS</span>
+                  <div className="cml-item"><span className="cml-dot cml-dot-none" /> No Data</div>
+                  <div className="cml-item"><span className="cml-star">★</span> Premium Tier</div>
+                </div>
               </div>
+            )}
+
+            {hoveredProgram && !selectedProgram && (
+              <HoverPreviewCard
+                program={hoveredProgram}
+                position={hoverPosition}
+                regionColor={REGIONS[hoveredProgram.region]?.color}
+              />
             )}
 
             <DetailPanel
@@ -4760,19 +4849,6 @@ function App() {
             <span>Search</span>
           </button>
           <button
-            className={`mobile-nav-btn${showLogoView ? ' active' : ''}`}
-            onClick={() => setShowLogoView(v => !v)}
-            title="Logo View"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            <span>Logos</span>
-          </button>
-          <button
             className="mobile-nav-btn mobile-nav-btn-primary"
             onClick={handleAddClick}
             title="Add"
@@ -4822,7 +4898,11 @@ function App() {
       </nav>
 
       <footer className="footer">
-        <img src="/logos/s-tier.png" alt="S-Tier" className="footer-logo" />
+        {(activeTab === 'basketball' || activeTab === 'football') && (
+          <div className="stier-banner">
+            <span className="stier-text">WELCOME TO THE S-TIER</span>
+          </div>
+        )}
         <p>
           {activeTab === 'events'
             ? `${events.length} events`
@@ -4981,6 +5061,7 @@ function App() {
         programs={programs}
         events={events}
         sport={activeTab}
+        allContractDetails={allContractDetails}
       />
 
       <ComparisonModal

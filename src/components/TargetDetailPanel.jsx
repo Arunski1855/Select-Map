@@ -8,31 +8,7 @@ import {
   deleteTargetRankingMetric
 } from '../firebase'
 import './TargetDetailPanel.css'
-
-const PIPELINE_STATUSES = [
-  { id: 'identified',    label: 'Identified',    color: '#6b7280' },
-  { id: 'contacted',     label: 'Contacted',     color: '#3b82f6' },
-  { id: 'in_discussion', label: 'In Discussion', color: '#8b5cf6' },
-  { id: 'proposal_sent', label: 'Proposal Sent', color: '#f59e0b' },
-  { id: 'negotiating',   label: 'Negotiating',   color: '#ec4899' },
-  { id: 'signed',        label: 'Signed',        color: '#10b981' },
-  { id: 'lost',          label: 'Lost',          color: '#ef4444' },
-]
-
-const PRIORITIES = [
-  { id: 'high',   label: 'High Priority', color: '#ef4444' },
-  { id: 'medium', label: 'Medium',        color: '#f59e0b' },
-  { id: 'low',    label: 'Low',           color: '#6b7280' },
-]
-
-const REGIONS = {
-  'Canada':      '#d4002a',
-  'Mid Atlantic':'#005eb8',
-  'South':       '#ff6b00',
-  'Midwest':     '#7d2d8e',
-  'North':       '#1a9fc9',
-  'West':        '#00a550',
-}
+import { REGIONS, PIPELINE_STATUSES, PRIORITIES } from '../constants'
 
 function formatPhone(phone) {
   const digits = (phone || '').replace(/\D/g, '')
@@ -158,7 +134,7 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
 
   const statusInfo = PIPELINE_STATUSES.find(s => s.id === target.status) || PIPELINE_STATUSES[0]
   const priorityInfo = PRIORITIES.find(p => p.id === target.priority) || PRIORITIES[1]
-  const regionColor = REGIONS[target.region] || '#666666'
+  const regionColor = REGIONS[target.region]?.color || '#666666'
 
   const panelStyle = sheetHeight ? { height: sheetHeight } : {}
 

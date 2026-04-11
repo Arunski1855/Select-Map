@@ -3,39 +3,58 @@ import { getDatabase, ref, push, onValue, remove, set, update } from 'firebase/d
 import {
   getAuth,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup
+  onAuthStateChanged
 } from 'firebase/auth'
+import logger from './utils/logger'
 
-// Firebase configuration
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyA_PDWSGaGLKIsjrCSdP0T0A3TUJqGQcuc",
-  authDomain: "adidas-select-map.firebaseapp.com",
-  databaseURL: "https://adidas-select-map-default-rtdb.firebaseio.com",
-  projectId: "adidas-select-map",
-  storageBucket: "adidas-select-map.firebasestorage.app",
-  messagingSenderId: "689658240398",
-  appId: "1:689658240398:web:8965ca228ae357187a98df",
-  measurementId: "G-MY9R7R3KK1"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+}
+
+// Validate required config
+if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
+  console.error('Firebase configuration missing. Please check your .env.local file or Vercel environment variables.')
+  // Show user-friendly error instead of crashing
+  const overlay = document.createElement('div')
+  Object.assign(overlay.style, { display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'#000', color:'#fff', fontFamily:'sans-serif', textAlign:'center', padding:'20px' })
+
+  const inner = document.createElement('div')
+
+  const heading = document.createElement('h1')
+  heading.style.color = '#E500A4'
+  heading.textContent = 'Configuration Error'
+
+  const msg1 = document.createElement('p')
+  msg1.textContent = 'Firebase environment variables are not configured.'
+
+  const msg2 = document.createElement('p')
+  Object.assign(msg2.style, { color:'#666', fontSize:'14px' })
+  msg2.textContent = 'Please add VITE_FIREBASE_* variables in Vercel.'
+
+  inner.append(heading, msg1, msg2)
+  overlay.appendChild(inner)
+  document.body.replaceChildren(overlay)
+  throw new Error('Firebase configuration missing')
 }
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
 const auth = getAuth(app)
-const googleProvider = new GoogleAuthProvider()
-
-// Default allowed users (always have access)
-const DEFAULT_ALLOWED_USERS = [
-  'dashiell.sperling@gmail.com',
-  'derek.stucker@adidas.com',
-  'thomas.bauman@adidas.com',
-  'spencer.pickering@adidas.com',
-  'bo.rodriguez@adidas.com'
-]
+// Default allowed users from environment (always have access)
+const DEFAULT_ALLOWED_USERS = (import.meta.env.VITE_DEFAULT_ALLOWED_USERS || '')
+  .split(',')
+  .map(email => email.trim().toLowerCase())
+  .filter(email => email.length > 0)
 
 // Sanitize email for use as Firebase key (replace '.' with ',')
 const sanitizeEmailForKey = (email) => {
@@ -60,33 +79,43 @@ const syncAllowedEmailLookup = async (emails) => {
     await set(lookupRef, lookupData)
   } catch (error) {
     // Silently fail if user doesn't have permission yet
-    console.log('Email lookup sync pending authentication')
+    logger.log('Email lookup sync pending authentication')
   }
 }
 
-// Initialize default allowed users on app start
+// Initialize default allowed users — only runs when a user is authenticated
 const initializeAllowedUsers = async () => {
+  if (!auth.currentUser) return
+
   const allowedRef = ref(database, 'allowedUsers')
   onValue(allowedRef, async (snapshot) => {
     const data = snapshot.val()
     const existingEmails = data ? Object.values(data).map(u => u.email.toLowerCase()) : []
 
-    // Add default users if they don't exist
-    for (const email of DEFAULT_ALLOWED_USERS) {
-      if (!existingEmails.includes(email.toLowerCase())) {
-        const newRef = push(allowedRef)
-        await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
+    try {
+      // Add default users if they don't exist
+      for (const email of DEFAULT_ALLOWED_USERS) {
+        if (!existingEmails.includes(email.toLowerCase())) {
+          const newRef = push(allowedRef)
+          await set(newRef, { email: email.toLowerCase(), addedAt: Date.now() })
+        }
       }
-    }
 
-    // Sync the lookup table for security rules
-    const allEmails = [...new Set([...existingEmails, ...DEFAULT_ALLOWED_USERS.map(e => e.toLowerCase())])]
-    await syncAllowedEmailLookup(allEmails)
-  }, { onlyOnce: true })
+      // Sync the lookup table for security rules
+      const allEmails = [...new Set([...existingEmails, ...DEFAULT_ALLOWED_USERS.map(e => e.toLowerCase())])]
+      await syncAllowedEmailLookup(allEmails)
+    } catch (error) {
+      logger.error('initializeAllowedUsers error:', error)
+    }
+  }, { onlyOnce: true }, (error) => {
+    logger.error('initializeAllowedUsers read error:', error)
+  })
 }
 
-// Run initialization
-initializeAllowedUsers()
+// Run initialization once auth state is known
+onAuthStateChanged(auth, (user) => {
+  if (user) initializeAllowedUsers()
+})
 
 // Add a program to Firebase
 export const addProgram = async (sport, program) => {
@@ -108,22 +137,22 @@ export const editProgram = async (sport, program) => {
 
   // Debug: Log auth state when edit is attempted
   const currentUser = auth.currentUser
-  console.log('=== EDIT PROGRAM DEBUG ===')
-  console.log('Auth current user:', currentUser ? currentUser.email : 'NULL (not authenticated)')
-  console.log('Auth user UID:', currentUser?.uid || 'N/A')
-  console.log('Program path:', `programs/${sport}/${program.id}`)
+  logger.log('=== EDIT PROGRAM DEBUG ===')
+  logger.log('Auth current user:', currentUser ? currentUser.email : 'NULL (not authenticated)')
+  logger.log('Auth user UID:', currentUser?.uid || 'N/A')
+  logger.log('Program path:', `programs/${sport}/${program.id}`)
 
   if (!currentUser) {
-    console.error('EDIT BLOCKED: No authenticated user!')
+    logger.error('EDIT BLOCKED: No authenticated user!')
     throw new Error('You must be logged in to edit programs. Please log out and log back in.')
   }
 
   try {
     await set(programRef, program)
-    console.log('Edit successful!')
+    logger.log('Edit successful!')
   } catch (error) {
-    console.error('Edit program error:', error.code, error.message)
-    console.error('Full error:', error)
+    logger.error('Edit program error:', error.code, error.message)
+    logger.error('Full error:', error)
     throw error
   }
 }
@@ -142,7 +171,7 @@ export const subscribeToPrograms = (sport, callback) => {
     const programs = data ? Object.values(data) : []
     callback(programs)
   }, (error) => {
-    console.error('Firebase error:', error)
+    logger.error('Firebase error:', error)
     callback([])
   })
   return unsubscribe
@@ -151,14 +180,6 @@ export const subscribeToPrograms = (sport, callback) => {
 // Authentication functions
 export const signIn = (email, password) => {
   return signInWithEmailAndPassword(auth, email, password)
-}
-
-export const signUp = (email, password) => {
-  return createUserWithEmailAndPassword(auth, email, password)
-}
-
-export const signInWithGoogle = () => {
-  return signInWithPopup(auth, googleProvider)
 }
 
 export const logOut = () => {
@@ -176,6 +197,9 @@ export const subscribeToAllowedUsers = (callback) => {
     const data = snapshot.val()
     const emails = data ? Object.values(data).map(u => u.email.toLowerCase()) : []
     callback(emails)
+  }, (error) => {
+    logger.error('Firebase allowedUsers error:', error)
+    callback([])
   })
 }
 
@@ -262,7 +286,7 @@ export const subscribeToEvents = (callback) => {
     const events = data ? Object.values(data) : []
     callback(events)
   }, (error) => {
-    console.error('Firebase events error:', error)
+    logger.error('Firebase events error:', error)
     callback([])
   })
   return unsubscribe
@@ -288,7 +312,7 @@ export const subscribeToNotes = (sport, programId, callback) => {
     const notes = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
     callback(notes)
   }, (error) => {
-    console.error('Firebase notes error:', error)
+    logger.error('Firebase notes error:', error)
     callback([])
   })
 }
@@ -313,7 +337,7 @@ export const subscribeToSchedule = (sport, programId, callback) => {
     const entries = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
     callback(entries)
   }, (error) => {
-    console.error('Firebase schedule error:', error)
+    logger.error('Firebase schedule error:', error)
     callback([])
   })
 }
@@ -333,7 +357,7 @@ export const subscribeToSocialMetrics = (sport, programId, callback) => {
     const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
     callback(metrics)
   }, (error) => {
-    console.error('Firebase social metrics error:', error)
+    logger.error('Firebase social metrics error:', error)
     callback([])
   })
 }
@@ -358,7 +382,7 @@ export const subscribeToRankingMetrics = (sport, programId, callback) => {
     const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
     callback(metrics)
   }, (error) => {
-    console.error('Firebase ranking metrics error:', error)
+    logger.error('Firebase ranking metrics error:', error)
     callback([])
   })
 }
@@ -384,14 +408,14 @@ export const archiveProgram = async (sport, programId) => {
           await set(programRef, { ...data, isArchived: true, archivedAt: Date.now() })
           resolve()
         } catch (error) {
-          console.error('Archive set error:', error)
+          logger.error('Archive set error:', error)
           reject(error)
         }
       } else {
         reject(new Error('Program not found'))
       }
     }, { onlyOnce: true }, (error) => {
-      console.error('Archive read error:', error)
+      logger.error('Archive read error:', error)
       reject(error)
     })
   })
@@ -422,7 +446,7 @@ export const subscribeToArchivedPrograms = (sport, callback) => {
     const programs = data ? Object.values(data).filter(p => p.isArchived) : []
     callback(programs)
   }, (error) => {
-    console.error('Firebase archived programs error:', error)
+    logger.error('Firebase archived programs error:', error)
     callback([])
   })
   return unsubscribe
@@ -443,7 +467,7 @@ export const subscribeToMentions = (sport, programId, callback) => {
     const mentions = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
     callback(mentions)
   }, (error) => {
-    console.error('Firebase mentions error:', error)
+    logger.error('Firebase mentions error:', error)
     callback([])
   })
 }
@@ -479,7 +503,7 @@ export const subscribeToLinkedEvents = (programId, callback) => {
     ) : []
     callback(events)
   }, (error) => {
-    console.error('Firebase linked events error:', error)
+    logger.error('Firebase linked events error:', error)
     callback([])
   })
 }
@@ -518,7 +542,7 @@ export const subscribeToTargetPrograms = (sport, callback) => {
     }) : []
     callback(targets)
   }, (error) => {
-    console.error('Firebase target programs error:', error)
+    logger.error('Firebase target programs error:', error)
     callback([])
   })
 }
@@ -548,7 +572,7 @@ export const subscribeToTargetNotes = (sport, targetId, callback) => {
     const notes = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : []
     callback(notes)
   }, (error) => {
-    console.error('Firebase target notes error:', error)
+    logger.error('Firebase target notes error:', error)
     callback([])
   })
 }
@@ -573,7 +597,7 @@ export const subscribeToTargetRankingMetrics = (sport, targetId, callback) => {
     const metrics = data ? Object.values(data).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []
     callback(metrics)
   }, (error) => {
-    console.error('Firebase target ranking metrics error:', error)
+    logger.error('Firebase target ranking metrics error:', error)
     callback([])
   })
 }
@@ -590,7 +614,7 @@ export const subscribeToContractDetails = (sport, programId, callback) => {
     const data = snapshot.val()
     callback(data || null)
   }, (error) => {
-    console.error('Firebase contract details error:', error)
+    logger.error('Firebase contract details error:', error)
     callback(null)
   })
 }
@@ -624,7 +648,7 @@ export const subscribeToContractHistory = (sport, programId, callback) => {
     const history = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : []
     callback(history)
   }, (error) => {
-    console.error('Firebase contract history error:', error)
+    logger.error('Firebase contract history error:', error)
     callback([])
   })
 }
@@ -636,7 +660,7 @@ export const subscribeToAllContractDetails = (sport, callback) => {
     const data = snapshot.val()
     callback(data || {})
   }, (error) => {
-    console.error('Firebase all contract details error:', error)
+    logger.error('Firebase all contract details error:', error)
     callback({})
   })
 }
@@ -652,7 +676,7 @@ export const subscribeToCompetitorEvents = (callback) => {
     }) : []
     callback(events)
   }, (error) => {
-    console.error('Firebase competitor events error:', error)
+    logger.error('Firebase competitor events error:', error)
     callback([])
   })
 }
@@ -715,7 +739,7 @@ export const subscribeToProgramBackups = (sport, programId, callback) => {
     const backups = data ? Object.values(data).sort((a, b) => b.backedUpAt - a.backedUpAt) : []
     callback(backups)
   }, (error) => {
-    console.error('Firebase program backups error:', error)
+    logger.error('Firebase program backups error:', error)
     callback([])
   })
 }
@@ -747,7 +771,7 @@ export const getBackupPin = (callback) => {
   const pinRef = ref(database, 'settings/backupPin')
   return onValue(pinRef, (snapshot) => {
     const pin = snapshot.val()
-    callback(pin || '1234') // Default PIN if not set
+    callback(pin || null) // null if no PIN configured — caller must handle
   }, { onlyOnce: true })
 }
 

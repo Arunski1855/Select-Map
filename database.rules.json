@@ -2,15 +2,15 @@
   "rules": {
     // ================================================================
     // ADIDAS SELECT MAP - ENHANCED SECURITY RULES
-    // Last updated: 2026-03-09
+    // Last updated: 2026-03-13
     // ================================================================
 
     // Whitelist lookup table (email sanitized as key for O(1) validation)
-    // Email keys are sanitized: replace '.' with ',' and lowercase
+    // Email keys are sanitized: replace ALL '.' with ',' (/\./g global) and lowercase
     "allowedEmailLookup": {
       ".read": "auth != null",
       // Only existing whitelisted users can modify the whitelist
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Programs - public read (map is public-viewable), whitelisted write
@@ -19,7 +19,7 @@
       "$sport": {
         "$programId": {
           // Only whitelisted users can write
-          ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+          ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
           // Validate required fields on write
           ".validate": "newData.hasChildren(['name', 'lat', 'lng'])"
         }
@@ -30,17 +30,17 @@
     "events": {
       ".read": true,
       "$eventId": {
-        ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+        ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
         ".validate": "newData.hasChildren(['name', 'date'])"
       }
     },
 
     // Target programs pipeline - sensitive, whitelisted access only
     "targetPrograms": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
       "$sport": {
         "$targetId": {
-          ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+          ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
           ".validate": "newData.hasChildren(['name', 'status'])"
         }
       }
@@ -48,36 +48,36 @@
 
     // Target notes - sensitive, whitelisted access only
     "targetNotes": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Target ranking metrics - sensitive, whitelisted access only
     "targetRankingMetrics": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Notes - whitelisted access
     "notes": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Schedule entries - whitelisted access
     "schedule": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // History logs - whitelisted read, append-only write
     "history": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
       "$sport": {
         "$programId": {
           "$entryId": {
             // Can only add new entries, not modify existing
-            ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists() && !data.exists()"
+            ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists() && !data.exists()"
           }
         }
       }
@@ -85,35 +85,35 @@
 
     // Social metrics - whitelisted access
     "socialMetrics": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Ranking metrics - whitelisted access
     "rankingMetrics": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Mentions - whitelisted access
     "mentions": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Contract details (highly sensitive) - whitelisted access only
     "contractDetails": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Contract history - whitelisted read, append-only
     "contractHistory": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
       "$sport": {
         "$programId": {
           "$entryId": {
-            ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists() && !data.exists()"
+            ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists() && !data.exists()"
           }
         }
       }
@@ -121,31 +121,31 @@
 
     // Competitor events - whitelisted access
     "competitorEvents": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Allowed users list - whitelisted access only
     "allowedUsers": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
-      ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()"
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
+      ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()"
     },
 
     // Backup metadata - tracks when backups were created
     "backupMetadata": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
       "$backupId": {
-        ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+        ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
         ".validate": "newData.hasChildren(['timestamp', 'createdBy', 'type'])"
       }
     },
 
     // Backup snapshots - stores actual backup data
     "backups": {
-      ".read": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      ".read": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists()",
       "$backupId": {
         // Only create, no modify or delete
-        ".write": "auth != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace('.', ',')).exists() && !data.exists()"
+        ".write": "auth != null && auth.token.email != null && root.child('allowedEmailLookup').child(auth.token.email.toLowerCase().replace(/\./g, ',')).exists() && !data.exists()"
       }
     }
   }

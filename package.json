@@ -7,9 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "generate-og": "node scripts/generate-og-image.js"
+    "generate-og": "node scripts/generate-og-image.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/"
   },
   "dependencies": {
+    "@sentry/react": "^8.0.0",
     "firebase": "^10.7.1",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.1.0",
@@ -22,6 +27,11 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "prettier": "^3.8.1",
     "sharp": "^0.34.5",
     "vite": "^5.0.0"
   }
