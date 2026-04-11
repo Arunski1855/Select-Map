@@ -37,7 +37,9 @@ export default [
         FileReader: 'readonly',
         Image: 'readonly',
         // Vite globals
-        import: 'readonly'
+        import: 'readonly',
+        // Build-time constant injected via vite.config.js define
+        __SENTRY_DSN__: 'readonly'
       }
     },
     settings: {

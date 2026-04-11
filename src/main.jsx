@@ -6,9 +6,9 @@ import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
 
 // Initialize Sentry — no-ops gracefully when DSN is absent (dev / CI)
-if (import.meta.env.VITE_SENTRY_DSN) {
+if (typeof __SENTRY_DSN__ !== 'undefined' && __SENTRY_DSN__) {
   Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
+    dsn: __SENTRY_DSN__,
     environment: import.meta.env.MODE,
     // Capture 100% of errors, 10% of performance traces
     tracesSampleRate: 0.1,
