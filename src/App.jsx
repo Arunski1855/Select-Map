@@ -7,7 +7,6 @@ import {
   deleteProgram,
   editProgram,
   signIn,
-  signUp,
   signInWithGoogle,
   logOut,
   onAuthChange,
@@ -114,7 +113,6 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
 
 // Auth Modal Component
 function AuthModal({ isOpen, onClose, onSuccess }) {
-  const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -126,11 +124,7 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
     setLoading(true)
 
     try {
-      if (isLogin) {
-        await signIn(email, password)
-      } else {
-        await signUp(email, password)
-      }
+      await signIn(email, password)
       onSuccess()
       onClose()
     } catch (err) {
@@ -160,7 +154,7 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="auth-modal" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>&times;</button>
-        <h2>{isLogin ? 'Sign In' : 'Create Account'}</h2>
+        <h2>Sign In</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -188,7 +182,7 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
           {error && <p className="error-message">{error}</p>}
 
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? 'Please wait...' : 'Sign In'}
           </button>
         </form>
 
@@ -206,12 +200,6 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
           Continue with Google
         </button>
 
-        <p className="auth-toggle">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? 'Sign up' : 'Sign in'}
-          </button>
-        </p>
       </div>
     </div>
   )

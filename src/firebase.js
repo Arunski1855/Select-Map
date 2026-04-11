@@ -3,7 +3,6 @@ import { getDatabase, ref, push, onValue, remove, set, update } from 'firebase/d
 import {
   getAuth,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -185,10 +184,6 @@ export const subscribeToPrograms = (sport, callback) => {
 // Authentication functions
 export const signIn = (email, password) => {
   return signInWithEmailAndPassword(auth, email, password)
-}
-
-export const signUp = (email, password) => {
-  return createUserWithEmailAndPassword(auth, email, password)
 }
 
 export const signInWithGoogle = () => {
