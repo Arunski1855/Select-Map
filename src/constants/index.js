@@ -75,6 +75,7 @@ export const PIPELINE_STATUSES = [
   { id: 'proposal_sent', label: 'Proposal Sent', description: 'Offer extended', color: '#f59e0b' },
   { id: 'negotiating', label: 'Negotiating', description: 'Working terms', color: '#ec4899' },
   { id: 'signed', label: 'Signed', description: 'Won', color: '#10b981' },
+  { id: 'did_not_extend', label: 'Did Not Extend Offer', description: 'Chose not to offer', color: '#f97316' },
   { id: 'lost', label: 'Lost', description: 'Went elsewhere', color: '#ef4444' }
 ]
 
