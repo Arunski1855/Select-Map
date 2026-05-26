@@ -21,6 +21,7 @@ import {
   updateProgramHistoricals
 } from '../firebase'
 import ProgramCard from './ProgramCard'
+import { REGIONS, LEVEL_COLORS } from '../constants'
 
 // Error boundary to prevent white-screen crashes
 class DetailPanelErrorBoundary extends Component {
@@ -59,22 +60,6 @@ class DetailPanelErrorBoundary extends Component {
   }
 }
 
-// Region definitions with colors
-const REGIONS = {
-  'Canada': { color: '#d4002a' },
-  'Mid Atlantic': { color: '#005eb8' },
-  'South': { color: '#ff6b00' },
-  'Midwest': { color: '#7d2d8e' },
-  'West': { color: '#00a550' }
-}
-
-const LEVEL_COLORS = {
-  'Mahomes': '#e31837',
-  'Gold': '#c9a84c',
-  'Silver': '#8a8d8f',
-  'Bronze': '#a0714f',
-  'Regional': '#005eb8'
-}
 
 // Team colors hex mapping
 // adidas Zone Graphic color palette
@@ -856,6 +841,11 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
               {program.tcaStoreUrl && (
                 <a href={program.tcaStoreUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-tca">
                   TCA Store
+                </a>
+              )}
+              {program.adiCustomUrl && (
+                <a href={program.adiCustomUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-adicustom">
+                  adiCustom Uniform
                 </a>
               )}
               {program.brandGuide && (
