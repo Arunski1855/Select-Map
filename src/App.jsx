@@ -3926,8 +3926,7 @@ function App() {
                               <div className="td-activity-content">
                                 <span className="td-activity-name">{activity.name}</span>
                                 <span className="td-activity-action">
-                                  {activity.action === 'signed' ? 'was signed' :
-                                   activity.action === 'lost' ? 'was lost' : 'was updated'}
+                                  {PIPELINE_STATUSES.find(s => s.id === activity.status)?.label ?? 'Updated'}
                                 </span>
                               </div>
                               <div className="td-activity-meta">
