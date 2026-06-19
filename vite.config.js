@@ -6,5 +6,10 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  define: {
+    // Explicitly bake Sentry DSN from process.env so Vercel's injected env
+    // vars are picked up even when .env files are absent in the build context.
+    __SENTRY_DSN__: JSON.stringify(process.env.VITE_SENTRY_DSN || '')
   }
 })

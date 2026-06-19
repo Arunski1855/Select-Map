@@ -21,17 +21,13 @@ function SplashScreen({ onComplete }) {
       <div className="splash-blur splash-blur--br" />
 
       <div className="splash-content">
-        {/* BOS (Badge of Sport) - adidas Performance Logo */}
+        {/* ADI SEL3CT Horizontal Logo (BOS + Wordmark) */}
         <div className="splash-logo">
           <img
-            src="/logos/adidas-logo.png"
-            alt="adidas"
+            src="/logos/Adiselect_Horizontal_Logo_White.png"
+            alt="ADI SEL3CT"
             className="splash-logo-img"
           />
-        </div>
-        {/* ADI SEL3CT Wordmark - detached from BOS per brand guidelines */}
-        <div className="splash-wordmark">
-          <span className="splash-wordmark-text">ADI SEL3CT</span>
         </div>
         {/* Magenta loader bar */}
         <div className="splash-loader">
