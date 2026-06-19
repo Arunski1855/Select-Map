@@ -3321,8 +3321,7 @@ function App() {
       <header className="header">
         <div className="header-content">
           <div className="title-row">
-            <img src="/logos/adidas-logo.png" alt="adidas" className="header-logo" />
-            <h1 className="title">ADI SEL3CT</h1>
+            <img src="/logos/Adiselect_Horizontal_Logo_White.png" alt="ADI SEL3CT" className="header-logo" />
           </div>
         </div>
 

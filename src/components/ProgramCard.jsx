@@ -243,7 +243,7 @@ function ProgramCard({ program, sport = 'football', onClose }) {
           <div className="program-card-branding-bar">
             <div className="program-card-branding-left">
               <img
-                src="/logos/adi-select-logo.svg"
+                src="/logos/Adiselect_Horizontal_Logo_White.png"
                 alt="ADI SEL3CT"
                 className="program-card-branding-logo"
                 onError={(e) => { e.target.style.display = 'none' }}
