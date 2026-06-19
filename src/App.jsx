@@ -3730,7 +3730,7 @@ function App() {
                     className={`td-sport-btn${targetsSport === 'basketball' ? ' active' : ''}`}
                     onClick={() => setTargetsSport('basketball')}
                   >
-                    <img src="/logos/adidas-select-basketball.png" alt="" className="td-sport-logo" />
+                    <img src="/logos/Adiselect_Horizontal_Logo_Black.png" alt="" className="td-sport-logo" />
                     <span>Basketball</span>
                   </button>
                   <button
