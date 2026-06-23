@@ -897,8 +897,9 @@ textarea {
 }
 
 .tab-icon {
-  height: 28px;
+  height: 20px;
   width: auto;
+  max-width: 120px;
   object-fit: contain;
   flex-shrink: 0;
   transition: transform 0.25s ease-out;
