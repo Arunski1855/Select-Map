@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { MapContainer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, Marker, Popup, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
   subscribeToPrograms,
@@ -2289,6 +2289,77 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
   )
 }
 
+// Deterministic label direction for map markers to minimise overlap
+function getLabelDirection(program) {
+  const lat = program.coordinates?.[0] || 0
+  const lng = program.coordinates?.[1] || 0
+  // Hash using distinct primes so adjacent schools tend to get different directions
+  const h = Math.abs(Math.floor(lat * 7) * 3 + Math.floor(lng * 5) * 11)
+  return ['right', 'top', 'left', 'bottom'][h % 4]
+}
+
+function SchoolDirectoryPanel({ programs, onClose, onExport, sport }) {
+  const [search, setSearch] = useState('')
+  const sorted = [...programs]
+    .filter(p => !search ||
+      p.name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.city?.toLowerCase().includes(search.toLowerCase()) ||
+      p.state?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+  return (
+    <div className="school-directory-panel">
+      <div className="sdp-header">
+        <img src="/logos/Adiselect_Horizontal_Logo_White.png" alt="ADI SEL3CT" className="sdp-logo" />
+        <button className="sdp-close" onClick={onClose} aria-label="Close directory">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square">
+            <line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/>
+          </svg>
+        </button>
+        <div className="sdp-subtitle">SCHOOL DIRECTORY</div>
+        <div className="sdp-sport-tag">{sport === 'football' ? 'FOOTBALL' : 'BASKETBALL'}</div>
+      </div>
+
+      <div className="sdp-search-row">
+        <input
+          className="sdp-search-input"
+          placeholder="Filter schools…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <span className="sdp-count">{sorted.length}</span>
+      </div>
+
+      <div className="sdp-list">
+        {sorted.map((p, i) => (
+          <div key={p.id} className="sdp-item">
+            <span className="sdp-num">{i + 1}</span>
+            <div className="sdp-info">
+              <div className="sdp-name">{p.name}</div>
+              <div className="sdp-location">{[p.city, p.state].filter(Boolean).join(', ')}</div>
+            </div>
+            {p.region && (
+              <div className="sdp-region" style={{ background: p.regionColor || '#555' }}>
+                {p.region.slice(0, 1)}
+              </div>
+            )}
+          </div>
+        ))}
+        {sorted.length === 0 && (
+          <div className="sdp-empty">No schools match.</div>
+        )}
+      </div>
+
+      <button className="sdp-export-btn" onClick={onExport}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+          <path d="M7 2v7"/><polyline points="4,6 7,9 10,6"/><path d="M2 10v2h10v-2"/>
+        </svg>
+        EXPORT DIRECTORY PDF
+      </button>
+    </div>
+  )
+}
+
 function App() {
   const { toasts, toast, dismiss } = useToast()
   const [showSplash, setShowSplash] = useState(true)
@@ -2393,6 +2464,10 @@ function App() {
   // Hover preview state
   const [hoveredProgram, setHoveredProgram] = useState(null)
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
+
+  // School directory panel + map labels
+  const [showSchoolDirectory, setShowSchoolDirectory] = useState(false)
+  const [showMapLabels, setShowMapLabels] = useState(false)
 
   // Competitor events
   const [competitorEvents, setCompetitorEvents] = useState([])
@@ -3242,6 +3317,95 @@ function App() {
     }
   }, [activeTab, filteredPrograms])
 
+  const handleExportDirectory = useCallback(async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      await import('jspdf-autotable')
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      const sportLabel = activeTab === 'football' ? 'SELECT FOOTBALL' : 'SELECT BASKETBALL'
+      const sorted = [...filteredPrograms].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+      // Black header bar
+      doc.setFillColor(0, 0, 0)
+      doc.rect(0, 0, 210, 28, 'F')
+
+      // ADI SEL3CT wordmark text (italic, compressed style approximation)
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bolditalic')
+      doc.setFontSize(18)
+      doc.text('ADI SEL3CT', 14, 13)
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.setCharSpace(2)
+      doc.text(sportLabel, 14, 21)
+      doc.setCharSpace(0)
+
+      // Date + count on right
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.text(today, 210 - 14, 13, { align: 'right' })
+      doc.text(`${sorted.length} Programs`, 210 - 14, 21, { align: 'right' })
+
+      // Table
+      const tableData = sorted.map((p, i) => [
+        i + 1,
+        p.name || '',
+        p.city || '',
+        p.state || '',
+        p.region || '',
+        p.level || '',
+        p.conference || '',
+        p.headCoach || ''
+      ])
+
+      doc.autoTable({
+        startY: 32,
+        head: [['#', 'School', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach']],
+        body: tableData,
+        styles: { fontSize: 7.5, cellPadding: 2.5, font: 'helvetica' },
+        headStyles: {
+          fillColor: [0, 0, 0],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8
+        },
+        alternateRowStyles: { fillColor: [248, 248, 248] },
+        columnStyles: {
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 48 },
+          2: { cellWidth: 28 },
+          3: { cellWidth: 12, halign: 'center' },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 18 },
+          6: { cellWidth: 28 },
+          7: { cellWidth: 30 }
+        },
+        margin: { left: 8, right: 8 },
+        didDrawPage: (data) => {
+          // Footer on every page
+          doc.setFillColor(0, 0, 0)
+          doc.rect(0, 285, 210, 12, 'F')
+          doc.setTextColor(255, 255, 255)
+          doc.setFont('helvetica', 'bolditalic')
+          doc.setFontSize(7)
+          doc.text('ADI SEL3CT — CONFIDENTIAL', 14, 292)
+          doc.setFont('helvetica', 'normal')
+          doc.text(`Page ${data.pageNumber}`, 210 - 14, 292, { align: 'right' })
+        }
+      })
+
+      const filename = `adi-select-${activeTab}-directory-${new Date().toISOString().split('T')[0]}.pdf`
+      doc.save(filename)
+      toast.success('Directory exported.')
+    } catch (err) {
+      logger.error('Directory export error:', err)
+      toast.error(`Export failed: ${err.message || 'Unknown error'}`)
+    }
+  }, [activeTab, filteredPrograms])
+
   // Edit a program
   const handleEditProgram = async (updatedProgram) => {
     try {
@@ -3532,6 +3696,34 @@ function App() {
                 <span className="stat-label">Bulk Edit</span>
               </div>
             )}
+            {/* School Directory */}
+            <div className="stat-item stat-directory"
+              onClick={() => setShowSchoolDirectory(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowSchoolDirectory(v => !v) }}
+              title="School Directory">
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="2" width="14" height="16" rx="1"/>
+                  <line x1="7" y1="7" x2="13" y2="7"/>
+                  <line x1="7" y1="10" x2="13" y2="10"/>
+                  <line x1="7" y1="13" x2="11" y2="13"/>
+                </svg>
+              </span>
+              <span className="stat-label">Directory</span>
+            </div>
+            {/* Map Labels toggle */}
+            <div className={`stat-item stat-labels${showMapLabels ? ' active' : ''}`}
+              onClick={() => setShowMapLabels(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowMapLabels(v => !v) }}
+              title="Toggle school name labels on map">
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="6" width="10" height="8" rx="1"/>
+                  <path d="M12 9l4-2v6l-4-2"/>
+                </svg>
+              </span>
+              <span className="stat-label">Labels</span>
+            </div>
             {/* Export */}
             <div className="stat-item stat-export"
               onClick={() => setShowExportMenu(true)}
@@ -3730,7 +3922,7 @@ function App() {
                     className={`td-sport-btn${targetsSport === 'basketball' ? ' active' : ''}`}
                     onClick={() => setTargetsSport('basketball')}
                   >
-                    <img src="/logos/adi-select-basketball.svg" alt="" className="td-sport-logo" />
+                    <img src="/logos/Adiselect_Horizontal_Logotype_White.png" alt="ADI SEL3CT" className="td-sport-logo td-sport-logo--wordmark" />
                     <span>Basketball</span>
                   </button>
                   <button
@@ -4648,7 +4840,18 @@ function App() {
                           setHoveredProgram(null)
                         }
                       }}
-                    />
+                    >
+                      {showMapLabels && (
+                        <Tooltip
+                          permanent
+                          direction={getLabelDirection(program)}
+                          offset={[0, -14]}
+                          className="map-school-label"
+                        >
+                          {program.name}
+                        </Tooltip>
+                      )}
+                    </Marker>
                   )
                 ))}
               </MapContainer>
@@ -4678,6 +4881,15 @@ function App() {
                 program={hoveredProgram}
                 position={hoverPosition}
                 regionColor={REGIONS[hoveredProgram.region]?.color}
+              />
+            )}
+
+            {showSchoolDirectory && (
+              <SchoolDirectoryPanel
+                programs={filteredPrograms}
+                sport={activeTab}
+                onClose={() => setShowSchoolDirectory(false)}
+                onExport={handleExportDirectory}
               />
             )}
 
