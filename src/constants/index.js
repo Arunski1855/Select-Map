@@ -134,7 +134,7 @@ export const TEAM_TYPE_OPTIONS = ['Prep', 'National']
 
 // Tab configuration
 export const TABS = [
-  { id: 'basketball', name: 'Select Basketball', icon: '/logos/adidas-select-basketball.png' },
+  { id: 'basketball', name: 'Select Basketball', icon: '/logos/adi-select-basketball.svg' },
   { id: 'football', name: 'Select Football (Mahomes)', icon: '/logos/mahomes-logo.png' },
   { id: 'events', name: 'Select Events', icon: '/logos/adidas-logo.png' },
   { id: 'targets', name: 'Target Programs', icon: '/logos/adidas-logo.png' }
