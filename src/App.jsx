@@ -2298,25 +2298,52 @@ function SchoolLabelLayer({ programs }) {
 
     const NS = 'http://www.w3.org/2000/svg'
     const svg = document.createElementNS(NS, 'svg')
-    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:650;overflow:visible;'
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:650;overflow:hidden;'
     map.getContainer().appendChild(svg)
 
     const LABEL_H = 15
     const LABEL_PAD_X = 4
-    const PAD = 2
-    const MARKER_R = 20
-    const OFFSET_RIGHT = MARKER_R + 8
-    const OFFSET_LEFT = MARKER_R + 90  // push NE labels far into ocean
+    const ROW_H = LABEL_H + 2
+    const OFFSET = 30  // px from marker edge to label
+
+    const countOverlaps = (lx, ly, lw, placed) => {
+      let n = 0
+      for (const p of placed) {
+        const xOk = lx + lw + 2 <= p.lx || lx >= p.lx + p.lw + 2
+        const yOk = ly + LABEL_H + 2 <= p.ly || ly >= p.ly + LABEL_H + 2
+        if (!xOk && !yOk) n++
+      }
+      return n
+    }
+
+    const findSlot = (startLx, startLy, lw, placed, sizeY) => {
+      let ly = startLy
+      for (let i = 0; i < 120; i++) {
+        if (countOverlaps(startLx, ly, lw, placed) === 0) return ly
+        ly += ROW_H
+        // If we've gone too far below the viewport, give up
+        if (ly > sizeY + 10) return null
+      }
+      return null
+    }
 
     const draw = () => {
       while (svg.firstChild) svg.removeChild(svg.firstChild)
       if (!programs || programs.length === 0) return
 
       const size = map.getSize()
-      svg.setAttribute('viewBox', `0 0 ${size.x} ${size.y}`)
+      svg.setAttribute('width', size.x)
+      svg.setAttribute('height', size.y)
+
+      const bounds = map.getBounds()
 
       const sorted = [...programs]
-        .filter(p => p.coordinates?.length === 2)
+        .filter(p => {
+          if (!p.coordinates?.length === 2) return false
+          // Only label markers visible on screen
+          const ll = L.latLng(p.coordinates[0], p.coordinates[1])
+          return bounds.contains(ll)
+        })
         .sort((a, b) => b.coordinates[0] - a.coordinates[0])
 
       const placed = []
@@ -2326,9 +2353,7 @@ function SchoolLabelLayer({ programs }) {
           L.latLng(program.coordinates[0], program.coordinates[1])
         )
 
-        const pushLeft = program.coordinates[1] > -75
-
-        // Draw text first so we can measure it
+        // Measure text first at off-screen position
         const text = document.createElementNS(NS, 'text')
         text.setAttribute('fill', '#ffffff')
         text.setAttribute('font-family', "'adidas FG Compressed','Barlow Condensed','Arial Narrow',sans-serif")
@@ -2337,58 +2362,68 @@ function SchoolLabelLayer({ programs }) {
         text.setAttribute('font-style', 'italic')
         text.setAttribute('letter-spacing', '0.07')
         text.setAttribute('text-anchor', 'start')
-        text.setAttribute('x', '0')
-        text.setAttribute('y', LABEL_H - 4)
+        text.setAttribute('x', '-9999')
+        text.setAttribute('y', '-9999')
         text.textContent = (program.name || '').toUpperCase()
         svg.appendChild(text)
 
-        // Measure actual rendered text width
-        let textW
-        try { textW = text.getComputedTextLength() } catch(e) { textW = program.name.length * 6 }
-        const LABEL_W = textW + LABEL_PAD_X * 2
+        let lw
+        try { lw = text.getComputedTextLength() + LABEL_PAD_X * 2 }
+        catch(e) { lw = program.name.length * 6 + LABEL_PAD_X * 2 }
 
-        // Position label
-        let lx = pushLeft ? pt.x - OFFSET_LEFT - LABEL_W : pt.x + OFFSET_RIGHT
-        let ly = pt.y - LABEL_H / 2
+        const startLy = pt.y - LABEL_H / 2
 
-        // Greedy anti-overlap: shift down until clear
-        let iters = 0, hit = true
-        while (hit && iters < 120) {
-          hit = false
-          for (const p of placed) {
-            const xClear = lx + LABEL_W + PAD <= p.lx || lx >= p.lx + p.lw + PAD
-            const yClear = ly + LABEL_H + PAD <= p.ly || ly >= p.ly + LABEL_H + PAD
-            if (!xClear && !yClear) { hit = true; break }
+        // Try right side then left side; pick whichever clears first within viewport
+        const rxStart = pt.x + OFFSET
+        const lxStart = pt.x - OFFSET - lw
+
+        const rySlot = findSlot(rxStart, startLy, lw, placed, size.y)
+        const lySlot = findSlot(lxStart, startLy, lw, placed, size.y)
+
+        let chosenX, chosenY, pushLeft
+        if (rySlot !== null && lySlot !== null) {
+          // Both fit — prefer side with label closer to marker vertically
+          if (Math.abs(rySlot - startLy) <= Math.abs(lySlot - startLy)) {
+            chosenX = rxStart; chosenY = rySlot; pushLeft = false
+          } else {
+            chosenX = lxStart; chosenY = lySlot; pushLeft = true
           }
-          if (hit) { ly += LABEL_H + PAD; iters++ }
+        } else if (rySlot !== null) {
+          chosenX = rxStart; chosenY = rySlot; pushLeft = false
+        } else if (lySlot !== null) {
+          chosenX = lxStart; chosenY = lySlot; pushLeft = true
+        } else {
+          // No room — skip this label
+          svg.removeChild(text)
+          return
         }
-        placed.push({ lx, ly, lw: LABEL_W })
 
-        // Reposition text into final location
-        text.setAttribute('x', lx + LABEL_PAD_X)
-        text.setAttribute('y', ly + LABEL_H - 4)
+        placed.push({ lx: chosenX, ly: chosenY, lw })
 
-        // Leader line to near edge of label
-        const lineEndX = pushLeft ? lx + LABEL_W : lx
-        const lineEndY = ly + LABEL_H / 2
+        // Finalize text position
+        text.setAttribute('x', chosenX + LABEL_PAD_X)
+        text.setAttribute('y', chosenY + LABEL_H - 4)
+
+        // Leader line from marker center to nearest edge of label
+        const lineEndX = pushLeft ? chosenX + lw : chosenX
+        const lineEndY = chosenY + LABEL_H / 2
 
         const line = document.createElementNS(NS, 'line')
         line.setAttribute('x1', pt.x)
         line.setAttribute('y1', pt.y)
         line.setAttribute('x2', lineEndX)
         line.setAttribute('y2', lineEndY)
-        line.setAttribute('stroke', 'rgba(255,255,255,0.55)')
+        line.setAttribute('stroke', 'rgba(255,255,255,0.6)')
         line.setAttribute('stroke-width', '0.75')
         line.setAttribute('stroke-dasharray', '2 3')
         svg.insertBefore(line, text)
 
-        // Label background behind text
         const rect = document.createElementNS(NS, 'rect')
-        rect.setAttribute('x', lx)
-        rect.setAttribute('y', ly)
-        rect.setAttribute('width', LABEL_W)
+        rect.setAttribute('x', chosenX)
+        rect.setAttribute('y', chosenY)
+        rect.setAttribute('width', lw)
         rect.setAttribute('height', LABEL_H)
-        rect.setAttribute('fill', 'rgba(0,0,0,0.72)')
+        rect.setAttribute('fill', 'rgba(0,0,0,0.75)')
         svg.insertBefore(rect, text)
       })
     }
