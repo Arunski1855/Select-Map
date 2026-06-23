@@ -3924,7 +3924,6 @@ function App() {
                     onClick={() => setTargetsSport('basketball')}
                   >
                     <img src="/logos/Adiselect_Horizontal_Logotype_White.png" alt="ADI SEL3CT" className="td-sport-logo td-sport-logo--wordmark" />
-                    <img src="/logos/Adiselect_Horizontal_Logo_Black.png" alt="" className="td-sport-logo" />
                     <span>Basketball</span>
                   </button>
                   <button
