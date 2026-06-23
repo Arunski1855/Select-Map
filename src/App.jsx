@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import React from 'react'
-import { MapContainer, Marker, Popup, Tooltip, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, Marker, Popup, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
   subscribeToPrograms,
@@ -2290,87 +2290,110 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
   )
 }
 
-// Deterministic label direction for map markers to minimise overlap
 function SchoolLabelLayer({ programs }) {
   const map = useMap()
-  const [labels, setLabels] = useState([])
-
-  const compute = useCallback(() => {
-    if (!map || !programs || programs.length === 0) { setLabels([]); return }
-    const OFFSET_X = 60
-    const LABEL_H = 16
-    const LABEL_W = 120
-    const PAD = 3
-
-    // Sort north to south (descending lat)
-    const sorted = [...programs].filter(p => p.coordinates?.length === 2)
-      .sort((a, b) => b.coordinates[0] - a.coordinates[0])
-
-    const placed = []
-
-    const result = sorted.map(program => {
-      const ll = L.latLng(program.coordinates[0], program.coordinates[1])
-      const pt = map.latLngToContainerPoint(ll)
-
-      const pushLeft = program.coordinates[1] > -78
-      const dx = pushLeft ? -(OFFSET_X + LABEL_W) : OFFSET_X
-      let labelX = pt.x + dx
-      let labelY = pt.y - LABEL_H / 2
-
-      // Greedy anti-overlap: shift down until clear
-      let iterations = 0
-      let overlap = true
-      while (overlap && iterations < 60) {
-        overlap = false
-        for (const p of placed) {
-          const xOk = labelX + LABEL_W + PAD < p.x || labelX > p.x + LABEL_W + PAD
-          const yOk = labelY + LABEL_H + PAD < p.y || labelY > p.y + LABEL_H + PAD
-          if (!xOk && !yOk) { overlap = true; break }
-        }
-        if (overlap) { labelY += LABEL_H + PAD; iterations++ }
-      }
-
-      placed.push({ x: labelX, y: labelY })
-
-      const markerLL = map.containerPointToLatLng(L.point(labelX, labelY + LABEL_H / 2))
-      const lineStart = ll
-      const lineEnd = map.containerPointToLatLng(
-        L.point(pushLeft ? labelX + LABEL_W : labelX, labelY + LABEL_H / 2)
-      )
-
-      return { id: program.id || program.name, program, markerLL, lineStart, lineEnd, labelX, labelY, pushLeft }
-    })
-
-    setLabels(result)
-  }, [map, programs])
 
   useEffect(() => {
-    compute()
-    map.on('zoomend moveend resize', compute)
-    return () => map.off('zoomend moveend resize', compute)
-  }, [map, compute])
+    if (!map) return
 
-  return (
-    <>
-      {labels.map(({ id, program, markerLL, lineStart, lineEnd, pushLeft }) => {
-        const icon = L.divIcon({
-          className: '',
-          html: `<span class="school-label-text${pushLeft ? ' school-label-left' : ''}">${program.name || ''}</span>`,
-          iconAnchor: [pushLeft ? 120 : 0, 8]
-        })
-        return (
-          <React.Fragment key={id}>
-            <Polyline
-              positions={[lineStart, lineEnd]}
-              pathOptions={{ color: '#fff', weight: 1, opacity: 0.6, dashArray: '3 4' }}
-              interactive={false}
-            />
-            <Marker position={markerLL} icon={icon} interactive={false} />
-          </React.Fragment>
+    const NS = 'http://www.w3.org/2000/svg'
+    const svg = document.createElementNS(NS, 'svg')
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:650;overflow:visible;'
+    map.getContainer().appendChild(svg)
+
+    const LABEL_W = 128
+    const LABEL_H = 15
+    const PAD = 2
+    const MARKER_R = 20
+    const OFFSET_X = MARKER_R + 8
+
+    const draw = () => {
+      while (svg.firstChild) svg.removeChild(svg.firstChild)
+      if (!programs || programs.length === 0) return
+
+      const size = map.getSize()
+      svg.setAttribute('viewBox', `0 0 ${size.x} ${size.y}`)
+
+      const sorted = [...programs]
+        .filter(p => p.coordinates?.length === 2)
+        .sort((a, b) => b.coordinates[0] - a.coordinates[0])
+
+      const placed = []
+
+      sorted.forEach(program => {
+        const pt = map.latLngToContainerPoint(
+          L.latLng(program.coordinates[0], program.coordinates[1])
         )
-      })}
-    </>
-  )
+
+        // Push labels left for eastern seaboard schools
+        const pushLeft = program.coordinates[1] > -75
+        let lx = pushLeft ? pt.x - OFFSET_X - LABEL_W : pt.x + OFFSET_X
+        let ly = pt.y - LABEL_H / 2
+
+        // Greedy anti-overlap: try right/left then shift down
+        let iters = 0
+        let hit = true
+        while (hit && iters < 100) {
+          hit = false
+          for (const p of placed) {
+            const xClear = lx + LABEL_W + PAD <= p.lx || lx >= p.lx + LABEL_W + PAD
+            const yClear = ly + LABEL_H + PAD <= p.ly || ly >= p.ly + LABEL_H + PAD
+            if (!xClear && !yClear) { hit = true; break }
+          }
+          if (hit) { ly += LABEL_H + PAD + 1; iters++ }
+        }
+        placed.push({ lx, ly })
+
+        // Leader line endpoint on the near edge of the label box
+        const lineEndX = pushLeft ? lx + LABEL_W : lx
+        const lineEndY = ly + LABEL_H / 2
+
+        // Leader line
+        const line = document.createElementNS(NS, 'line')
+        line.setAttribute('x1', pt.x)
+        line.setAttribute('y1', pt.y)
+        line.setAttribute('x2', lineEndX)
+        line.setAttribute('y2', lineEndY)
+        line.setAttribute('stroke', 'rgba(255,255,255,0.55)')
+        line.setAttribute('stroke-width', '0.75')
+        line.setAttribute('stroke-dasharray', '2 3')
+        svg.appendChild(line)
+
+        // Label background
+        const rect = document.createElementNS(NS, 'rect')
+        rect.setAttribute('x', lx)
+        rect.setAttribute('y', ly)
+        rect.setAttribute('width', LABEL_W)
+        rect.setAttribute('height', LABEL_H)
+        rect.setAttribute('fill', 'rgba(0,0,0,0.72)')
+        svg.appendChild(rect)
+
+        // Label text
+        const text = document.createElementNS(NS, 'text')
+        text.setAttribute('x', pushLeft ? lx + LABEL_W - 4 : lx + 4)
+        text.setAttribute('y', ly + LABEL_H - 4)
+        text.setAttribute('fill', '#ffffff')
+        text.setAttribute('font-family', "'adidas FG Compressed','Barlow Condensed','Arial Narrow',sans-serif")
+        text.setAttribute('font-size', '9.5')
+        text.setAttribute('font-weight', '700')
+        text.setAttribute('font-style', 'italic')
+        text.setAttribute('letter-spacing', '0.07')
+        text.setAttribute('text-anchor', pushLeft ? 'end' : 'start')
+        text.textContent = (program.name || '').toUpperCase()
+        svg.appendChild(text)
+      })
+    }
+
+    draw()
+    map.on('zoomend moveend resize', draw)
+
+    return () => {
+      map.off('zoomend moveend resize', draw)
+      if (svg.parentNode) svg.parentNode.removeChild(svg)
+    }
+  }, [map, programs])
+
+  return null
 }
 
 function SchoolDirectoryPanel({ programs, onClose, onExport, sport }) {
