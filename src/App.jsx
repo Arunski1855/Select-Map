@@ -2301,11 +2301,12 @@ function SchoolLabelLayer({ programs }) {
     svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:650;overflow:visible;'
     map.getContainer().appendChild(svg)
 
-    const LABEL_W = 128
     const LABEL_H = 15
+    const LABEL_PAD_X = 4
     const PAD = 2
     const MARKER_R = 20
-    const OFFSET_X = MARKER_R + 8
+    const OFFSET_RIGHT = MARKER_R + 8
+    const OFFSET_LEFT = MARKER_R + 90  // push NE labels far into ocean
 
     const draw = () => {
       while (svg.firstChild) svg.removeChild(svg.firstChild)
@@ -2325,30 +2326,52 @@ function SchoolLabelLayer({ programs }) {
           L.latLng(program.coordinates[0], program.coordinates[1])
         )
 
-        // Push labels left for eastern seaboard schools
         const pushLeft = program.coordinates[1] > -75
-        let lx = pushLeft ? pt.x - OFFSET_X - LABEL_W : pt.x + OFFSET_X
+
+        // Draw text first so we can measure it
+        const text = document.createElementNS(NS, 'text')
+        text.setAttribute('fill', '#ffffff')
+        text.setAttribute('font-family', "'adidas FG Compressed','Barlow Condensed','Arial Narrow',sans-serif")
+        text.setAttribute('font-size', '9.5')
+        text.setAttribute('font-weight', '700')
+        text.setAttribute('font-style', 'italic')
+        text.setAttribute('letter-spacing', '0.07')
+        text.setAttribute('text-anchor', 'start')
+        text.setAttribute('x', '0')
+        text.setAttribute('y', LABEL_H - 4)
+        text.textContent = (program.name || '').toUpperCase()
+        svg.appendChild(text)
+
+        // Measure actual rendered text width
+        let textW
+        try { textW = text.getComputedTextLength() } catch(e) { textW = program.name.length * 6 }
+        const LABEL_W = textW + LABEL_PAD_X * 2
+
+        // Position label
+        let lx = pushLeft ? pt.x - OFFSET_LEFT - LABEL_W : pt.x + OFFSET_RIGHT
         let ly = pt.y - LABEL_H / 2
 
-        // Greedy anti-overlap: try right/left then shift down
-        let iters = 0
-        let hit = true
-        while (hit && iters < 100) {
+        // Greedy anti-overlap: shift down until clear
+        let iters = 0, hit = true
+        while (hit && iters < 120) {
           hit = false
           for (const p of placed) {
-            const xClear = lx + LABEL_W + PAD <= p.lx || lx >= p.lx + LABEL_W + PAD
+            const xClear = lx + LABEL_W + PAD <= p.lx || lx >= p.lx + p.lw + PAD
             const yClear = ly + LABEL_H + PAD <= p.ly || ly >= p.ly + LABEL_H + PAD
             if (!xClear && !yClear) { hit = true; break }
           }
-          if (hit) { ly += LABEL_H + PAD + 1; iters++ }
+          if (hit) { ly += LABEL_H + PAD; iters++ }
         }
-        placed.push({ lx, ly })
+        placed.push({ lx, ly, lw: LABEL_W })
 
-        // Leader line endpoint on the near edge of the label box
+        // Reposition text into final location
+        text.setAttribute('x', lx + LABEL_PAD_X)
+        text.setAttribute('y', ly + LABEL_H - 4)
+
+        // Leader line to near edge of label
         const lineEndX = pushLeft ? lx + LABEL_W : lx
         const lineEndY = ly + LABEL_H / 2
 
-        // Leader line
         const line = document.createElementNS(NS, 'line')
         line.setAttribute('x1', pt.x)
         line.setAttribute('y1', pt.y)
@@ -2357,30 +2380,16 @@ function SchoolLabelLayer({ programs }) {
         line.setAttribute('stroke', 'rgba(255,255,255,0.55)')
         line.setAttribute('stroke-width', '0.75')
         line.setAttribute('stroke-dasharray', '2 3')
-        svg.appendChild(line)
+        svg.insertBefore(line, text)
 
-        // Label background
+        // Label background behind text
         const rect = document.createElementNS(NS, 'rect')
         rect.setAttribute('x', lx)
         rect.setAttribute('y', ly)
         rect.setAttribute('width', LABEL_W)
         rect.setAttribute('height', LABEL_H)
         rect.setAttribute('fill', 'rgba(0,0,0,0.72)')
-        svg.appendChild(rect)
-
-        // Label text
-        const text = document.createElementNS(NS, 'text')
-        text.setAttribute('x', pushLeft ? lx + LABEL_W - 4 : lx + 4)
-        text.setAttribute('y', ly + LABEL_H - 4)
-        text.setAttribute('fill', '#ffffff')
-        text.setAttribute('font-family', "'adidas FG Compressed','Barlow Condensed','Arial Narrow',sans-serif")
-        text.setAttribute('font-size', '9.5')
-        text.setAttribute('font-weight', '700')
-        text.setAttribute('font-style', 'italic')
-        text.setAttribute('letter-spacing', '0.07')
-        text.setAttribute('text-anchor', pushLeft ? 'end' : 'start')
-        text.textContent = (program.name || '').toUpperCase()
-        svg.appendChild(text)
+        svg.insertBefore(rect, text)
       })
     }
 
