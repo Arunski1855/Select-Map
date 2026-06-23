@@ -4141,6 +4141,56 @@ textarea {
   border-color: var(--text-primary);
 }
 
+/* Names toggle button */
+.stat-names-toggle {
+  background: var(--bg-tertiary) !important;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.stat-names-toggle:hover {
+  border-color: var(--text-primary);
+}
+
+.stat-names-toggle.active {
+  border-color: var(--adi-magenta);
+  background: #1a001a !important;
+}
+
+.stat-names-toggle.active .stat-icon svg {
+  stroke: var(--adi-magenta);
+}
+
+/* Program name labels on map */
+.program-name-label {
+  background: #000000 !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 0 !important;
+  color: #ffffff !important;
+  font-family: var(--font-heading-compressed, 'adidas FG Compressed', sans-serif) !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  padding: 2px 5px !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}
+
+.program-name-label::before {
+  border-right-color: #000000 !important;
+}
+
+.program-name-label.program-name-label--ne::before {
+  display: none;
+}
+
+.program-name-label.program-name-label--ne {
+  border-color: var(--adi-magenta) !important;
+  position: relative;
+}
+
 .stat-export .stat-value {
   font-size: 1.2rem;
 }
