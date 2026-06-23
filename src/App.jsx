@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { MapContainer, Marker, Popup, Tooltip, useMap } from 'react-leaflet'
+import React from 'react'
+import { MapContainer, Marker, Popup, Tooltip, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
   subscribeToPrograms,
@@ -2290,12 +2291,86 @@ function CompetitorEventsModal({ isOpen, onClose, events, onAdd, onUpdate, onDel
 }
 
 // Deterministic label direction for map markers to minimise overlap
-function getLabelDirection(program) {
-  const lat = program.coordinates?.[0] || 0
-  const lng = program.coordinates?.[1] || 0
-  // Hash using distinct primes so adjacent schools tend to get different directions
-  const h = Math.abs(Math.floor(lat * 7) * 3 + Math.floor(lng * 5) * 11)
-  return ['right', 'top', 'left', 'bottom'][h % 4]
+function SchoolLabelLayer({ programs }) {
+  const map = useMap()
+  const [labels, setLabels] = useState([])
+
+  const compute = useCallback(() => {
+    if (!map || !programs || programs.length === 0) { setLabels([]); return }
+    const OFFSET_X = 60
+    const LABEL_H = 16
+    const LABEL_W = 120
+    const PAD = 3
+
+    // Sort north to south (descending lat)
+    const sorted = [...programs].filter(p => p.coordinates?.length === 2)
+      .sort((a, b) => b.coordinates[0] - a.coordinates[0])
+
+    const placed = []
+
+    const result = sorted.map(program => {
+      const ll = L.latLng(program.coordinates[0], program.coordinates[1])
+      const pt = map.latLngToContainerPoint(ll)
+
+      const pushLeft = program.coordinates[1] > -78
+      const dx = pushLeft ? -(OFFSET_X + LABEL_W) : OFFSET_X
+      let labelX = pt.x + dx
+      let labelY = pt.y - LABEL_H / 2
+
+      // Greedy anti-overlap: shift down until clear
+      let iterations = 0
+      let overlap = true
+      while (overlap && iterations < 60) {
+        overlap = false
+        for (const p of placed) {
+          const xOk = labelX + LABEL_W + PAD < p.x || labelX > p.x + LABEL_W + PAD
+          const yOk = labelY + LABEL_H + PAD < p.y || labelY > p.y + LABEL_H + PAD
+          if (!xOk && !yOk) { overlap = true; break }
+        }
+        if (overlap) { labelY += LABEL_H + PAD; iterations++ }
+      }
+
+      placed.push({ x: labelX, y: labelY })
+
+      const markerLL = map.containerPointToLatLng(L.point(labelX, labelY + LABEL_H / 2))
+      const lineStart = ll
+      const lineEnd = map.containerPointToLatLng(
+        L.point(pushLeft ? labelX + LABEL_W : labelX, labelY + LABEL_H / 2)
+      )
+
+      return { id: program.id || program.name, program, markerLL, lineStart, lineEnd, labelX, labelY, pushLeft }
+    })
+
+    setLabels(result)
+  }, [map, programs])
+
+  useEffect(() => {
+    compute()
+    map.on('zoomend moveend resize', compute)
+    return () => map.off('zoomend moveend resize', compute)
+  }, [map, compute])
+
+  return (
+    <>
+      {labels.map(({ id, program, markerLL, lineStart, lineEnd, pushLeft }) => {
+        const icon = L.divIcon({
+          className: '',
+          html: `<span class="school-label-text${pushLeft ? ' school-label-left' : ''}">${program.name || ''}</span>`,
+          iconAnchor: [pushLeft ? 120 : 0, 8]
+        })
+        return (
+          <React.Fragment key={id}>
+            <Polyline
+              positions={[lineStart, lineEnd]}
+              pathOptions={{ color: '#fff', weight: 1, opacity: 0.6, dashArray: '3 4' }}
+              interactive={false}
+            />
+            <Marker position={markerLL} icon={icon} interactive={false} />
+          </React.Fragment>
+        )
+      })}
+    </>
+  )
 }
 
 function SchoolDirectoryPanel({ programs, onClose, onExport, sport }) {
@@ -4846,19 +4921,12 @@ function App() {
                         }
                       }}
                     >
-                      {(showMapLabels || showNames) && (
-                        <Tooltip
-                          permanent
-                          direction={getLabelDirection(program)}
-                          offset={[0, -14]}
-                          className="map-school-label"
-                        >
-                          {program.name}
-                        </Tooltip>
-                      )}
                     </Marker>
                   )
                 })}
+                {(showMapLabels || showNames) && (
+                  <SchoolLabelLayer programs={displayPrograms} />
+                )}
               </MapContainer>
             )}
 
