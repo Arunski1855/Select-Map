@@ -2415,6 +2415,7 @@ function App() {
   const [isExporting, setIsExporting] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showSubscribeMenu, setShowSubscribeMenu] = useState(false)
+  const [showNames, setShowNames] = useState(false)
 
   // Digest & Reports
   const [isDigestOpen, setIsDigestOpen] = useState(false)
@@ -3723,6 +3724,19 @@ function App() {
                 </svg>
               </span>
               <span className="stat-label">Labels</span>
+            {/* Names Toggle */}
+            <div className={`stat-item stat-names-toggle${showNames ? ' active' : ''}`}
+              onClick={() => setShowNames(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowNames(v => !v) }}>
+              <span className="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="6" cy="10" r="3"/>
+                  <line x1="10" y1="10" x2="17" y2="10"/>
+                  <line x1="10" y1="7" x2="17" y2="7"/>
+                  <line x1="10" y1="13" x2="14" y2="13"/>
+                </svg>
+              </span>
+              <span className="stat-label">Names</span>
             </div>
             {/* Export */}
             <div className="stat-item stat-export"
@@ -3923,6 +3937,7 @@ function App() {
                     onClick={() => setTargetsSport('basketball')}
                   >
                     <img src="/logos/Adiselect_Horizontal_Logotype_White.png" alt="ADI SEL3CT" className="td-sport-logo td-sport-logo--wordmark" />
+                    <img src="/logos/Adiselect_Horizontal_Logo_Black.png" alt="" className="td-sport-logo" />
                     <span>Basketball</span>
                   </button>
                   <button
@@ -4819,8 +4834,12 @@ function App() {
                   <FlyToMarker position={adjustedPositions[selectedProgram.id] || selectedProgram.coordinates} />
                 )}
 
-                {displayPrograms.map(program => (
-                  program && program.coordinates && (
+                {displayPrograms.map(program => {
+                  if (!program || !program.coordinates) return null
+                  const [lat, lon] = program.coordinates
+                  const isNortheast = lat > 39.5 && lon > -80
+                  const tooltipOffset = isNortheast ? [110, -30] : [12, -14]
+                  return (
                     <Marker
                       key={program.id}
                       position={adjustedPositions[program.id] || program.coordinates}
@@ -4847,13 +4866,19 @@ function App() {
                           direction={getLabelDirection(program)}
                           offset={[0, -14]}
                           className="map-school-label"
+                      {showNames && (
+                        <Tooltip
+                          permanent
+                          direction="right"
+                          offset={tooltipOffset}
+                          className={`program-name-label${isNortheast ? ' program-name-label--ne' : ''}`}
                         >
                           {program.name}
                         </Tooltip>
                       )}
                     </Marker>
                   )
-                ))}
+                })}
               </MapContainer>
             )}
 
