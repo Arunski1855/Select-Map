@@ -7865,11 +7865,11 @@ textarea {
 }
 
 .td-sport-logo {
-  height: 28px;
-  width: 28px;
+  height: 36px;
+  width: 36px;
   object-fit: contain;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 4px;
+  background: var(--adi-white);
+  padding: 3px;
   opacity: 0.85;
   transition: all 0.25s ease-out;
   position: relative;
