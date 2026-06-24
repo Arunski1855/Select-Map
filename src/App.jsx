@@ -2420,9 +2420,9 @@ function SchoolLabelLayer({ programs }) {
         line.setAttribute('y1', lineStartY)
         line.setAttribute('x2', lineEndX)
         line.setAttribute('y2', lineEndY)
-        line.setAttribute('stroke', 'rgba(255,255,255,0.75)')
-        line.setAttribute('stroke-width', '1')
-        line.setAttribute('stroke-dasharray', '3 3')
+        line.setAttribute('stroke', '#111111')
+        line.setAttribute('stroke-width', '1.5')
+        line.setAttribute('stroke-dasharray', '4 3')
         svg.insertBefore(line, text)
 
         const rect = document.createElementNS(NS, 'rect')
@@ -2430,7 +2430,7 @@ function SchoolLabelLayer({ programs }) {
         rect.setAttribute('y', chosenY)
         rect.setAttribute('width', lw)
         rect.setAttribute('height', LABEL_H)
-        rect.setAttribute('fill', 'rgba(0,0,0,0.75)')
+        rect.setAttribute('fill', 'rgba(0,0,0,0.85)')
         svg.insertBefore(rect, text)
       })
     }
