@@ -2408,14 +2408,21 @@ function SchoolLabelLayer({ programs }) {
         const lineEndX = pushLeft ? chosenX + lw : chosenX
         const lineEndY = chosenY + LABEL_H / 2
 
+        // Start line from logo edge, not center
+        const LOGO_R = 20
+        const dx = lineEndX - pt.x, dy = lineEndY - pt.y
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1
+        const lineStartX = pt.x + (dx / dist) * LOGO_R
+        const lineStartY = pt.y + (dy / dist) * LOGO_R
+
         const line = document.createElementNS(NS, 'line')
-        line.setAttribute('x1', pt.x)
-        line.setAttribute('y1', pt.y)
+        line.setAttribute('x1', lineStartX)
+        line.setAttribute('y1', lineStartY)
         line.setAttribute('x2', lineEndX)
         line.setAttribute('y2', lineEndY)
-        line.setAttribute('stroke', 'rgba(255,255,255,0.6)')
-        line.setAttribute('stroke-width', '0.75')
-        line.setAttribute('stroke-dasharray', '2 3')
+        line.setAttribute('stroke', 'rgba(255,255,255,0.75)')
+        line.setAttribute('stroke-width', '1')
+        line.setAttribute('stroke-dasharray', '3 3')
         svg.insertBefore(line, text)
 
         const rect = document.createElementNS(NS, 'rect')
@@ -2429,10 +2436,10 @@ function SchoolLabelLayer({ programs }) {
     }
 
     draw()
-    map.on('zoomend moveend resize', draw)
+    map.on('move zoom resize', draw)
 
     return () => {
-      map.off('zoomend moveend resize', draw)
+      map.off('move zoom resize', draw)
       if (svg.parentNode) svg.parentNode.removeChild(svg)
     }
   }, [map, programs])
