@@ -2317,12 +2317,14 @@ function SchoolLabelLayer({ programs }) {
     }
 
     const findSlot = (startLx, startLy, lw, placed, sizeY) => {
-      let ly = startLy
-      for (let i = 0; i < 120; i++) {
-        if (countOverlaps(startLx, ly, lw, placed) === 0) return ly
-        ly += ROW_H
-        // If we've gone too far below the viewport, give up
-        if (ly > sizeY + 10) return null
+      // Spread up and down from natural position: 0, -1, +1, -2, +2, ...
+      for (let i = 0; i <= 80; i++) {
+        const offsets = i === 0 ? [0] : [-i * ROW_H, i * ROW_H]
+        for (const dy of offsets) {
+          const ly = startLy + dy
+          if (ly < -LABEL_H || ly > sizeY) continue
+          if (countOverlaps(startLx, ly, lw, placed) === 0) return ly
+        }
       }
       return null
     }
@@ -2339,8 +2341,7 @@ function SchoolLabelLayer({ programs }) {
 
       const sorted = [...programs]
         .filter(p => {
-          if (!p.coordinates?.length === 2) return false
-          // Only label markers visible on screen
+          if (!p.coordinates || p.coordinates.length < 2) return false
           const ll = L.latLng(p.coordinates[0], p.coordinates[1])
           return bounds.contains(ll)
         })
