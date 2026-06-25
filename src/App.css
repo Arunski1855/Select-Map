@@ -13016,6 +13016,22 @@ textarea {
   text-transform: uppercase;
 }
 
+.sdp-gender-tag {
+  display: inline-block;
+  margin-top: 3px;
+  margin-left: 4px;
+  padding: 1px 6px;
+  font-family: 'adidas FG Compressed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.sdp-gender-tag--boys { background: #005eb8; }
+.sdp-gender-tag--girls { background: #E500A4; }
+
 .sdp-search-row {
   display: flex;
   align-items: center;

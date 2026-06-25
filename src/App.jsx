@@ -2492,7 +2492,7 @@ function SchoolLabelLayer({ programs }) {
   return null
 }
 
-function SchoolDirectoryPanel({ programs, onClose, onExport, sport }) {
+function SchoolDirectoryPanel({ programs, onClose, onExport, sport, gender }) {
   const [search, setSearch] = useState('')
   const sorted = [...programs]
     .filter(p => !search ||
@@ -2512,6 +2512,9 @@ function SchoolDirectoryPanel({ programs, onClose, onExport, sport }) {
         </button>
         <div className="sdp-subtitle">SCHOOL DIRECTORY</div>
         <div className="sdp-sport-tag">{sport === 'football' ? 'FOOTBALL' : 'BASKETBALL'}</div>
+        {gender && gender !== 'all' && (
+          <div className={`sdp-gender-tag sdp-gender-tag--${gender.toLowerCase()}`}>{gender.toUpperCase()}</div>
+        )}
       </div>
 
       <div className="sdp-search-row">
@@ -5080,6 +5083,7 @@ function App() {
               <SchoolDirectoryPanel
                 programs={filteredPrograms}
                 sport={activeTab}
+                gender={filterGender}
                 onClose={() => setShowSchoolDirectory(false)}
                 onExport={handleExportDirectory}
               />
