@@ -4024,14 +4024,15 @@ textarea {
 .footer {
   background: #000;
   color: white;
-  padding: 1rem 1.5rem;
+  padding: 0.35rem 1rem;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   z-index: 1000;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .footer-logo-wrapper {
@@ -4060,7 +4061,7 @@ textarea {
   background-color: #000000;
   background-size: cover;
   background-position: center;
-  padding: 12px 32px;
+  padding: 4px 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4070,7 +4071,7 @@ textarea {
   font-family: var(--font-heading-compressed);
   font-weight: 700;
   font-style: italic;
-  font-size: 1.5rem;
+  font-size: 0.85rem;
   letter-spacing: var(--letter-spacing-brand);
   text-transform: uppercase;
   color: #FFFFFF;
@@ -4079,11 +4080,11 @@ textarea {
 
 @media (max-width: 480px) {
   .stier-banner {
-    padding: 8px 16px;
+    padding: 3px 10px;
   }
 
   .stier-text {
-    font-size: 1rem;
+    font-size: 0.75rem;
   }
 }
 
