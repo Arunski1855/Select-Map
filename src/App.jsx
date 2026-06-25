@@ -3523,6 +3523,7 @@ function App() {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       const sportLabel = activeTab === 'football' ? 'SELECT FOOTBALL' : 'SELECT BASKETBALL'
+      const genderLabel = filterGender === 'all' ? 'ALL' : filterGender.toUpperCase()
       const sorted = [...filteredPrograms].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
       // Black header bar
@@ -3538,7 +3539,7 @@ function App() {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setCharSpace(2)
-      doc.text(sportLabel, 14, 21)
+      doc.text(`${sportLabel} — ${genderLabel}`, 14, 21)
       doc.setCharSpace(0)
 
       // Date + count on right
@@ -3602,7 +3603,7 @@ function App() {
       logger.error('Directory export error:', err)
       toast.error(`Export failed: ${err.message || 'Unknown error'}`)
     }
-  }, [activeTab, filteredPrograms])
+  }, [activeTab, filteredPrograms, filterGender])
 
   // Edit a program
   const handleEditProgram = async (updatedProgram) => {
