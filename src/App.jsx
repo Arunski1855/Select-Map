@@ -3394,7 +3394,7 @@ function App() {
     try {
       // Lazy load jsPDF only when user exports
       const jsPDF = (await import('jspdf')).default
-      await import('jspdf-autotable')
+      const autoTable = (await import('jspdf-autotable')).default
 
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -3443,7 +3443,7 @@ function App() {
           p.headCoach || ''
         ])
 
-        doc.autoTable({
+        autoTable(doc, {
           startY: 42,
           head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
           body: tableData,
@@ -3484,7 +3484,7 @@ function App() {
   const handleExportDirectory = useCallback(async () => {
     try {
       const jsPDF = (await import('jspdf')).default
-      await import('jspdf-autotable')
+      const autoTable = (await import('jspdf-autotable')).default
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -3525,7 +3525,7 @@ function App() {
         p.headCoach || ''
       ])
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 32,
         head: [['#', 'School', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach']],
         body: tableData,
