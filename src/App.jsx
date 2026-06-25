@@ -2304,7 +2304,7 @@ function SchoolLabelLayer({ programs }) {
     if (!parent) return
 
     const svg = document.createElementNS(NS, 'svg')
-    svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:1200;overflow:visible;'
+    svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:650;overflow:visible;'
     parent.appendChild(svg)
 
     const LABEL_H = 18
