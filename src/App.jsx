@@ -2393,8 +2393,14 @@ function SchoolLabelLayer({ programs }) {
         svg.appendChild(text)
 
         let textW
-        try { textW = text.getComputedTextLength() } catch(e) { textW = program.name.length * 6.5 }
-        const lw = textW + LABEL_PAD_X * 2
+        try {
+          textW = text.getComputedTextLength()
+          // If measurement returns 0 or suspiciously small (font not loaded),
+          // fall back to character-count estimate
+          if (textW < program.name.length * 4) textW = program.name.length * 7.5
+        } catch(e) { textW = program.name.length * 7.5 }
+        // Add 15% safety buffer so custom font never overflows the box
+        const lw = Math.ceil(textW * 1.15) + LABEL_PAD_X * 2
 
         const startLy = pt.y - LABEL_H / 2
 
@@ -2458,9 +2464,20 @@ function SchoolLabelLayer({ programs }) {
         accent.setAttribute('fill', '#E500A4')
         svg.insertBefore(accent, text)
 
+        // Clip text to label box so it never overflows the white background
+        const clipId = `lc-${Math.round(chosenX)}-${Math.round(chosenY)}`
+        const clipPath = document.createElementNS(NS, 'clipPath')
+        clipPath.setAttribute('id', clipId)
+        const clipRect = document.createElementNS(NS, 'rect')
+        clipRect.setAttribute('x', chosenX + 2); clipRect.setAttribute('y', chosenY)
+        clipRect.setAttribute('width', lw - 4); clipRect.setAttribute('height', LABEL_H)
+        clipPath.appendChild(clipRect)
+        svg.insertBefore(clipPath, text)
+
         // Reposition text
         text.setAttribute('x', chosenX + LABEL_PAD_X + (pushLeft ? 0 : 2))
         text.setAttribute('y', chosenY + LABEL_H - LABEL_PAD_Y)
+        text.setAttribute('clip-path', `url(#${clipId})`)
       })
     }
 
