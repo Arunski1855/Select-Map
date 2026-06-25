@@ -2297,11 +2297,15 @@ function SchoolLabelLayer({ programs }) {
     if (!map) return
 
     const NS = 'http://www.w3.org/2000/svg'
-    const container = map.getContainer()
+    // Mount SVG on the PARENT of the Leaflet container so it sits above
+    // Leaflet's own overflow:hidden clip boundary
+    const mapEl = map.getContainer()
+    const parent = mapEl.parentElement
+    if (!parent) return
 
     const svg = document.createElementNS(NS, 'svg')
-    svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:650;overflow:hidden;'
-    container.appendChild(svg)
+    svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:1200;overflow:visible;'
+    parent.appendChild(svg)
 
     const LABEL_H = 18
     const LABEL_PAD_X = 6
@@ -2309,7 +2313,7 @@ function SchoolLabelLayer({ programs }) {
     const ROW_H = LABEL_H + 3
     const LOGO_R = 22
     const OFFSET = LOGO_R + 6
-    const MARGIN = 4   // min px from map edge
+    const MARGIN = 6   // min px from viewport edge
 
     const countOverlaps = (lx, ly, lw, placed) => {
       for (const p of placed) {
@@ -2335,9 +2339,15 @@ function SchoolLabelLayer({ programs }) {
       while (svg.firstChild) svg.removeChild(svg.firstChild)
       if (!programs || programs.length === 0) return
 
+      // Offset: mapEl may be inset within its parent
+      const mapRect = mapEl.getBoundingClientRect()
+      const parentRect = parent.getBoundingClientRect()
+      const ox = mapRect.left - parentRect.left
+      const oy = mapRect.top - parentRect.top
+
       const size = map.getSize()
-      svg.setAttribute('width', size.x)
-      svg.setAttribute('height', size.y)
+      svg.setAttribute('width', parentRect.width)
+      svg.setAttribute('height', parentRect.height)
 
       // Add drop-shadow filter definition
       const defs = document.createElementNS(NS, 'defs')
@@ -2364,9 +2374,11 @@ function SchoolLabelLayer({ programs }) {
       const placed = []
 
       sorted.forEach(program => {
-        const pt = map.latLngToContainerPoint(
+        const raw = map.latLngToContainerPoint(
           L.latLng(program.coordinates[0], program.coordinates[1])
         )
+        // Shift into parent coordinate space
+        const pt = { x: raw.x + ox, y: raw.y + oy }
 
         // Render text off-screen to measure
         const text = document.createElementNS(NS, 'text')
@@ -2386,14 +2398,16 @@ function SchoolLabelLayer({ programs }) {
 
         const startLy = pt.y - LABEL_H / 2
 
-        // Try right, then left — only if fully within map bounds
+        // Bounds check against parent viewport width (not just map width)
+        const vw = parentRect.width
+        const vh = parentRect.height
         const rxStart = pt.x + OFFSET
         const lxStart = pt.x - OFFSET - lw
-        const rightOk = rxStart + lw <= size.x - MARGIN
+        const rightOk = rxStart + lw <= vw - MARGIN
         const leftOk  = lxStart >= MARGIN
 
-        const rySlot = rightOk ? findSlot(rxStart, startLy, lw, placed, size.y) : null
-        const lySlot = leftOk  ? findSlot(lxStart, startLy, lw, placed, size.y) : null
+        const rySlot = rightOk ? findSlot(rxStart, startLy, lw, placed, vh) : null
+        const lySlot = leftOk  ? findSlot(lxStart, startLy, lw, placed, vh) : null
 
         let chosenX, chosenY, pushLeft
         if (rySlot !== null && lySlot !== null) {

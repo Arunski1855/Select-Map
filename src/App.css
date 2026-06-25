@@ -1301,6 +1301,7 @@ textarea {
   width: 100%;
   height: calc(100vh - 280px);
   z-index: 1;
+  position: relative;
 }
 
 /* Cluster Markers */
