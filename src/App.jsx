@@ -2298,7 +2298,7 @@ function SchoolLabelLayer({ programs }) {
 
     const NS = 'http://www.w3.org/2000/svg'
     const svg = document.createElementNS(NS, 'svg')
-    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:650;overflow:hidden;'
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:650;overflow:visible;'
     map.getContainer().appendChild(svg)
 
     const LABEL_H = 15
@@ -2374,16 +2374,22 @@ function SchoolLabelLayer({ programs }) {
 
         const startLy = pt.y - LABEL_H / 2
 
-        // Try right side then left side; pick whichever clears first within viewport
+        // Only offer a side if the label fits within x bounds
         const rxStart = pt.x + OFFSET
         const lxStart = pt.x - OFFSET - lw
+        const rightFits = rxStart + lw <= size.x
+        const leftFits = lxStart >= 0
 
-        const rySlot = findSlot(rxStart, startLy, lw, placed, size.y)
-        const lySlot = findSlot(lxStart, startLy, lw, placed, size.y)
+        const rySlot = rightFits ? findSlot(rxStart, startLy, lw, placed, size.y) : null
+        const lySlot = leftFits  ? findSlot(lxStart, startLy, lw, placed, size.y) : null
+
+        // Fallback: clamp to edge if neither side fits cleanly
+        const rxClamped = Math.min(rxStart, size.x - lw)
+        const lxClamped = Math.max(lxStart, 0)
+        const ryFallback = (!rightFits && !leftFits) ? findSlot(rxClamped, startLy, lw, placed, size.y) : null
 
         let chosenX, chosenY, pushLeft
         if (rySlot !== null && lySlot !== null) {
-          // Both fit — prefer side with label closer to marker vertically
           if (Math.abs(rySlot - startLy) <= Math.abs(lySlot - startLy)) {
             chosenX = rxStart; chosenY = rySlot; pushLeft = false
           } else {
@@ -2393,8 +2399,9 @@ function SchoolLabelLayer({ programs }) {
           chosenX = rxStart; chosenY = rySlot; pushLeft = false
         } else if (lySlot !== null) {
           chosenX = lxStart; chosenY = lySlot; pushLeft = true
+        } else if (ryFallback !== null) {
+          chosenX = rxClamped; chosenY = ryFallback; pushLeft = false
         } else {
-          // No room — skip this label
           svg.removeChild(text)
           return
         }
