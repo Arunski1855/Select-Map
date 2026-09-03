@@ -253,11 +253,11 @@ const TILE_PROVIDERS = {
     dark: `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIA_TOKEN || ''}`,
     attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   },
-  // CartoDB Voyager - No auth required, clean modern style
+  // Esri - No auth required, clean modern style
   carto: {
-    light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
   }
 }
 
@@ -3306,7 +3306,7 @@ function App() {
     try {
       // Lazy load jsPDF only when user exports
       const jsPDF = (await import('jspdf')).default
-      await import('jspdf-autotable')
+      const autoTable = (await import('jspdf-autotable')).default
 
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -3355,7 +3355,7 @@ function App() {
           p.headCoach || ''
         ])
 
-        doc.autoTable({
+        autoTable(doc, {
           startY: 42,
           head: [['Program', 'City', 'State', 'Region', 'Level', 'Conference', 'Coach']],
           body: tableData,
@@ -3396,7 +3396,7 @@ function App() {
   const handleExportDirectory = useCallback(async () => {
     try {
       const jsPDF = (await import('jspdf')).default
-      await import('jspdf-autotable')
+      const autoTable = (await import('jspdf-autotable')).default
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -3437,7 +3437,7 @@ function App() {
         p.headCoach || ''
       ])
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 32,
         head: [['#', 'School', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach']],
         body: tableData,
