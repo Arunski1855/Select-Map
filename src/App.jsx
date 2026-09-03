@@ -3432,32 +3432,34 @@ function App() {
         p.city || '',
         p.state || '',
         p.region || '',
-        p.level || '',
         p.conference || '',
-        p.headCoach || ''
+        p.headCoach || '',
+        p.contactPhone || '',
+        p.contactEmail || ''
       ])
 
       autoTable(doc, {
         startY: 32,
-        head: [['#', 'School', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach']],
+        head: [['#', 'School', 'City', 'State', 'Region', 'Conference', 'Head Coach', 'Phone', 'Email']],
         body: tableData,
-        styles: { fontSize: 7.5, cellPadding: 2.5, font: 'helvetica' },
+        styles: { fontSize: 7, cellPadding: 2, font: 'helvetica' },
         headStyles: {
           fillColor: [0, 0, 0],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-          fontSize: 8
+          fontSize: 7.5
         },
         alternateRowStyles: { fillColor: [248, 248, 248] },
         columnStyles: {
-          0: { cellWidth: 8, halign: 'center' },
-          1: { cellWidth: 48 },
-          2: { cellWidth: 28 },
-          3: { cellWidth: 12, halign: 'center' },
-          4: { cellWidth: 20 },
-          5: { cellWidth: 18 },
+          0: { cellWidth: 7, halign: 'center' },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 10, halign: 'center' },
+          4: { cellWidth: 18 },
+          5: { cellWidth: 24 },
           6: { cellWidth: 28 },
-          7: { cellWidth: 30 }
+          7: { cellWidth: 22 },
+          8: { cellWidth: 'auto' }
         },
         margin: { left: 8, right: 8 },
         didDrawPage: (data) => {
