@@ -728,6 +728,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
           <img src={program.logo} alt={program.name} />
         </div>
         <div className="detail-panel-title">
+          <div className="detail-panel-eyebrow">{sport === 'football' ? 'Select Football' : 'Select Basketball'}</div>
           <h2>{program.name}</h2>
           <p>{program.city}, {program.state}</p>
           <div className="detail-badges-row">
