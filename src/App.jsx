@@ -3197,6 +3197,43 @@ function App() {
     }
   }
 
+  const handleConvertToProgram = async (target) => {
+    const sportLabel = targetsSport === 'football' ? 'football' : 'basketball'
+    if (!window.confirm(`Convert ${target.name || 'this school'} to a signed ${sportLabel} program? This will mark the pipeline lead as Signed and add them to the Select program list.`)) return
+    try {
+      // 1. Mark pipeline lead as signed
+      await editTargetProgram(targetsSport, { ...target, status: 'signed', signedAt: Date.now() })
+      if (selectedTargetProgram?.id === target.id) {
+        setSelectedTargetProgram({ ...target, status: 'signed', signedAt: Date.now() })
+      }
+      // 2. Add as a Select program (map target fields → program fields)
+      const newProgram = {
+        name: target.name || '',
+        city: target.city || '',
+        state: target.state || '',
+        region: target.region || '',
+        level: target.level || '',
+        conference: target.conference || '',
+        headCoach: target.headCoach || '',
+        contactEmail: target.contactEmail || '',
+        contactPhone: target.contactPhone || '',
+        coordinates: target.coordinates || null,
+        logo: target.logo || '',
+        addedBy: user?.email || 'unknown',
+        timestamp: Date.now(),
+        convertedFromPipeline: target.id,
+      }
+      await addProgram(targetsSport, newProgram)
+      if (user) {
+        await addProgramHistory(targetsSport, newProgram.id || target.name, 'created', user.email)
+      }
+      toast.success(`${target.name || 'School'} signed and added to the ${sportLabel} program list!`)
+    } catch (err) {
+      logger.error('Error converting target to program:', err)
+      toast.error('Could not convert to program. Please try again.')
+    }
+  }
+
   const openEditTargetForm = (target) => {
     setEditingTarget(target)
     setIsTargetFormOpen(true)
@@ -4569,6 +4606,7 @@ function App() {
               onEdit={(t) => { setSelectedTargetProgram(null); openEditTargetForm(t) }}
               onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
               onStatusChange={handleUpdateTargetStatus}
+              onConvert={handleConvertToProgram}
             />
 
               </>
