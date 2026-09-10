@@ -419,6 +419,23 @@
   color: #000000;
 }
 
+.tdp-convert-btn--noselect {
+  background: #6b7280;
+  border-color: #6b7280;
+  color: #ffffff;
+}
+
+.tdp-convert-btn--noselect:hover {
+  background: #4b5563;
+  border-color: #4b5563;
+}
+
+[data-theme="dark"] .tdp-convert-btn--noselect {
+  background: #6b7280;
+  border-color: #6b7280;
+  color: #ffffff;
+}
+
 /* ─── Ranking History ──────────────────── */
 .tdp-ranking-section {
   margin-top: 20px;

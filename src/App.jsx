@@ -3197,16 +3197,17 @@ function App() {
     }
   }
 
-  const handleConvertToProgram = async (target) => {
+  const handleConvertToProgram = async (target, isSelect = true) => {
     const sportLabel = targetsSport === 'football' ? 'football' : 'basketball'
-    if (!window.confirm(`Convert ${target.name || 'this school'} to a signed ${sportLabel} program? This will mark the pipeline lead as Signed and add them to the Select program list.`)) return
+    const label = isSelect ? 'Select' : 'Signed (Not Select)'
+    if (!window.confirm(`Mark ${target.name || 'this school'} as ${label}? This will update the pipeline lead and add them to the program list.`)) return
     try {
       // 1. Mark pipeline lead as signed
       await editTargetProgram(targetsSport, { ...target, status: 'signed', signedAt: Date.now() })
       if (selectedTargetProgram?.id === target.id) {
         setSelectedTargetProgram({ ...target, status: 'signed', signedAt: Date.now() })
       }
-      // 2. Add as a Select program (map target fields → program fields)
+      // 2. Add as a program (isSelect controls Select vs Non-Select)
       const newProgram = {
         name: target.name || '',
         city: target.city || '',
@@ -3219,6 +3220,7 @@ function App() {
         contactPhone: target.contactPhone || '',
         coordinates: target.coordinates || null,
         logo: target.logo || '',
+        isSelect,
         addedBy: user?.email || 'unknown',
         timestamp: Date.now(),
         convertedFromPipeline: target.id,
@@ -3227,7 +3229,7 @@ function App() {
       if (user) {
         await addProgramHistory(targetsSport, newProgram.id || target.name, 'created', user.email)
       }
-      toast.success(`${target.name || 'School'} signed and added to the ${sportLabel} program list!`)
+      toast.success(`${target.name || 'School'} marked as ${label} and added to the ${sportLabel} program list!`)
     } catch (err) {
       logger.error('Error converting target to program:', err)
       toast.error('Could not convert to program. Please try again.')
@@ -4606,7 +4608,8 @@ function App() {
               onEdit={(t) => { setSelectedTargetProgram(null); openEditTargetForm(t) }}
               onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
               onStatusChange={handleUpdateTargetStatus}
-              onConvert={handleConvertToProgram}
+              onConvert={(t) => handleConvertToProgram(t, true)}
+              onConvertNotSelect={(t) => handleConvertToProgram(t, false)}
             />
 
               </>
