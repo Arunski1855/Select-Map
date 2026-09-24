@@ -3197,6 +3197,45 @@ function App() {
     }
   }
 
+  const handleConvertToProgram = async (target, isSelect = true) => {
+    const sportLabel = targetsSport === 'football' ? 'football' : 'basketball'
+    const label = isSelect ? 'Select' : 'Signed (Not Select)'
+    if (!window.confirm(`Mark ${target.name || 'this school'} as ${label}? This will update the pipeline lead and add them to the program list.`)) return
+    try {
+      // 1. Mark pipeline lead as signed
+      await editTargetProgram(targetsSport, { ...target, status: 'signed', signedAt: Date.now() })
+      if (selectedTargetProgram?.id === target.id) {
+        setSelectedTargetProgram({ ...target, status: 'signed', signedAt: Date.now() })
+      }
+      // 2. Add as a program (isSelect controls Select vs Non-Select)
+      const newProgram = {
+        name: target.name || '',
+        city: target.city || '',
+        state: target.state || '',
+        region: target.region || '',
+        level: target.level || '',
+        conference: target.conference || '',
+        headCoach: target.headCoach || '',
+        contactEmail: target.contactEmail || '',
+        contactPhone: target.contactPhone || '',
+        coordinates: target.coordinates || null,
+        logo: target.logo || '',
+        isSelect,
+        addedBy: user?.email || 'unknown',
+        timestamp: Date.now(),
+        convertedFromPipeline: target.id,
+      }
+      await addProgram(targetsSport, newProgram)
+      if (user) {
+        await addProgramHistory(targetsSport, newProgram.id || target.name, 'created', user.email)
+      }
+      toast.success(`${target.name || 'School'} marked as ${label} and added to the ${sportLabel} program list!`)
+    } catch (err) {
+      logger.error('Error converting target to program:', err)
+      toast.error('Could not convert to program. Please try again.')
+    }
+  }
+
   const openEditTargetForm = (target) => {
     setEditingTarget(target)
     setIsTargetFormOpen(true)
@@ -3432,32 +3471,34 @@ function App() {
         p.city || '',
         p.state || '',
         p.region || '',
-        p.level || '',
         p.conference || '',
-        p.headCoach || ''
+        p.headCoach || '',
+        p.contactPhone || '',
+        p.contactEmail || ''
       ])
 
       autoTable(doc, {
         startY: 32,
-        head: [['#', 'School', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach']],
+        head: [['#', 'School', 'City', 'State', 'Region', 'Conference', 'Head Coach', 'Phone', 'Email']],
         body: tableData,
-        styles: { fontSize: 7.5, cellPadding: 2.5, font: 'helvetica' },
+        styles: { fontSize: 7, cellPadding: 2, font: 'helvetica' },
         headStyles: {
           fillColor: [0, 0, 0],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-          fontSize: 8
+          fontSize: 7.5
         },
         alternateRowStyles: { fillColor: [248, 248, 248] },
         columnStyles: {
-          0: { cellWidth: 8, halign: 'center' },
-          1: { cellWidth: 48 },
-          2: { cellWidth: 28 },
-          3: { cellWidth: 12, halign: 'center' },
-          4: { cellWidth: 20 },
-          5: { cellWidth: 18 },
+          0: { cellWidth: 7, halign: 'center' },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 10, halign: 'center' },
+          4: { cellWidth: 18 },
+          5: { cellWidth: 24 },
           6: { cellWidth: 28 },
-          7: { cellWidth: 30 }
+          7: { cellWidth: 22 },
+          8: { cellWidth: 'auto' }
         },
         margin: { left: 8, right: 8 },
         didDrawPage: (data) => {
@@ -4567,6 +4608,8 @@ function App() {
               onEdit={(t) => { setSelectedTargetProgram(null); openEditTargetForm(t) }}
               onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
               onStatusChange={handleUpdateTargetStatus}
+              onConvert={(t) => handleConvertToProgram(t, true)}
+              onConvertNotSelect={(t) => handleConvertToProgram(t, false)}
             />
 
               </>

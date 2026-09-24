@@ -1294,6 +1294,8 @@ textarea {
   flex: 1;
   position: relative;
   display: flex;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Map Container */
@@ -3279,23 +3281,9 @@ textarea {
   transition: none !important;
 }
 
-/* Detail Panel Banner */
+/* Detail Panel Banner — collapsed into a hairline label inside the header */
 .detail-panel-banner {
-  padding: 6px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.detail-panel-banner-text {
-  font-family: var(--font-heading-compressed);
-  font-size: 0.65rem;
-  font-weight: 700;
-  font-style: italic;
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-brand);
-  color: white;
+  display: none; /* banner text is now shown inline in the profile block */
 }
 
 /* Drag Handle (mobile only by default, shown via CSS) */
@@ -3326,51 +3314,54 @@ textarea {
 }
 
 .detail-panel-close {
-  background: var(--adi-magenta);
+  background: transparent;
   border: none;
-  color: var(--adi-white);
-  font-size: 1.1rem;
-  font-weight: 700;
-  width: 28px;
-  height: 28px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.4rem;
+  font-weight: 300;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast);
   flex-shrink: 0;
   margin-left: auto;
   position: relative;
   z-index: 1;
+  align-self: flex-start;
 }
 
 .detail-panel-close:hover {
-  background: var(--adi-black);
-  color: var(--adi-white);
-  transform: scale(1.1);
+  color: rgba(255, 255, 255, 1);
 }
 
 .detail-region-badge {
   font-family: var(--font-heading-compressed);
-  display: inline-block;
-  font-size: 0.65rem;
-  color: white;
-  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.7);
+  padding: 2px 6px 2px 7px;
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-brand);
+  letter-spacing: 0.12em;
   font-weight: 700;
   font-style: italic;
-  margin-top: 4px;
+  margin-top: 5px;
   position: relative;
   z-index: 1;
+  border-left: 2px solid var(--adi-magenta);
+  background: rgba(255,255,255,0.07);
 }
 
 .detail-panel-profile {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-color);
+  gap: 14px;
+  padding: 16px 16px 18px;
+  border-bottom: none;
   position: relative;
   background: var(--adi-black);
   overflow: hidden;
@@ -3391,16 +3382,15 @@ textarea {
 /* Handle is now a separate element .detail-panel-handle */
 
 .detail-panel-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 52px;
+  height: 52px;
+  border-radius: 0;
   overflow: hidden;
   background: var(--adi-white);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: none;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .detail-panel-logo img {
@@ -3416,28 +3406,41 @@ textarea {
   z-index: 1;
 }
 
+.detail-panel-eyebrow {
+  font-family: var(--font-heading-compressed);
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--adi-magenta);
+  margin-bottom: 2px;
+  position: relative;
+  z-index: 1;
+}
+
 .detail-panel-title h2 {
   font-family: var(--font-heading-compressed);
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
   font-style: italic;
   color: var(--adi-white);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-brand);
-  line-height: 1.1;
+  line-height: 1.05;
   position: relative;
   z-index: 1;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .detail-panel-title p {
   font-family: var(--font-body);
-  margin: 2px 0 0;
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.7);
+  margin: 3px 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
   position: relative;
   z-index: 1;
+  letter-spacing: 0.04em;
 }
 
 /* Mt. Zion Prep/National toggle */
@@ -3479,56 +3482,57 @@ textarea {
   display: flex;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+  background: var(--bg-primary);
 }
 
 .detail-tab {
   font-family: var(--font-heading-compressed);
   flex: 1;
-  padding: 10px 0;
+  padding: 11px 0 10px;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  font-style: italic;
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-brand);
+  letter-spacing: 0.12em;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .detail-tab:hover {
   color: var(--text-secondary);
-  background: var(--bg-secondary);
 }
 
 .detail-tab.active {
   color: var(--text-primary);
   border-bottom-color: var(--adi-magenta);
-  font-weight: 700;
 }
 
 .detail-panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: 14px;
+  padding: 0;
 }
 
 /* Detail Info Tab */
 .detail-section {
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 2px 0;
-  margin-bottom: 12px;
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 0;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  padding: 8px 14px;
-  font-size: 0.82rem;
+  align-items: center;
+  padding: 9px 16px;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   gap: 12px;
 }
@@ -3536,6 +3540,7 @@ textarea {
 .detail-row span:last-child {
   text-align: right;
   word-break: break-word;
+  font-weight: 500;
 }
 
 .detail-row:not(:last-child) {
@@ -3544,19 +3549,29 @@ textarea {
 
 .detail-label {
   font-family: var(--font-heading-compressed);
-  font-weight: 600;
+  font-weight: 700;
+  font-style: italic;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
 }
 
 /* Top Prospects Block */
+.detail-info-tab,
+.detail-vitals-tab,
+.detail-intel-tab,
+.detail-contract-tab {
+  padding-bottom: 12px;
+}
+
 .detail-prospects {
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 12px;
+  background: transparent;
+  border-radius: 0;
+  padding: 10px 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .detail-prospects .detail-label {
@@ -3671,32 +3686,42 @@ textarea {
 
 .detail-actions {
   display: flex;
-  gap: 8px;
-  padding-top: 12px;
+  gap: 0;
   border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .detail-export-btn,
 .detail-edit-btn,
 .detail-delete-btn {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading-compressed);
   flex: 1;
-  padding: 8px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 11px 8px;
+  border-radius: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid var(--border-color);
+  transition: all 0.15s;
+  border: none;
+  border-right: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
+}
+
+.detail-export-btn:last-child,
+.detail-edit-btn:last-child,
+.detail-delete-btn:last-child {
+  border-right: none;
 }
 
 .detail-export-btn {
-  background: transparent;
+  background: var(--bg-primary);
   color: var(--adi-magenta);
-  border: 2px solid var(--adi-magenta);
 }
 
 .detail-export-btn:hover {
@@ -3708,35 +3733,24 @@ textarea {
   flex-shrink: 0;
 }
 
-/* Mobile: Make export button outline even clearer */
-@media (max-width: 768px) {
-  .detail-export-btn {
-    border-width: 2px;
-    font-weight: 700;
-  }
-}
-
 .detail-edit-btn {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-color: var(--text-secondary);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
 }
 
 .detail-edit-btn:hover {
-  background: var(--text-primary);
-  color: var(--bg-primary);
-  border-color: var(--text-primary);
+  background: var(--adi-black);
+  color: var(--adi-white);
 }
 
 .detail-delete-btn {
-  background: var(--bg-secondary);
-  color: var(--danger-color);
+  background: var(--bg-primary);
+  color: var(--text-muted);
 }
 
 .detail-delete-btn:hover {
   background: var(--danger-color);
   color: white;
-  border-color: var(--danger-color);
 }
 
 /* Schedule Tab */
@@ -5213,15 +5227,17 @@ textarea {
 
 .detail-level-badge {
   font-family: var(--font-heading-compressed);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.6rem;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 3px;
+  color: rgba(255,255,255,0.7);
+  padding: 2px 6px 2px 7px;
+  border-radius: 0;
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-brand);
+  letter-spacing: 0.12em;
   font-weight: 700;
   font-style: italic;
+  background: rgba(255,255,255,0.07);
 }
 
 .detail-level-value {
@@ -8977,10 +8993,16 @@ textarea {
   cursor: pointer;
 }
 
-/* Map View */
+/* Map View — Leaflet requires explicit pixel dimensions */
 .td-map-layout {
-  flex: 1;
-  position: relative;
+  width: 100%;
+  height: calc(100vh - 200px);
+}
+
+.td-map-layout .map-container,
+.td-map-layout .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Mobile Responsive */

@@ -728,6 +728,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
           <img src={program.logo} alt={program.name} />
         </div>
         <div className="detail-panel-title">
+          <div className="detail-panel-eyebrow">{sport === 'football' ? 'Select Football' : 'Select Basketball'}</div>
           <h2>{program.name}</h2>
           <p>{program.city}, {program.state}</p>
           <div className="detail-badges-row">
@@ -848,7 +849,12 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   adiCustom Uniform
                 </a>
               )}
-              {program.brandGuide && (
+              {program.brandGuideUrl && (
+                <a href={program.brandGuideUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-brand">
+                  Brand Guidelines
+                </a>
+              )}
+              {!program.brandGuideUrl && program.brandGuide && (
                 <a href={program.brandGuide} download={program.brandGuideName || 'brand-guidelines.pdf'} className="detail-link-btn detail-link-brand">
                   Brand Guidelines
                 </a>
