@@ -8995,13 +8995,12 @@ textarea {
 .td-map-layout {
   flex: 1;
   position: relative;
-  display: flex;
-  flex-direction: column;
   min-height: 0;
 }
 
 .td-map-layout .map-container {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
