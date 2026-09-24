@@ -8993,24 +8993,13 @@ textarea {
   cursor: pointer;
 }
 
-/* Map View */
+/* Map View — Leaflet requires explicit pixel dimensions */
 .td-map-layout {
-  flex: 1;
-  position: relative;
-  min-height: 400px;
+  width: 100%;
+  height: calc(100vh - 200px);
 }
 
-.td-map-layout .map-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Leaflet needs a real px height — set it via the container element directly */
+.td-map-layout .map-container,
 .td-map-layout .leaflet-container {
   width: 100% !important;
   height: 100% !important;
