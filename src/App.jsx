@@ -3432,6 +3432,93 @@ function App() {
     }
   }, [activeTab, filteredPrograms])
 
+  const handleExportMahomesDeck = useCallback(async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = (await import('jspdf-autotable')).default
+
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      const W = 297 // A4 landscape width mm
+      const allFootball = filteredPrograms
+
+      const drawPageHeader = (tierLabel, tierColor, count) => {
+        // Black bar
+        doc.setFillColor(0, 0, 0)
+        doc.rect(0, 0, W, 22, 'F')
+        // Accent stripe
+        doc.setFillColor(...tierColor)
+        doc.rect(0, 22, W, 3, 'F')
+
+        doc.setTextColor(255, 255, 255)
+        doc.setFont('helvetica', 'bolditalic')
+        doc.setFontSize(16)
+        doc.text('ADI SEL3CT', 12, 10)
+
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.setCharSpace(2)
+        doc.text('SELECT FOOTBALL', 12, 17)
+        doc.setCharSpace(0)
+
+        doc.setTextColor(...tierColor)
+        doc.setFont('helvetica', 'bolditalic')
+        doc.setFontSize(18)
+        doc.text(tierLabel, W / 2, 13, { align: 'center' })
+
+        doc.setTextColor(200, 200, 200)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7)
+        doc.text(today, W - 12, 10, { align: 'right' })
+        doc.text(`${count} Programs`, W - 12, 17, { align: 'right' })
+      }
+
+      const buildTableRows = (list) =>
+        list.map((p, i) => [
+          i + 1,
+          p.name || '',
+          p.city || '',
+          p.state || '',
+          p.region || '',
+          p.conference || '',
+          p.headCoach || ''
+        ])
+
+      // ── PAGE 1: MAHOMES (Golden) ──
+      const mahomes = allFootball.filter(p => p.level === 'Mahomes')
+      drawPageHeader('MAHOMES TIER', [227, 24, 55], mahomes.length)
+      autoTable(doc, {
+        startY: 30,
+        head: [['#', 'School', 'City', 'State', 'Region', 'Conference', 'Head Coach']],
+        body: buildTableRows(mahomes),
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [227, 24, 55], textColor: [255, 255, 255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [252, 245, 245] },
+        margin: { left: 12, right: 12 }
+      })
+
+      // ── PAGE 2: GOLD (Sterling) ──
+      doc.addPage()
+      const sterling = allFootball.filter(p => p.level === 'Gold')
+      drawPageHeader('STERLING TIER', [201, 168, 76], sterling.length)
+      autoTable(doc, {
+        startY: 30,
+        head: [['#', 'School', 'City', 'State', 'Region', 'Conference', 'Head Coach']],
+        body: buildTableRows(sterling),
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [180, 140, 40], textColor: [255, 255, 255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [252, 250, 240] },
+        margin: { left: 12, right: 12 }
+      })
+
+      doc.save(`adidas-select-football-mahomes-deck-${new Date().toISOString().split('T')[0]}.pdf`)
+      setShowExportMenu(false)
+    } catch (err) {
+      logger.error('Mahomes deck export error:', err)
+      toast.error(`Export failed: ${err.message || 'Unknown error'}`)
+    }
+  }, [filteredPrograms])
+
   const handleExportDirectory = useCallback(async () => {
     try {
       const jsPDF = (await import('jspdf')).default
@@ -5359,6 +5446,19 @@ function App() {
                     </svg>
                   </span>
                   <span>Export Report (PDF)</span>
+                </button>
+              )}
+              {activeTab === 'football' && (
+                <button className="export-modal-btn" onClick={handleExportMahomesDeck}>
+                  <span className="export-modal-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+                      <polyline points="12,2 12,6 16,6"/>
+                      <circle cx="10" cy="13" r="3" strokeWidth="1.5"/>
+                      <path d="M10 11v2l1 1" strokeWidth="1.5"/>
+                    </svg>
+                  </span>
+                  <span>Mahomes Deck (PDF)</span>
                 </button>
               )}
             </div>
