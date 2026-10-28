@@ -4074,7 +4074,7 @@ textarea {
   background-color: #000000;
   background-size: cover;
   background-position: center;
-  padding: 12px 32px;
+  padding: 3px 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4084,7 +4084,7 @@ textarea {
   font-family: var(--font-heading-compressed);
   font-weight: 700;
   font-style: italic;
-  font-size: 1.5rem;
+  font-size: 0.75rem;
   letter-spacing: var(--letter-spacing-brand);
   text-transform: uppercase;
   color: #FFFFFF;
