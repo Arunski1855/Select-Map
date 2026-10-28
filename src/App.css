@@ -10625,6 +10625,29 @@ textarea {
   z-index: 15;
 }
 
+/* ── Football Tier Rings ─────────────────────────────────────────── */
+/* Each football program level gets a distinct border ring on its marker */
+.logo-marker.tier-mahomes {
+  border-color: #e31837;
+  box-shadow: 0 2px 8px rgba(227, 24, 55, 0.5), 0 0 0 1px #e31837;
+}
+.logo-marker.tier-gold {
+  border-color: #c9a84c;
+  box-shadow: 0 2px 8px rgba(201, 168, 76, 0.55), 0 0 0 1px #c9a84c;
+}
+.logo-marker.tier-silver {
+  border-color: #8a8d8f;
+  box-shadow: 0 2px 8px rgba(138, 141, 143, 0.5), 0 0 0 1px #8a8d8f;
+}
+.logo-marker.tier-bronze {
+  border-color: #a0714f;
+  box-shadow: 0 2px 8px rgba(160, 113, 79, 0.5), 0 0 0 1px #a0714f;
+}
+.logo-marker.tier-regional {
+  border-color: #005eb8;
+  box-shadow: 0 2px 8px rgba(0, 94, 184, 0.5), 0 0 0 1px #005eb8;
+}
+
 /* Dark mode contract gradient adjustments */
 [data-theme="dark"] .logo-marker.contract-years-0 {
   box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.5);

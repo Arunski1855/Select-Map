@@ -74,11 +74,12 @@ const escapeHtml = (str) => {
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
 const ICON_CACHE_MAX = 200
 const iconCache = new Map()
-const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null) => {
-  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}`
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null, levelTier = null) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}|${levelTier}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
   const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
   const eliteClass = isSelect === false ? ' elite-tier' : ''
+  const levelClass = levelTier ? ` tier-${levelTier.toLowerCase().replace(/\s+/g, '-')}` : ''
   // Years remaining gradient class: 0=urgent, 1=warning, 2=caution, 3+=healthy
   let yearsClass = ''
   if (yearsRemaining !== null && contractStatus !== 'none') {
@@ -93,7 +94,7 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}${levelClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
         <img src="${escapeHtml(logoUrl)}" alt="${safeName}" />
         ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
         ${contractTier === 'premium' ? '<span class="tier-badge">★</span>' : ''}
@@ -2655,12 +2656,18 @@ function App() {
     if (activeTab === 'events') return
     setIsLoading(true)
 
-    const unsubscribe = subscribeToPrograms(activeTab, (data) => {
-      // Filter out archived programs for the main view
-      setPrograms(data.filter(p => !p.isArchived).map(p => ({
+    // Sterling tab shares football data but filtered to Gold level
+    const sportKey = activeTab === 'sterling' ? 'football' : activeTab
+
+    const unsubscribe = subscribeToPrograms(sportKey, (data) => {
+      let filtered = data.filter(p => !p.isArchived).map(p => ({
         ...p,
         name: p.name?.replace(/\bMt\.?\s*Zion(?:\s+Prep)?\b/gi, 'Mt. Zion Prep')
-      })))
+      }))
+      if (activeTab === 'sterling') {
+        filtered = filtered.filter(p => p.level === 'Gold')
+      }
+      setPrograms(filtered)
       setIsLoading(false)
     })
 
@@ -2829,11 +2836,12 @@ function App() {
             contractStatus = 'none'
           }
         }
-        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier)
+        const levelTier = (activeTab === 'football' || activeTab === 'sterling') ? (program.level || null) : null
+        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier, levelTier)
       }
     })
     return icons
-  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed])
+  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed, activeTab])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
@@ -3349,7 +3357,7 @@ function App() {
 
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
+      const tabName = (activeTab === 'football' || activeTab === 'sterling') ? 'Select Football' : 'Select Basketball'
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
       // Header
@@ -3526,7 +3534,7 @@ function App() {
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      const sportLabel = activeTab === 'football' ? 'SELECT FOOTBALL' : 'SELECT BASKETBALL'
+      const sportLabel = (activeTab === 'football' || activeTab === 'sterling') ? 'SELECT FOOTBALL' : 'SELECT BASKETBALL'
       const sorted = [...filteredPrograms].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
       // Black header bar
@@ -3682,6 +3690,9 @@ function App() {
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />
   }
+
+  // Sterling is a view of football data — pass 'football' to child components
+  const sportKey = activeTab === 'sterling' ? 'football' : activeTab
 
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
@@ -4025,7 +4036,7 @@ function App() {
           )}
         </div>
 
-        {activeTab !== 'football' && (
+        {activeTab !== 'football' && activeTab !== 'sterling' && (
           <div className="gender-filter-pills">
             {['Boys', 'Girls', 'all'].map(g => (
               <button
@@ -5090,7 +5101,7 @@ function App() {
             {showSchoolDirectory && (
               <SchoolDirectoryPanel
                 programs={filteredPrograms}
-                sport={activeTab}
+                sport={sportKey}
                 onClose={() => setShowSchoolDirectory(false)}
                 onExport={handleExportDirectory}
               />
@@ -5099,7 +5110,7 @@ function App() {
             <DetailPanel
               program={selectedProgram}
               mtZionPrograms={selectedMtZionGroup}
-              sport={activeTab}
+              sport={sportKey}
               isOpen={!!selectedProgram}
               onClose={() => { setSelectedProgram(null); setSelectedMtZionGroup(null) }}
               isUserAllowed={isUserAllowed}
@@ -5312,7 +5323,7 @@ function App() {
       </nav>
 
       <footer className="footer">
-        {(activeTab === 'basketball' || activeTab === 'football') && (
+        {(activeTab === 'basketball' || activeTab === 'football' || activeTab === 'sterling') && (
           <div className="stier-banner">
             <span className="stier-text">WELCOME TO THE S-TIER</span>
           </div>
@@ -5332,7 +5343,7 @@ function App() {
         onClose={closeForm}
         onAdd={handleAddProgram}
         onEdit={handleEditProgram}
-        sport={activeTab}
+        sport={sportKey}
         editProgram={editingProgram}
         user={user}
       />
@@ -5347,7 +5358,7 @@ function App() {
         isOpen={!!historyProgram}
         onClose={() => setHistoryProgram(null)}
         program={historyProgram}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <AdminPanel
@@ -5448,7 +5459,7 @@ function App() {
                   <span>Export Report (PDF)</span>
                 </button>
               )}
-              {activeTab === 'football' && (
+              {(activeTab === 'football' || activeTab === 'sterling') && (
                 <button className="export-modal-btn" onClick={handleExportMahomesDeck}>
                   <span className="export-modal-icon">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -5471,7 +5482,7 @@ function App() {
         onClose={() => setIsAnalyticsOpen(false)}
         programs={programs}
         events={events}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <DigestModal
@@ -5479,7 +5490,7 @@ function App() {
         onClose={() => setIsDigestOpen(false)}
         programs={programs}
         events={events}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <ReportsModal
@@ -5487,7 +5498,7 @@ function App() {
         onClose={() => setIsReportsOpen(false)}
         programs={programs}
         events={events}
-        sport={activeTab}
+        sport={sportKey}
         allContractDetails={allContractDetails}
       />
 
@@ -5503,7 +5514,7 @@ function App() {
         archivedPrograms={archivedPrograms}
         onRestore={handleRestoreProgram}
         onDelete={handlePermanentDelete}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <BulkEditModal
@@ -5512,7 +5523,7 @@ function App() {
         programs={programs}
         onSave={handleEditProgram}
         onDelete={handleBulkDeleteProgram}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <ContractDashboard
@@ -5520,7 +5531,7 @@ function App() {
         onClose={() => setIsContractDashboardOpen(false)}
         programs={programs}
         allContractDetails={allContractDetails}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <CompetitorEventsModal
