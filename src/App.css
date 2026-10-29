@@ -421,12 +421,14 @@ textarea {
 }
 
 .app {
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-body);
+  overflow: hidden;
 }
 
 /* Header */
@@ -1301,8 +1303,13 @@ textarea {
 /* Map Container */
 .map-container {
   width: 100%;
-  height: calc(100vh - 280px);
+  height: 100%;
   z-index: 1;
+}
+
+.main .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Cluster Markers */
