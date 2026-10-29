@@ -4036,17 +4036,23 @@ textarea {
 
 /* Footer */
 .footer {
-  background: #000;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.82);
   color: white;
-  padding: 3px 12px;
+  padding: 3px 14px;
   text-align: center;
   font-size: 0.65rem;
   z-index: 1000;
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 12px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .footer-logo-wrapper {

@@ -5120,6 +5120,23 @@ function App() {
             />
           </div>
         )}
+
+        {/* Floating status footer — overlays map, does not push content */}
+        <footer className="footer">
+          {(activeTab === 'basketball' || activeTab === 'football' || activeTab === 'sterling') && (
+            <div className="stier-banner">
+              <span className="stier-text">WELCOME TO THE S-TIER</span>
+            </div>
+          )}
+          <p>
+            {activeTab === 'events'
+              ? `${events.length} events`
+              : activeTab === 'targets'
+              ? `${filteredTargetPrograms.length} target programs`
+              : `${filteredPrograms.length} programs displayed`}
+            {user && ` | Signed in as ${user.email}`}
+          </p>
+        </footer>
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
@@ -5321,22 +5338,6 @@ function App() {
           </button>
         </div>
       </nav>
-
-      <footer className="footer">
-        {(activeTab === 'basketball' || activeTab === 'football' || activeTab === 'sterling') && (
-          <div className="stier-banner">
-            <span className="stier-text">WELCOME TO THE S-TIER</span>
-          </div>
-        )}
-        <p>
-          {activeTab === 'events'
-            ? `${events.length} events`
-            : activeTab === 'targets'
-            ? `${filteredTargetPrograms.length} target programs`
-            : `${filteredPrograms.length} programs displayed`}
-          {user && ` | Signed in as ${user.email}`}
-        </p>
-      </footer>
 
       <AddProgramForm
         isOpen={isFormOpen}
