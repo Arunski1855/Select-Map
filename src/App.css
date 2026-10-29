@@ -3253,7 +3253,7 @@ textarea {
 .programs-layout {
   display: flex;
   width: 100%;
-  height: calc(100vh - 280px);
+  height: 100%;
   position: relative;
 }
 
@@ -4891,7 +4891,7 @@ textarea {
 
   /* Programs layout on mobile */
   .programs-layout {
-    height: calc(100vh - 200px);
+    height: 100%;
     position: relative;
   }
 
@@ -5211,7 +5211,7 @@ textarea {
   }
 
   .programs-layout {
-    height: calc(100vh - 180px);
+    height: 100%;
   }
 
   .detail-panel {
