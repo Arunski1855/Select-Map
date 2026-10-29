@@ -13210,3 +13210,238 @@ textarea {
     width: 240px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   UNIFIED COMMAND STRIP
+   ══════════════════════════════════════════════════════ */
+
+.command-strip {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  background: #000;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 0 8px;
+  gap: 6px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 200;
+}
+
+/* ── Sport tab chips ── */
+.cs-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cs-tab {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255,255,255,0.45);
+  font-family: 'adidasFG', 'adidasFG Compressed', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  border-radius: 0;
+}
+
+.cs-tab:hover { color: rgba(255,255,255,0.75); }
+
+.cs-tab.active { color: #fff; }
+
+/* Tier accent bottom borders */
+.cs-tab--basketball.active  { border-bottom-color: #E500A4; }
+.cs-tab--football.active    { border-bottom-color: #e31837; }
+.cs-tab--sterling.active    { border-bottom-color: #c9a84c; }
+.cs-tab--events.active      { border-bottom-color: rgba(255,255,255,0.5); }
+.cs-tab--targets.active     { border-bottom-color: rgba(255,255,255,0.5); }
+
+.cs-strip-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+}
+
+/* ── Search ── */
+.cs-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  max-width: 320px;
+  height: 28px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 0 8px;
+  gap: 6px;
+}
+
+.cs-search-icon {
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+.cs-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+}
+
+.cs-search-input::placeholder { color: rgba(255,255,255,0.3); }
+
+.cs-search-clear {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.cs-search-clear:hover { color: #fff; }
+
+/* ── Right actions ── */
+.cs-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.cs-count {
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.6rem;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+  padding: 0 6px;
+  text-transform: uppercase;
+}
+
+/* Gender pills */
+.cs-gender-pills {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 4px;
+}
+
+.cs-gender-pill {
+  height: 22px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.5);
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.62rem;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 0;
+}
+.cs-gender-pill:hover { color: #fff; border-color: rgba(255,255,255,0.45); }
+.cs-gender-pill.active { background: #fff; color: #000; border-color: #fff; }
+
+/* Icon action buttons */
+.cs-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  position: relative;
+  border-radius: 0;
+  flex-shrink: 0;
+}
+.cs-action-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.cs-action-btn.active { color: #E500A4; }
+
+/* Tooltip via title — browser default; or we can use a CSS trick */
+.cs-action-btn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  padding: 3px 6px;
+  pointer-events: none;
+  z-index: 999;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+/* Dropdown wrapper (acts as button + popover) */
+.cs-dropdown {
+  position: relative;
+}
+
+.cs-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.15);
+  min-width: 160px;
+  z-index: 500;
+  padding: 4px 0;
+}
+
+.cs-dropdown.open .cs-dropdown-menu { display: block; }
+
+/* ── Advanced filters strip ── */
+.cs-advanced-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #0a0a0a;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+
+.cs-clear-filters {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.5);
+  font-size: 0.65rem;
+  font-family: 'adidasFG', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.cs-clear-filters:hover { color: #fff; border-color: rgba(255,255,255,0.5); }
+

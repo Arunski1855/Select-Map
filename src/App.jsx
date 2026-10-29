@@ -3766,8 +3766,221 @@ function App() {
         </div>
       )}
 
-      {/* Dashboard Stats (programs only, requires login except targets which has its own gate) */}
-      {activeTab !== 'events' && activeTab !== 'targets' && user && (
+      {/* ── UNIFIED COMMAND STRIP ── */}
+      <div className="command-strip">
+
+        {/* LEFT: Sport tab chips */}
+        <nav className="cs-tabs">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              className={`cs-tab cs-tab--${tab.id}${activeTab === tab.id ? ' active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="cs-tab-label">
+                {tab.id === 'basketball' ? 'Basketball'
+                  : tab.id === 'football' ? 'Mahomes'
+                  : tab.id === 'sterling' ? 'Sterling'
+                  : tab.id === 'events' ? 'Events'
+                  : 'Targets'}
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        {/* CENTER: Search */}
+        {activeTab !== 'events' && activeTab !== 'targets' && user && (
+          <div className="cs-search">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="cs-search-icon">
+              <circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="19" y2="19"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search programs, cities, coaches…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="cs-search-input"
+            />
+            {searchQuery && (
+              <button className="cs-search-clear" onClick={() => setSearchQuery('')}>×</button>
+            )}
+          </div>
+        )}
+
+        {/* RIGHT: Action icon buttons */}
+        {activeTab !== 'events' && activeTab !== 'targets' && user && (
+          <div className="cs-actions">
+
+            {/* Program count */}
+            <span className="cs-count">{filteredPrograms.length} Programs</span>
+
+            {/* Gender pills (basketball only) */}
+            {activeTab !== 'football' && activeTab !== 'sterling' && (
+              <div className="cs-gender-pills">
+                {['Boys', 'Girls', 'all'].map(g => (
+                  <button key={g} className={`cs-gender-pill${filterGender === g ? ' active' : ''}`}
+                    onClick={() => setFilterGender(g)}>
+                    {g === 'all' ? 'All' : g}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Contracts layer toggle */}
+            {isUserAllowed && (
+              <button
+                className={`cs-action-btn${showContractMapLayer ? ' active' : ''}`}
+                onClick={() => setShowContractMapLayer(v => !v)}
+                title="Contracts Layer"
+              >
+                <span style={{display:'flex',gap:'2px',alignItems:'center'}}>
+                  <span className="contract-layer-dot contract-layer-dot-expiring" style={{width:6,height:6}}/>
+                  <span className="contract-layer-dot contract-layer-dot-active" style={{width:6,height:6}}/>
+                  <span className="contract-layer-dot contract-layer-dot-none" style={{width:6,height:6}}/>
+                </span>
+              </button>
+            )}
+
+            {/* Analytics dropdown */}
+            <div
+              className={`cs-action-btn cs-dropdown${analyticsMenuOpen ? ' open' : ''}`}
+              onMouseEnter={() => setAnalyticsMenuOpen(true)}
+              onMouseLeave={() => setAnalyticsMenuOpen(false)}
+              title="Analytics"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <rect x="2" y="10" width="4" height="8" rx="1"/><rect x="8" y="6" width="4" height="12" rx="1"/><rect x="14" y="2" width="4" height="16" rx="1"/>
+              </svg>
+              <div className="cs-dropdown-menu">
+                <button className="analytics-dropdown-item" onClick={() => { setIsAnalyticsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="10" width="4" height="8" rx="1"/><rect x="8" y="6" width="4" height="12" rx="1"/><rect x="14" y="2" width="4" height="16" rx="1"/></svg></span>
+                  <span>Dashboard</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsDigestOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="2" width="14" height="16" rx="2"/><line x1="6" y1="6" x2="14" y2="6"/><line x1="6" y1="10" x2="14" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/></svg></span>
+                  <span>Digest</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsReportsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="12" y="2" width="6" height="6" rx="1"/><rect x="2" y="12" width="6" height="6" rx="1"/><rect x="12" y="12" width="6" height="6" rx="1"/></svg></span>
+                  <span>Reports</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsComparisonOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="6" height="12" rx="1"/><rect x="12" y="4" width="6" height="12" rx="1"/></svg></span>
+                  <span>Compare</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contracts */}
+            {isUserAllowed && (
+              <button className="cs-action-btn" title="Contracts" onClick={() => setIsContractDashboardOpen(true)}>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="2" width="14" height="16" rx="2"/><line x1="6" y1="6" x2="14" y2="6"/><line x1="6" y1="10" x2="14" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/>
+                </svg>
+              </button>
+            )}
+
+            {/* Bulk Edit */}
+            {isUserAllowed && (
+              <button className="cs-action-btn" title="Bulk Edit" onClick={() => setIsBulkEditOpen(true)}>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="2" width="16" height="16" rx="2"/><line x1="2" y1="7" x2="18" y2="7"/><line x1="2" y1="12" x2="18" y2="12"/><line x1="7" y1="2" x2="7" y2="18"/><line x1="13" y1="2" x2="13" y2="18"/>
+                </svg>
+              </button>
+            )}
+
+            {/* Directory */}
+            <button className="cs-action-btn" title="Directory"
+              onClick={() => setShowSchoolDirectory(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowSchoolDirectory(v => !v) }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="2" width="14" height="16" rx="1"/><line x1="7" y1="7" x2="13" y2="7"/><line x1="7" y1="10" x2="13" y2="10"/><line x1="7" y1="13" x2="11" y2="13"/>
+              </svg>
+            </button>
+
+            {/* Labels */}
+            <button className={`cs-action-btn${showMapLabels ? ' active' : ''}`} title="Labels"
+              onClick={() => setShowMapLabels(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowMapLabels(v => !v) }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="6" width="10" height="8" rx="1"/><path d="M12 9l4-2v6l-4-2"/>
+              </svg>
+            </button>
+
+            {/* Export */}
+            <button className="cs-action-btn" title="Export"
+              onClick={() => setShowExportMenu(true)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 3v10"/><polyline points="6,9 10,13 14,9"/><path d="M3 14v3a1 1 0 001 1h12a1 1 0 001-1v-3"/>
+              </svg>
+            </button>
+
+            {/* Data dropdown */}
+            {isUserAllowed && (
+              <div
+                className={`cs-action-btn cs-dropdown${dataMenuOpen ? ' open' : ''}`}
+                onMouseEnter={() => setDataMenuOpen(true)}
+                onMouseLeave={() => setDataMenuOpen(false)}
+                title="Data"
+              >
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v10c0 1.66 3.13 3 7 3s7-1.34 7-3V5"/><path d="M3 10c0 1.66 3.13 3 7 3s7-1.34 7-3"/>
+                </svg>
+                <div className="cs-dropdown-menu">
+                  <button className="analytics-dropdown-item" onClick={() => { setIsArchiveModalOpen(true); setDataMenuOpen(false) }}>
+                    <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="16" height="4" rx="1"/><path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/><line x1="8" y1="11" x2="12" y2="11"/></svg></span>
+                    <span>Archive ({archivedPrograms.length})</span>
+                  </button>
+                  <button className="analytics-dropdown-item" onClick={() => { handleBackupAccess(); setDataMenuOpen(false) }}>
+                    <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" transform="scale(0.85) translate(1,1)"/><polyline points="14,2 14,8 20,8" transform="scale(0.85) translate(1,1)"/></svg></span>
+                    <span>Backup</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* More Filters */}
+            <button className={`cs-action-btn${showFilters ? ' active' : ''}`} title="More Filters"
+              onClick={() => setShowFilters(!showFilters)}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="5" x2="17" y2="5"/><line x1="6" y1="10" x2="14" y2="10"/><line x1="9" y1="15" x2="11" y2="15"/>
+              </svg>
+            </button>
+
+          </div>
+        )}
+
+      </div>{/* end command-strip */}
+
+      {/* Advanced filters — collapsible strip */}
+      {showFilters && activeTab !== 'events' && activeTab !== 'targets' && user && (
+        <div className="cs-advanced-filters">
+          <div className="filter-box">
+            <select value={filterConference} onChange={(e) => setFilterConference(e.target.value)} className="region-filter">
+              <option value="all">All Conferences</option>
+              {uniqueConferences.map(conf => <option key={conf} value={conf}>{conf}</option>)}
+            </select>
+          </div>
+          <div className="filter-box">
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="region-filter">
+              <option value="name">Sort: Name</option>
+              <option value="region">Sort: Region</option>
+              <option value="state">Sort: State</option>
+              <option value="conference">Sort: Conference</option>
+            </select>
+          </div>
+          {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys' || filterTeamType !== 'all') && (
+            <button className="cs-clear-filters" onClick={() => {
+              setSearchQuery(''); setSelectedRegion('all'); setFilterConference('all');
+              setFilterGender('Boys'); setFilterTeamType('all'); setSortBy('name')
+            }}>Clear all</button>
+          )}
+        </div>
+      )}
+
+      {/* LEGACY DASHBOARD HIDDEN — keeping state wiring intact */}
+      {activeTab !== 'events' && activeTab !== 'targets' && user && false && (
         <div className="dashboard">
           <div className="dashboard-stats">
             {/* Total Programs Dropdown - shows region populations */}
@@ -4005,117 +4218,6 @@ function App() {
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <nav className="tabs">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <img src={tab.icon} alt="" className="tab-icon" />
-            <span className="tab-name">{tab.name}</span>
-          </button>
-        ))}
-      </nav>
-
-      {/* Search and Filter Bar (programs only, requires login except targets which has its own gate) */}
-      {activeTab !== 'events' && activeTab !== 'targets' && user && <div className="toolbar">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Search programs, cities, coaches..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-          {searchQuery && (
-            <button className="clear-search" onClick={() => setSearchQuery('')}>
-              &times;
-            </button>
-          )}
-        </div>
-
-        {activeTab !== 'football' && activeTab !== 'sterling' && (
-          <div className="gender-filter-pills">
-            {['Boys', 'Girls', 'all'].map(g => (
-              <button
-                key={g}
-                className={`gender-pill ${filterGender === g ? 'active' : ''}`}
-                onClick={() => setFilterGender(g)}
-              >
-                {g === 'all' ? 'All' : g}
-              </button>
-            ))}
-          </div>
-        )}
-
-
-        {isUserAllowed && activeTab !== 'targets' && (
-          <button
-            className={`contract-layer-toggle-btn${showContractMapLayer ? ' active' : ''}`}
-            onClick={() => setShowContractMapLayer(v => !v)}
-            title="Toggle contract status map layer"
-          >
-            <span className="contract-layer-dot contract-layer-dot-expiring" />
-            <span className="contract-layer-dot contract-layer-dot-active" />
-            <span className="contract-layer-dot contract-layer-dot-none" />
-            {showContractMapLayer ? 'Contracts On' : 'Contracts'}
-          </button>
-        )}
-
-        <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
-          {showFilters ? 'Less Filters' : 'More Filters'}
-        </button>
-
-        {showFilters && (
-          <div className="advanced-filters">
-            <div className="filter-box">
-              <select
-                value={filterConference}
-                onChange={(e) => setFilterConference(e.target.value)}
-                className="region-filter"
-              >
-                <option value="all">All Conferences</option>
-                {uniqueConferences.map(conf => (
-                  <option key={conf} value={conf}>{conf}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-box">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="region-filter"
-              >
-                <option value="name">Sort: Name</option>
-                <option value="region">Sort: Region</option>
-                <option value="state">Sort: State</option>
-                <option value="conference">Sort: Conference</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys' || filterTeamType !== 'all') && (
-          <div className="filter-info">
-            Showing {filteredPrograms.length} of {programs.length} programs
-            {filterGender !== 'Boys' && <span className="filter-tag">{filterGender === 'all' ? 'All' : filterGender}</span>}
-            {filterTeamType !== 'all' && <span className="filter-tag">{filterTeamType}</span>}
-            <button className="clear-filters" onClick={() => {
-              setSearchQuery('')
-              setSelectedRegion('all')
-              setFilterConference('all')
-              setFilterGender('Boys')
-              setFilterTeamType('all')
-              setSortBy('name')
-            }}>
-              Clear filters
-            </button>
-          </div>
-        )}
-      </div>}
 
       <main className="main">
         {activeTab === 'targets' ? (
