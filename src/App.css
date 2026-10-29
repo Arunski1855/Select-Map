@@ -4038,14 +4038,15 @@ textarea {
 .footer {
   background: #000;
   color: white;
-  padding: 1rem 1.5rem;
+  padding: 3px 12px;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   z-index: 1000;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: 12px;
 }
 
 .footer-logo-wrapper {
@@ -4053,11 +4054,11 @@ textarea {
   background-color: #000000;
   background-size: cover;
   background-position: center;
-  padding: 8px 16px;
+  padding: 2px 8px;
 }
 
 .footer-logo {
-  height: 32px;
+  height: 16px;
   width: auto;
   object-fit: contain;
   opacity: 0.9;
@@ -4104,9 +4105,10 @@ textarea {
 .footer p {
   margin: 0;
   font-family: var(--font-heading-compressed);
-  letter-spacing: var(--letter-spacing-brand);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 /* Leaflet Controls */
