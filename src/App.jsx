@@ -4368,8 +4368,8 @@ function App() {
             ) : targetDashboardView === 'dashboard' ? (
               /* NEW: Dashboard View with Hot Targets + Mini Kanban + Activity */
               <div className="td-dashboard">
-                {/* Main Grid: Left (Pipeline + Activity) | Right (Hot Targets) | Form (when open) */}
-                <div className="td-dashboard-main">
+                {/* Main Grid: Left (Pipeline + Activity) | Center (Hot Targets) | Right (Map) */}
+                <div className="td-dashboard-main td-dashboard-main--with-map">
                   {/* Left Column: Pipeline Overview + Activity Feed */}
                   <div className="td-dashboard-left">
                     {/* Mini Pipeline Overview */}
@@ -4551,26 +4551,63 @@ function App() {
                     </section>
                   </div>
 
-                </div>
+                  {/* Right Column: Target Map */}
+                  <div className="td-dashboard-map-col">
+                    <section className="td-section td-map-section" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                      <div className="td-section-header">
+                        <h3>Target Map</h3>
+                        <button className="td-section-link" onClick={() => setTargetDashboardView('map')}>Full Map →</button>
+                      </div>
+                      <div className="td-mini-map-wrap">
+                        <MapContainer
+                          key="targets-dashboard-mini"
+                          center={mapCenter}
+                          zoom={3.5}
+                          className="td-mini-map"
+                          zoomControl={false}
+                          scrollWheelZoom={false}
+                          dragging={false}
+                          doubleClickZoom={false}
+                          attributionControl={false}
+                        >
+                          <DynamicTileLayer darkMode={darkMode} />
+                          {filteredTargetPrograms.map(target => (
+                            target && target.coordinates && (
+                              <Marker
+                                key={target.id}
+                                position={target.coordinates}
+                                icon={L.divIcon({
+                                  className: 'target-marker',
+                                  html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
+                                    ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
+                                  </div>`,
+                                  iconSize: [28, 28],
+                                  iconAnchor: [14, 28],
+                                  popupAnchor: [0, -28]
+                                })}
+                                eventHandlers={{ click: () => setSelectedTargetProgram(target) }}
+                              />
+                            )
+                          ))}
+                        </MapContainer>
+                      </div>
+                      {/* Regional Distribution - now inside map column */}
+                      <div className="td-region-grid td-region-grid--compact">
+                        {Object.entries(REGIONS).map(([region, data]) => {
+                          const count = targetPrograms.filter(t => t.region === region).length
+                          return (
+                            <div key={region} className="td-region-item" style={{ '--region-color': data.color }}>
+                              <span className="td-region-dot" />
+                              <span className="td-region-name">{region}</span>
+                              <span className="td-region-count">{count}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
+                  </div>
 
-                {/* Regional Distribution - Below main grid */}
-                <section className="td-section td-region-section">
-                  <div className="td-section-header">
-                    <h3>Regional Distribution</h3>
-                  </div>
-                  <div className="td-region-grid">
-                    {Object.entries(REGIONS).map(([region, data]) => {
-                      const count = targetPrograms.filter(t => t.region === region).length
-                      return (
-                        <div key={region} className="td-region-item" style={{ '--region-color': data.color }}>
-                          <span className="td-region-dot" />
-                          <span className="td-region-name">{region}</span>
-                          <span className="td-region-count">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </section>
+                </div>
               </div>
             ) : targetDashboardView === 'kanban' ? (
               /* Improved Kanban Pipeline View with Drag & Drop */

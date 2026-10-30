@@ -8376,10 +8376,48 @@ textarea {
 /* Dashboard Main Layout (Left + Right columns) */
 .td-dashboard-main {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
   gap: 24px;
   flex: 1;
   min-height: 0;
+}
+
+.td-dashboard-main--with-map {
+  grid-template-columns: minmax(260px, 1fr) minmax(240px, 1fr) minmax(280px, 1.4fr);
+}
+
+.td-dashboard-map-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.td-map-section {
+  flex: 1;
+  min-height: 0;
+}
+
+.td-mini-map-wrap {
+  flex: 1;
+  min-height: 240px;
+  position: relative;
+  overflow: hidden;
+}
+
+.td-mini-map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 240px;
+  cursor: default;
+}
+
+.td-region-grid--compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px 8px;
+  padding: 8px 12px;
+  font-size: 0.7rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .td-dashboard-left {
