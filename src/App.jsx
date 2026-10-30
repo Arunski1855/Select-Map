@@ -74,11 +74,12 @@ const escapeHtml = (str) => {
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
 const ICON_CACHE_MAX = 200
 const iconCache = new Map()
-const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null) => {
-  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}`
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null, levelTier = null) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}|${levelTier}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
   const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
   const eliteClass = isSelect === false ? ' elite-tier' : ''
+  const levelClass = levelTier ? ` tier-${levelTier.toLowerCase().replace(/\s+/g, '-')}` : ''
   // Years remaining gradient class: 0=urgent, 1=warning, 2=caution, 3+=healthy
   let yearsClass = ''
   if (yearsRemaining !== null && contractStatus !== 'none') {
@@ -93,7 +94,7 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}${levelClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
         <img src="${escapeHtml(logoUrl)}" alt="${safeName}" />
         ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
         ${contractTier === 'premium' ? '<span class="tier-badge">★</span>' : ''}
@@ -2655,12 +2656,18 @@ function App() {
     if (activeTab === 'events') return
     setIsLoading(true)
 
-    const unsubscribe = subscribeToPrograms(activeTab, (data) => {
-      // Filter out archived programs for the main view
-      setPrograms(data.filter(p => !p.isArchived).map(p => ({
+    // Sterling tab shares football data but filtered to Gold level
+    const sportKey = activeTab === 'sterling' ? 'football' : activeTab
+
+    const unsubscribe = subscribeToPrograms(sportKey, (data) => {
+      let filtered = data.filter(p => !p.isArchived).map(p => ({
         ...p,
         name: p.name?.replace(/\bMt\.?\s*Zion(?:\s+Prep)?\b/gi, 'Mt. Zion Prep')
-      })))
+      }))
+      if (activeTab === 'sterling') {
+        filtered = filtered.filter(p => p.level === 'Gold')
+      }
+      setPrograms(filtered)
       setIsLoading(false)
     })
 
@@ -2829,11 +2836,12 @@ function App() {
             contractStatus = 'none'
           }
         }
-        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier)
+        const levelTier = (activeTab === 'football' || activeTab === 'sterling') ? (program.level || null) : null
+        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier, levelTier)
       }
     })
     return icons
-  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed])
+  }, [filteredPrograms, showContractMapLayer, allContractDetails, isUserAllowed, activeTab])
 
   // Offset overlapping program markers
   const adjustedPositions = useMemo(() => {
@@ -3197,6 +3205,45 @@ function App() {
     }
   }
 
+  const handleConvertToProgram = async (target, isSelect = true) => {
+    const sportLabel = targetsSport === 'football' ? 'football' : 'basketball'
+    const label = isSelect ? 'Select' : 'Signed (Not Select)'
+    if (!window.confirm(`Mark ${target.name || 'this school'} as ${label}? This will update the pipeline lead and add them to the program list.`)) return
+    try {
+      // 1. Mark pipeline lead as signed
+      await editTargetProgram(targetsSport, { ...target, status: 'signed', signedAt: Date.now() })
+      if (selectedTargetProgram?.id === target.id) {
+        setSelectedTargetProgram({ ...target, status: 'signed', signedAt: Date.now() })
+      }
+      // 2. Add as a program (isSelect controls Select vs Non-Select)
+      const newProgram = {
+        name: target.name || '',
+        city: target.city || '',
+        state: target.state || '',
+        region: target.region || '',
+        level: target.level || '',
+        conference: target.conference || '',
+        headCoach: target.headCoach || '',
+        contactEmail: target.contactEmail || '',
+        contactPhone: target.contactPhone || '',
+        coordinates: target.coordinates || null,
+        logo: target.logo || '',
+        isSelect,
+        addedBy: user?.email || 'unknown',
+        timestamp: Date.now(),
+        convertedFromPipeline: target.id,
+      }
+      await addProgram(targetsSport, newProgram)
+      if (user) {
+        await addProgramHistory(targetsSport, newProgram.id || target.name, 'created', user.email)
+      }
+      toast.success(`${target.name || 'School'} marked as ${label} and added to the ${sportLabel} program list!`)
+    } catch (err) {
+      logger.error('Error converting target to program:', err)
+      toast.error('Could not convert to program. Please try again.')
+    }
+  }
+
   const openEditTargetForm = (target) => {
     setEditingTarget(target)
     setIsTargetFormOpen(true)
@@ -3310,7 +3357,7 @@ function App() {
 
       const doc = new jsPDF()
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      const tabName = activeTab === 'football' ? 'Select Football' : 'Select Basketball'
+      const tabName = (activeTab === 'football' || activeTab === 'sterling') ? 'Select Football' : 'Select Basketball'
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
       // Header
@@ -3393,6 +3440,93 @@ function App() {
     }
   }, [activeTab, filteredPrograms])
 
+  const handleExportMahomesDeck = useCallback(async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = (await import('jspdf-autotable')).default
+
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      const W = 297 // A4 landscape width mm
+      const allFootball = filteredPrograms
+
+      const drawPageHeader = (tierLabel, tierColor, count) => {
+        // Black bar
+        doc.setFillColor(0, 0, 0)
+        doc.rect(0, 0, W, 22, 'F')
+        // Accent stripe
+        doc.setFillColor(...tierColor)
+        doc.rect(0, 22, W, 3, 'F')
+
+        doc.setTextColor(255, 255, 255)
+        doc.setFont('helvetica', 'bolditalic')
+        doc.setFontSize(16)
+        doc.text('ADI SEL3CT', 12, 10)
+
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.setCharSpace(2)
+        doc.text('SELECT FOOTBALL', 12, 17)
+        doc.setCharSpace(0)
+
+        doc.setTextColor(...tierColor)
+        doc.setFont('helvetica', 'bolditalic')
+        doc.setFontSize(18)
+        doc.text(tierLabel, W / 2, 13, { align: 'center' })
+
+        doc.setTextColor(200, 200, 200)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7)
+        doc.text(today, W - 12, 10, { align: 'right' })
+        doc.text(`${count} Programs`, W - 12, 17, { align: 'right' })
+      }
+
+      const buildTableRows = (list) =>
+        list.map((p, i) => [
+          i + 1,
+          p.name || '',
+          p.city || '',
+          p.state || '',
+          p.region || '',
+          p.conference || '',
+          p.headCoach || ''
+        ])
+
+      // ── PAGE 1: MAHOMES (Golden) ──
+      const mahomes = allFootball.filter(p => p.level === 'Mahomes')
+      drawPageHeader('MAHOMES TIER', [227, 24, 55], mahomes.length)
+      autoTable(doc, {
+        startY: 30,
+        head: [['#', 'School', 'City', 'State', 'Region', 'Conference', 'Head Coach']],
+        body: buildTableRows(mahomes),
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [227, 24, 55], textColor: [255, 255, 255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [252, 245, 245] },
+        margin: { left: 12, right: 12 }
+      })
+
+      // ── PAGE 2: GOLD (Sterling) ──
+      doc.addPage()
+      const sterling = allFootball.filter(p => p.level === 'Gold')
+      drawPageHeader('STERLING TIER', [201, 168, 76], sterling.length)
+      autoTable(doc, {
+        startY: 30,
+        head: [['#', 'School', 'City', 'State', 'Region', 'Conference', 'Head Coach']],
+        body: buildTableRows(sterling),
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [180, 140, 40], textColor: [255, 255, 255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [252, 250, 240] },
+        margin: { left: 12, right: 12 }
+      })
+
+      doc.save(`adidas-select-football-mahomes-deck-${new Date().toISOString().split('T')[0]}.pdf`)
+      setShowExportMenu(false)
+    } catch (err) {
+      logger.error('Mahomes deck export error:', err)
+      toast.error(`Export failed: ${err.message || 'Unknown error'}`)
+    }
+  }, [filteredPrograms])
+
   const handleExportDirectory = useCallback(async () => {
     try {
       const jsPDF = (await import('jspdf')).default
@@ -3400,7 +3534,7 @@ function App() {
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      const sportLabel = activeTab === 'football' ? 'SELECT FOOTBALL' : 'SELECT BASKETBALL'
+      const sportLabel = (activeTab === 'football' || activeTab === 'sterling') ? 'SELECT FOOTBALL' : 'SELECT BASKETBALL'
       const sorted = [...filteredPrograms].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
       // Black header bar
@@ -3432,32 +3566,34 @@ function App() {
         p.city || '',
         p.state || '',
         p.region || '',
-        p.level || '',
         p.conference || '',
-        p.headCoach || ''
+        p.headCoach || '',
+        p.contactPhone || '',
+        p.contactEmail || ''
       ])
 
       autoTable(doc, {
         startY: 32,
-        head: [['#', 'School', 'City', 'State', 'Region', 'Level', 'Conference', 'Head Coach']],
+        head: [['#', 'School', 'City', 'State', 'Region', 'Conference', 'Head Coach', 'Phone', 'Email']],
         body: tableData,
-        styles: { fontSize: 7.5, cellPadding: 2.5, font: 'helvetica' },
+        styles: { fontSize: 7, cellPadding: 2, font: 'helvetica' },
         headStyles: {
           fillColor: [0, 0, 0],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-          fontSize: 8
+          fontSize: 7.5
         },
         alternateRowStyles: { fillColor: [248, 248, 248] },
         columnStyles: {
-          0: { cellWidth: 8, halign: 'center' },
-          1: { cellWidth: 48 },
-          2: { cellWidth: 28 },
-          3: { cellWidth: 12, halign: 'center' },
-          4: { cellWidth: 20 },
-          5: { cellWidth: 18 },
+          0: { cellWidth: 7, halign: 'center' },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 10, halign: 'center' },
+          4: { cellWidth: 18 },
+          5: { cellWidth: 24 },
           6: { cellWidth: 28 },
-          7: { cellWidth: 30 }
+          7: { cellWidth: 22 },
+          8: { cellWidth: 'auto' }
         },
         margin: { left: 8, right: 8 },
         didDrawPage: (data) => {
@@ -3555,6 +3691,9 @@ function App() {
     return <SplashScreen onComplete={() => setShowSplash(false)} />
   }
 
+  // Sterling is a view of football data — pass 'football' to child components
+  const sportKey = activeTab === 'sterling' ? 'football' : activeTab
+
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
@@ -3627,8 +3766,221 @@ function App() {
         </div>
       )}
 
-      {/* Dashboard Stats (programs only, requires login except targets which has its own gate) */}
-      {activeTab !== 'events' && activeTab !== 'targets' && user && (
+      {/* ── UNIFIED COMMAND STRIP ── */}
+      <div className="command-strip">
+
+        {/* LEFT: Sport tab chips */}
+        <nav className="cs-tabs">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              className={`cs-tab cs-tab--${tab.id}${activeTab === tab.id ? ' active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="cs-tab-label">
+                {tab.id === 'basketball' ? 'Basketball'
+                  : tab.id === 'football' ? 'Mahomes'
+                  : tab.id === 'sterling' ? 'Sterling'
+                  : tab.id === 'events' ? 'Events'
+                  : 'Targets'}
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        {/* CENTER: Search */}
+        {activeTab !== 'events' && activeTab !== 'targets' && user && (
+          <div className="cs-search">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="cs-search-icon">
+              <circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="19" y2="19"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search programs, cities, coaches…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="cs-search-input"
+            />
+            {searchQuery && (
+              <button className="cs-search-clear" onClick={() => setSearchQuery('')}>×</button>
+            )}
+          </div>
+        )}
+
+        {/* RIGHT: Action icon buttons */}
+        {activeTab !== 'events' && activeTab !== 'targets' && user && (
+          <div className="cs-actions">
+
+            {/* Program count */}
+            <span className="cs-count">{filteredPrograms.length} Programs</span>
+
+            {/* Gender pills (basketball only) */}
+            {activeTab !== 'football' && activeTab !== 'sterling' && (
+              <div className="cs-gender-pills">
+                {['Boys', 'Girls', 'all'].map(g => (
+                  <button key={g} className={`cs-gender-pill${filterGender === g ? ' active' : ''}`}
+                    onClick={() => setFilterGender(g)}>
+                    {g === 'all' ? 'All' : g}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Contracts layer toggle */}
+            {isUserAllowed && (
+              <button
+                className={`cs-action-btn${showContractMapLayer ? ' active' : ''}`}
+                onClick={() => setShowContractMapLayer(v => !v)}
+                title="Contracts Layer"
+              >
+                <span style={{display:'flex',gap:'2px',alignItems:'center'}}>
+                  <span className="contract-layer-dot contract-layer-dot-expiring" style={{width:6,height:6}}/>
+                  <span className="contract-layer-dot contract-layer-dot-active" style={{width:6,height:6}}/>
+                  <span className="contract-layer-dot contract-layer-dot-none" style={{width:6,height:6}}/>
+                </span>
+              </button>
+            )}
+
+            {/* Analytics dropdown */}
+            <div
+              className={`cs-action-btn cs-dropdown${analyticsMenuOpen ? ' open' : ''}`}
+              onMouseEnter={() => setAnalyticsMenuOpen(true)}
+              onMouseLeave={() => setAnalyticsMenuOpen(false)}
+              title="Analytics"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <rect x="2" y="10" width="4" height="8" rx="1"/><rect x="8" y="6" width="4" height="12" rx="1"/><rect x="14" y="2" width="4" height="16" rx="1"/>
+              </svg>
+              <div className="cs-dropdown-menu">
+                <button className="analytics-dropdown-item" onClick={() => { setIsAnalyticsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="10" width="4" height="8" rx="1"/><rect x="8" y="6" width="4" height="12" rx="1"/><rect x="14" y="2" width="4" height="16" rx="1"/></svg></span>
+                  <span>Dashboard</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsDigestOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="2" width="14" height="16" rx="2"/><line x1="6" y1="6" x2="14" y2="6"/><line x1="6" y1="10" x2="14" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/></svg></span>
+                  <span>Digest</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsReportsOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="12" y="2" width="6" height="6" rx="1"/><rect x="2" y="12" width="6" height="6" rx="1"/><rect x="12" y="12" width="6" height="6" rx="1"/></svg></span>
+                  <span>Reports</span>
+                </button>
+                <button className="analytics-dropdown-item" onClick={() => { setIsComparisonOpen(true); setAnalyticsMenuOpen(false) }}>
+                  <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="6" height="12" rx="1"/><rect x="12" y="4" width="6" height="12" rx="1"/></svg></span>
+                  <span>Compare</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contracts */}
+            {isUserAllowed && (
+              <button className="cs-action-btn" title="Contracts" onClick={() => setIsContractDashboardOpen(true)}>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="2" width="14" height="16" rx="2"/><line x1="6" y1="6" x2="14" y2="6"/><line x1="6" y1="10" x2="14" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/>
+                </svg>
+              </button>
+            )}
+
+            {/* Bulk Edit */}
+            {isUserAllowed && (
+              <button className="cs-action-btn" title="Bulk Edit" onClick={() => setIsBulkEditOpen(true)}>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="2" y="2" width="16" height="16" rx="2"/><line x1="2" y1="7" x2="18" y2="7"/><line x1="2" y1="12" x2="18" y2="12"/><line x1="7" y1="2" x2="7" y2="18"/><line x1="13" y1="2" x2="13" y2="18"/>
+                </svg>
+              </button>
+            )}
+
+            {/* Directory */}
+            <button className="cs-action-btn" title="Directory"
+              onClick={() => setShowSchoolDirectory(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowSchoolDirectory(v => !v) }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="2" width="14" height="16" rx="1"/><line x1="7" y1="7" x2="13" y2="7"/><line x1="7" y1="10" x2="13" y2="10"/><line x1="7" y1="13" x2="11" y2="13"/>
+              </svg>
+            </button>
+
+            {/* Labels */}
+            <button className={`cs-action-btn${showMapLabels ? ' active' : ''}`} title="Labels"
+              onClick={() => setShowMapLabels(v => !v)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowMapLabels(v => !v) }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="6" width="10" height="8" rx="1"/><path d="M12 9l4-2v6l-4-2"/>
+              </svg>
+            </button>
+
+            {/* Export */}
+            <button className="cs-action-btn" title="Export"
+              onClick={() => setShowExportMenu(true)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowExportMenu(true) }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 3v10"/><polyline points="6,9 10,13 14,9"/><path d="M3 14v3a1 1 0 001 1h12a1 1 0 001-1v-3"/>
+              </svg>
+            </button>
+
+            {/* Data dropdown */}
+            {isUserAllowed && (
+              <div
+                className={`cs-action-btn cs-dropdown${dataMenuOpen ? ' open' : ''}`}
+                onMouseEnter={() => setDataMenuOpen(true)}
+                onMouseLeave={() => setDataMenuOpen(false)}
+                title="Data"
+              >
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v10c0 1.66 3.13 3 7 3s7-1.34 7-3V5"/><path d="M3 10c0 1.66 3.13 3 7 3s7-1.34 7-3"/>
+                </svg>
+                <div className="cs-dropdown-menu">
+                  <button className="analytics-dropdown-item" onClick={() => { setIsArchiveModalOpen(true); setDataMenuOpen(false) }}>
+                    <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="16" height="4" rx="1"/><path d="M3 7v9a1 1 0 001 1h12a1 1 0 001-1V7"/><line x1="8" y1="11" x2="12" y2="11"/></svg></span>
+                    <span>Archive ({archivedPrograms.length})</span>
+                  </button>
+                  <button className="analytics-dropdown-item" onClick={() => { handleBackupAccess(); setDataMenuOpen(false) }}>
+                    <span className="analytics-dropdown-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" transform="scale(0.85) translate(1,1)"/><polyline points="14,2 14,8 20,8" transform="scale(0.85) translate(1,1)"/></svg></span>
+                    <span>Backup</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* More Filters */}
+            <button className={`cs-action-btn${showFilters ? ' active' : ''}`} title="More Filters"
+              onClick={() => setShowFilters(!showFilters)}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="5" x2="17" y2="5"/><line x1="6" y1="10" x2="14" y2="10"/><line x1="9" y1="15" x2="11" y2="15"/>
+              </svg>
+            </button>
+
+          </div>
+        )}
+
+      </div>{/* end command-strip */}
+
+      {/* Advanced filters — collapsible strip */}
+      {showFilters && activeTab !== 'events' && activeTab !== 'targets' && user && (
+        <div className="cs-advanced-filters">
+          <div className="filter-box">
+            <select value={filterConference} onChange={(e) => setFilterConference(e.target.value)} className="region-filter">
+              <option value="all">All Conferences</option>
+              {uniqueConferences.map(conf => <option key={conf} value={conf}>{conf}</option>)}
+            </select>
+          </div>
+          <div className="filter-box">
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="region-filter">
+              <option value="name">Sort: Name</option>
+              <option value="region">Sort: Region</option>
+              <option value="state">Sort: State</option>
+              <option value="conference">Sort: Conference</option>
+            </select>
+          </div>
+          {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys' || filterTeamType !== 'all') && (
+            <button className="cs-clear-filters" onClick={() => {
+              setSearchQuery(''); setSelectedRegion('all'); setFilterConference('all');
+              setFilterGender('Boys'); setFilterTeamType('all'); setSortBy('name')
+            }}>Clear all</button>
+          )}
+        </div>
+      )}
+
+      {/* LEGACY DASHBOARD HIDDEN — keeping state wiring intact */}
+      {activeTab !== 'events' && activeTab !== 'targets' && user && false && (
         <div className="dashboard">
           <div className="dashboard-stats">
             {/* Total Programs Dropdown - shows region populations */}
@@ -3866,117 +4218,6 @@ function App() {
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <nav className="tabs">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <img src={tab.icon} alt="" className="tab-icon" />
-            <span className="tab-name">{tab.name}</span>
-          </button>
-        ))}
-      </nav>
-
-      {/* Search and Filter Bar (programs only, requires login except targets which has its own gate) */}
-      {activeTab !== 'events' && activeTab !== 'targets' && user && <div className="toolbar">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Search programs, cities, coaches..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-          {searchQuery && (
-            <button className="clear-search" onClick={() => setSearchQuery('')}>
-              &times;
-            </button>
-          )}
-        </div>
-
-        {activeTab !== 'football' && (
-          <div className="gender-filter-pills">
-            {['Boys', 'Girls', 'all'].map(g => (
-              <button
-                key={g}
-                className={`gender-pill ${filterGender === g ? 'active' : ''}`}
-                onClick={() => setFilterGender(g)}
-              >
-                {g === 'all' ? 'All' : g}
-              </button>
-            ))}
-          </div>
-        )}
-
-
-        {isUserAllowed && activeTab !== 'targets' && (
-          <button
-            className={`contract-layer-toggle-btn${showContractMapLayer ? ' active' : ''}`}
-            onClick={() => setShowContractMapLayer(v => !v)}
-            title="Toggle contract status map layer"
-          >
-            <span className="contract-layer-dot contract-layer-dot-expiring" />
-            <span className="contract-layer-dot contract-layer-dot-active" />
-            <span className="contract-layer-dot contract-layer-dot-none" />
-            {showContractMapLayer ? 'Contracts On' : 'Contracts'}
-          </button>
-        )}
-
-        <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
-          {showFilters ? 'Less Filters' : 'More Filters'}
-        </button>
-
-        {showFilters && (
-          <div className="advanced-filters">
-            <div className="filter-box">
-              <select
-                value={filterConference}
-                onChange={(e) => setFilterConference(e.target.value)}
-                className="region-filter"
-              >
-                <option value="all">All Conferences</option>
-                {uniqueConferences.map(conf => (
-                  <option key={conf} value={conf}>{conf}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-box">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="region-filter"
-              >
-                <option value="name">Sort: Name</option>
-                <option value="region">Sort: Region</option>
-                <option value="state">Sort: State</option>
-                <option value="conference">Sort: Conference</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {(searchQuery || selectedRegion !== 'all' || filterConference !== 'all' || filterGender !== 'Boys' || filterTeamType !== 'all') && (
-          <div className="filter-info">
-            Showing {filteredPrograms.length} of {programs.length} programs
-            {filterGender !== 'Boys' && <span className="filter-tag">{filterGender === 'all' ? 'All' : filterGender}</span>}
-            {filterTeamType !== 'all' && <span className="filter-tag">{filterTeamType}</span>}
-            <button className="clear-filters" onClick={() => {
-              setSearchQuery('')
-              setSelectedRegion('all')
-              setFilterConference('all')
-              setFilterGender('Boys')
-              setFilterTeamType('all')
-              setSortBy('name')
-            }}>
-              Clear filters
-            </button>
-          </div>
-        )}
-      </div>}
 
       <main className="main">
         {activeTab === 'targets' ? (
@@ -4127,8 +4368,8 @@ function App() {
             ) : targetDashboardView === 'dashboard' ? (
               /* NEW: Dashboard View with Hot Targets + Mini Kanban + Activity */
               <div className="td-dashboard">
-                {/* Main Grid: Left (Pipeline + Activity) | Right (Hot Targets) | Form (when open) */}
-                <div className="td-dashboard-main">
+                {/* Main Grid: Left (Pipeline + Activity) | Center (Hot Targets) | Right (Map) */}
+                <div className="td-dashboard-main td-dashboard-main--with-map">
                   {/* Left Column: Pipeline Overview + Activity Feed */}
                   <div className="td-dashboard-left">
                     {/* Mini Pipeline Overview */}
@@ -4310,26 +4551,63 @@ function App() {
                     </section>
                   </div>
 
-                </div>
+                  {/* Right Column: Target Map */}
+                  <div className="td-dashboard-map-col">
+                    <section className="td-section td-map-section" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                      <div className="td-section-header">
+                        <h3>Target Map</h3>
+                        <button className="td-section-link" onClick={() => setTargetDashboardView('map')}>Full Map →</button>
+                      </div>
+                      <div className="td-mini-map-wrap">
+                        <MapContainer
+                          key="targets-dashboard-mini"
+                          center={mapCenter}
+                          zoom={3.5}
+                          className="td-mini-map"
+                          zoomControl={false}
+                          scrollWheelZoom={false}
+                          dragging={false}
+                          doubleClickZoom={false}
+                          attributionControl={false}
+                        >
+                          <DynamicTileLayer darkMode={darkMode} />
+                          {filteredTargetPrograms.map(target => (
+                            target && target.coordinates && (
+                              <Marker
+                                key={target.id}
+                                position={target.coordinates}
+                                icon={L.divIcon({
+                                  className: 'target-marker',
+                                  html: `<div class="target-marker-icon" style="border-color: ${PIPELINE_STATUSES.find(s => s.id === target.status)?.color || '#6b7280'}">
+                                    ${target.logo ? `<img src="${target.logo}" alt="" />` : '<span>T</span>'}
+                                  </div>`,
+                                  iconSize: [28, 28],
+                                  iconAnchor: [14, 28],
+                                  popupAnchor: [0, -28]
+                                })}
+                                eventHandlers={{ click: () => setSelectedTargetProgram(target) }}
+                              />
+                            )
+                          ))}
+                        </MapContainer>
+                      </div>
+                      {/* Regional Distribution - now inside map column */}
+                      <div className="td-region-grid td-region-grid--compact">
+                        {Object.entries(REGIONS).map(([region, data]) => {
+                          const count = targetPrograms.filter(t => t.region === region).length
+                          return (
+                            <div key={region} className="td-region-item" style={{ '--region-color': data.color }}>
+                              <span className="td-region-dot" />
+                              <span className="td-region-name">{region}</span>
+                              <span className="td-region-count">{count}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
+                  </div>
 
-                {/* Regional Distribution - Below main grid */}
-                <section className="td-section td-region-section">
-                  <div className="td-section-header">
-                    <h3>Regional Distribution</h3>
-                  </div>
-                  <div className="td-region-grid">
-                    {Object.entries(REGIONS).map(([region, data]) => {
-                      const count = targetPrograms.filter(t => t.region === region).length
-                      return (
-                        <div key={region} className="td-region-item" style={{ '--region-color': data.color }}>
-                          <span className="td-region-dot" />
-                          <span className="td-region-name">{region}</span>
-                          <span className="td-region-count">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </section>
+                </div>
               </div>
             ) : targetDashboardView === 'kanban' ? (
               /* Improved Kanban Pipeline View with Drag & Drop */
@@ -4567,6 +4845,8 @@ function App() {
               onEdit={(t) => { setSelectedTargetProgram(null); openEditTargetForm(t) }}
               onDelete={(id) => { setSelectedTargetProgram(null); handleDeleteTargetProgram(id) }}
               onStatusChange={handleUpdateTargetStatus}
+              onConvert={(t) => handleConvertToProgram(t, true)}
+              onConvertNotSelect={(t) => handleConvertToProgram(t, false)}
             />
 
               </>
@@ -4960,7 +5240,7 @@ function App() {
             {showSchoolDirectory && (
               <SchoolDirectoryPanel
                 programs={filteredPrograms}
-                sport={activeTab}
+                sport={sportKey}
                 onClose={() => setShowSchoolDirectory(false)}
                 onExport={handleExportDirectory}
               />
@@ -4969,7 +5249,7 @@ function App() {
             <DetailPanel
               program={selectedProgram}
               mtZionPrograms={selectedMtZionGroup}
-              sport={activeTab}
+              sport={sportKey}
               isOpen={!!selectedProgram}
               onClose={() => { setSelectedProgram(null); setSelectedMtZionGroup(null) }}
               isUserAllowed={isUserAllowed}
@@ -4979,6 +5259,23 @@ function App() {
             />
           </div>
         )}
+
+        {/* Floating status footer — overlays map, does not push content */}
+        <footer className="footer">
+          {(activeTab === 'basketball' || activeTab === 'football' || activeTab === 'sterling') && (
+            <div className="stier-banner">
+              <span className="stier-text">WELCOME TO THE S-TIER</span>
+            </div>
+          )}
+          <p>
+            {activeTab === 'events'
+              ? `${events.length} events`
+              : activeTab === 'targets'
+              ? `${filteredTargetPrograms.length} target programs`
+              : `${filteredPrograms.length} programs displayed`}
+            {user && ` | Signed in as ${user.email}`}
+          </p>
+        </footer>
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
@@ -5181,28 +5478,12 @@ function App() {
         </div>
       </nav>
 
-      <footer className="footer">
-        {(activeTab === 'basketball' || activeTab === 'football') && (
-          <div className="stier-banner">
-            <span className="stier-text">WELCOME TO THE S-TIER</span>
-          </div>
-        )}
-        <p>
-          {activeTab === 'events'
-            ? `${events.length} events`
-            : activeTab === 'targets'
-            ? `${filteredTargetPrograms.length} target programs`
-            : `${filteredPrograms.length} programs displayed`}
-          {user && ` | Signed in as ${user.email}`}
-        </p>
-      </footer>
-
       <AddProgramForm
         isOpen={isFormOpen}
         onClose={closeForm}
         onAdd={handleAddProgram}
         onEdit={handleEditProgram}
-        sport={activeTab}
+        sport={sportKey}
         editProgram={editingProgram}
         user={user}
       />
@@ -5217,7 +5498,7 @@ function App() {
         isOpen={!!historyProgram}
         onClose={() => setHistoryProgram(null)}
         program={historyProgram}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <AdminPanel
@@ -5318,6 +5599,19 @@ function App() {
                   <span>Export Report (PDF)</span>
                 </button>
               )}
+              {(activeTab === 'football' || activeTab === 'sterling') && (
+                <button className="export-modal-btn" onClick={handleExportMahomesDeck}>
+                  <span className="export-modal-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+                      <polyline points="12,2 12,6 16,6"/>
+                      <circle cx="10" cy="13" r="3" strokeWidth="1.5"/>
+                      <path d="M10 11v2l1 1" strokeWidth="1.5"/>
+                    </svg>
+                  </span>
+                  <span>Mahomes Deck (PDF)</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -5328,7 +5622,7 @@ function App() {
         onClose={() => setIsAnalyticsOpen(false)}
         programs={programs}
         events={events}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <DigestModal
@@ -5336,7 +5630,7 @@ function App() {
         onClose={() => setIsDigestOpen(false)}
         programs={programs}
         events={events}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <ReportsModal
@@ -5344,7 +5638,7 @@ function App() {
         onClose={() => setIsReportsOpen(false)}
         programs={programs}
         events={events}
-        sport={activeTab}
+        sport={sportKey}
         allContractDetails={allContractDetails}
       />
 
@@ -5360,7 +5654,7 @@ function App() {
         archivedPrograms={archivedPrograms}
         onRestore={handleRestoreProgram}
         onDelete={handlePermanentDelete}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <BulkEditModal
@@ -5369,7 +5663,7 @@ function App() {
         programs={programs}
         onSave={handleEditProgram}
         onDelete={handleBulkDeleteProgram}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <ContractDashboard
@@ -5377,7 +5671,7 @@ function App() {
         onClose={() => setIsContractDashboardOpen(false)}
         programs={programs}
         allContractDetails={allContractDetails}
-        sport={activeTab}
+        sport={sportKey}
       />
 
       <CompetitorEventsModal

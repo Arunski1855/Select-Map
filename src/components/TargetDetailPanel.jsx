@@ -17,7 +17,7 @@ function formatPhone(phone) {
   return phone
 }
 
-function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete, onStatusChange }) {
+function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user, onEdit, onDelete, onStatusChange, onConvert, onConvertNotSelect }) {
   const [activeTab, setActiveTab] = useState('info')
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
@@ -246,6 +246,12 @@ function TargetDetailPanel({ target, sport, isOpen, onClose, isUserAllowed, user
               <div className="tdp-actions">
                 <button className="tdp-edit-btn" onClick={() => onEdit(target)}>Edit</button>
                 <button className="tdp-delete-btn" onClick={() => onDelete(target.id)}>Delete</button>
+                {target.status !== 'signed' && onConvert && (
+                  <button className="tdp-convert-btn" onClick={() => onConvert(target)}>✓ Select</button>
+                )}
+                {target.status !== 'signed' && onConvertNotSelect && (
+                  <button className="tdp-convert-btn tdp-convert-btn--noselect" onClick={() => onConvertNotSelect(target)}>✓ Signed</button>
+                )}
               </div>
             )}
           </div>

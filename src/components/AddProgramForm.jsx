@@ -23,6 +23,7 @@ const initialFormState = {
   maxprepsUrl: '',
   tcaStoreUrl: '',
   adiCustomUrl: '',
+  brandGuideUrl: '',
   level: '',
   primaryColor: '',
   secondaryColor: '',
@@ -66,6 +67,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         maxprepsUrl: editProgram.maxprepsUrl || '',
         tcaStoreUrl: editProgram.tcaStoreUrl || '',
         adiCustomUrl: editProgram.adiCustomUrl || '',
+        brandGuideUrl: editProgram.brandGuideUrl || '',
         level: editProgram.level || '',
         primaryColor: editProgram.primaryColor || '',
         secondaryColor: editProgram.secondaryColor || '',
@@ -245,6 +247,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         maxprepsUrl: formData.maxprepsUrl || '',
         tcaStoreUrl: formData.tcaStoreUrl || '',
         adiCustomUrl: formData.adiCustomUrl || '',
+        brandGuideUrl: formData.brandGuideUrl || '',
         level: formData.level || '',
         primaryColor: formData.primaryColor || '',
         secondaryColor: formData.secondaryColor || '',
@@ -673,6 +676,18 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
               id="adiCustomUrl"
               name="adiCustomUrl"
               value={formData.adiCustomUrl}
+              onChange={handleInputChange}
+              placeholder="https://..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="brandGuideUrl">Brand Guidelines URL</label>
+            <input
+              type="url"
+              id="brandGuideUrl"
+              name="brandGuideUrl"
+              value={formData.brandGuideUrl}
               onChange={handleInputChange}
               placeholder="https://..."
             />
