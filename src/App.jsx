@@ -3058,12 +3058,15 @@ function App() {
     setEditingEvent(null)
   }
 
+  // Normalize sport key — sterling tab writes to football path in Firebase
+  const sportKey = activeTab === 'sterling' ? 'football' : activeTab
+
   // Add a new program
   const handleAddProgram = async (newProgram) => {
     try {
-      await addProgram(activeTab, newProgram)
+      await addProgram(sportKey, newProgram)
       if (user) {
-        await addProgramHistory(activeTab, newProgram.id, 'created', user.email)
+        await addProgramHistory(sportKey, newProgram.id, 'created', user.email)
       }
     } catch (err) {
       logger.error('Error adding program:', err)
@@ -3076,9 +3079,9 @@ function App() {
     if (window.confirm('Archive this program? It will be hidden but can be restored later.')) {
       try {
         if (user) {
-          await addProgramHistory(activeTab, programId, 'archived', user.email)
+          await addProgramHistory(sportKey, programId, 'archived', user.email)
         }
-        await archiveProgram(activeTab, programId)
+        await archiveProgram(sportKey, programId)
         setSelectedProgram(null)
       } catch (err) {
         logger.error('Error archiving program:', err)
@@ -3091,9 +3094,9 @@ function App() {
   const handleBulkDeleteProgram = async (programId) => {
     try {
       if (user) {
-        await addProgramHistory(activeTab, programId, 'archived', user.email)
+        await addProgramHistory(sportKey, programId, 'archived', user.email)
       }
-      await archiveProgram(activeTab, programId)
+      await archiveProgram(sportKey, programId)
     } catch (err) {
       logger.error('Error archiving program:', err)
       throw err // Re-throw to be caught by bulk edit modal
@@ -3645,9 +3648,9 @@ function App() {
         }
       }
 
-      await editProgram(activeTab, updatedProgram)
+      await editProgram(sportKey, updatedProgram)
       if (user) {
-        await addProgramHistory(activeTab, updatedProgram.id, 'edited', user.email)
+        await addProgramHistory(sportKey, updatedProgram.id, 'edited', user.email)
       }
     } catch (err) {
       logger.error('Error editing program:', err)
@@ -3690,9 +3693,6 @@ function App() {
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />
   }
-
-  // Sterling is a view of football data — pass 'football' to child components
-  const sportKey = activeTab === 'sterling' ? 'football' : activeTab
 
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
@@ -5486,6 +5486,7 @@ function App() {
         sport={sportKey}
         editProgram={editingProgram}
         user={user}
+        defaultLevel={activeTab === 'sterling' ? 'Gold' : ''}
       />
 
       <AuthModal

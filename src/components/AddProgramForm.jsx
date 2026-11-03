@@ -37,8 +37,8 @@ const initialFormState = {
   isSelect: true
 }
 
-function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, user }) {
-  const [formData, setFormData] = useState(initialFormState)
+function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, user, defaultLevel }) {
+  const [formData, setFormData] = useState({ ...initialFormState, level: defaultLevel || '' })
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoData, setLogoData] = useState(null)
   const [gallery, setGallery] = useState([])
@@ -86,7 +86,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
       setBrandGuide(editProgram.brandGuide || null)
       setBrandGuideName(editProgram.brandGuideName || '')
     } else {
-      setFormData(initialFormState)
+      setFormData({ ...initialFormState, level: defaultLevel || '' })
       setLogoPreview(null)
       setLogoData(null)
       setGallery([])
