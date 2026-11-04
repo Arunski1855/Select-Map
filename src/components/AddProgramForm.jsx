@@ -93,7 +93,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
       setBrandGuide(null)
       setBrandGuideName('')
     }
-  }, [editProgram])
+  }, [editProgram, isOpen, defaultLevel])
 
   // Placeholder examples based on sport
   const placeholders = sport === 'basketball'

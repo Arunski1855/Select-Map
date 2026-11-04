@@ -3064,9 +3064,13 @@ function App() {
   // Add a new program
   const handleAddProgram = async (newProgram) => {
     try {
-      await addProgram(sportKey, newProgram)
+      // On the sterling tab, always enforce Gold level
+      const programToSave = activeTab === 'sterling'
+        ? { ...newProgram, level: 'Gold' }
+        : newProgram
+      await addProgram(sportKey, programToSave)
       if (user) {
-        await addProgramHistory(sportKey, newProgram.id, 'created', user.email)
+        await addProgramHistory(sportKey, programToSave.id, 'created', user.email)
       }
     } catch (err) {
       logger.error('Error adding program:', err)
@@ -3638,7 +3642,7 @@ function App() {
 
         // Save to ranking history if either ranking changed and has a new value
         if ((nationalChanged && newNational) || (stateChanged && newState)) {
-          await addRankingMetric(activeTab, updatedProgram.id, {
+          await addRankingMetric(sportKey, updatedProgram.id, {
             nationalRank: newNational || null,
             stateRank: newState || null,
             date: new Date().toISOString().split('T')[0],
@@ -3648,9 +3652,12 @@ function App() {
         }
       }
 
-      await editProgram(sportKey, updatedProgram)
+      const programToEdit = activeTab === 'sterling'
+        ? { ...updatedProgram, level: 'Gold' }
+        : updatedProgram
+      await editProgram(sportKey, programToEdit)
       if (user) {
-        await addProgramHistory(sportKey, updatedProgram.id, 'edited', user.email)
+        await addProgramHistory(sportKey, programToEdit.id, 'edited', user.email)
       }
     } catch (err) {
       logger.error('Error editing program:', err)
