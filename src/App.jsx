@@ -2666,6 +2666,8 @@ function App() {
       }))
       if (activeTab === 'sterling') {
         filtered = filtered.filter(p => p.level === 'Gold')
+      } else if (activeTab === 'football') {
+        filtered = filtered.filter(p => p.level === 'Mahomes')
       }
       setPrograms(filtered)
       setIsLoading(false)
@@ -3064,13 +3066,9 @@ function App() {
   // Add a new program
   const handleAddProgram = async (newProgram) => {
     try {
-      // On the sterling tab, always enforce Gold level
-      const programToSave = activeTab === 'sterling'
-        ? { ...newProgram, level: 'Gold' }
-        : newProgram
-      await addProgram(sportKey, programToSave)
+      await addProgram(sportKey, newProgram)
       if (user) {
-        await addProgramHistory(sportKey, programToSave.id, 'created', user.email)
+        await addProgramHistory(sportKey, newProgram.id, 'created', user.email)
       }
     } catch (err) {
       logger.error('Error adding program:', err)
@@ -3652,12 +3650,9 @@ function App() {
         }
       }
 
-      const programToEdit = activeTab === 'sterling'
-        ? { ...updatedProgram, level: 'Gold' }
-        : updatedProgram
-      await editProgram(sportKey, programToEdit)
+      await editProgram(sportKey, updatedProgram)
       if (user) {
-        await addProgramHistory(sportKey, programToEdit.id, 'edited', user.email)
+        await addProgramHistory(sportKey, updatedProgram.id, 'edited', user.email)
       }
     } catch (err) {
       logger.error('Error editing program:', err)

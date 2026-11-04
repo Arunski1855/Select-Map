@@ -492,20 +492,44 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="level">Program Level</label>
-            <select
-              id="level"
-              name="level"
-              value={formData.level}
-              onChange={handleInputChange}
-            >
-              <option value="">Select Level</option>
-              {(sport === 'football' ? FOOTBALL_PROGRAM_LEVELS : PROGRAM_LEVELS).map(lvl => (
-                <option key={lvl} value={lvl}>{lvl}</option>
-              ))}
-            </select>
-          </div>
+          {sport === 'football' ? (
+            <div className="form-group">
+              <label>Program Tier</label>
+              <div className="football-tier-toggle">
+                <button
+                  type="button"
+                  className={`tier-btn tier-btn--mahomes${formData.level === 'Mahomes' ? ' active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, level: 'Mahomes' }))}
+                >
+                  <span className="tier-btn-label">MAHOMES</span>
+                  <span className="tier-btn-sub">Tier 1 · Top programs</span>
+                </button>
+                <button
+                  type="button"
+                  className={`tier-btn tier-btn--sterling${formData.level === 'Gold' ? ' active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, level: 'Gold' }))}
+                >
+                  <span className="tier-btn-label">STERLING</span>
+                  <span className="tier-btn-sub">Tier 2 · Gold programs</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="form-group">
+              <label htmlFor="level">Program Level</label>
+              <select
+                id="level"
+                name="level"
+                value={formData.level}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Level</option>
+                {PROGRAM_LEVELS.map(lvl => (
+                  <option key={lvl} value={lvl}>{lvl}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="form-row">
             <div className="form-group">

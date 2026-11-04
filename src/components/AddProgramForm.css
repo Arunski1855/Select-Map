@@ -694,3 +694,64 @@ input[type="file"]::file-selector-button:hover {
     gap: 0.75rem;
   }
 }
+
+/* Football tier toggle */
+.football-tier-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.tier-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border: 2px solid #ddd;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 0;
+  gap: 2px;
+}
+
+.tier-btn:hover {
+  border-color: #999;
+  background: #eee;
+}
+
+.tier-btn-label {
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tier-btn-sub {
+  font-size: 0.65rem;
+  color: #888;
+  letter-spacing: 0.04em;
+}
+
+.tier-btn--mahomes.active {
+  background: #e31837;
+  border-color: #e31837;
+  color: #fff;
+}
+.tier-btn--mahomes.active .tier-btn-sub { color: rgba(255,255,255,0.75); }
+
+.tier-btn--sterling.active {
+  background: #c9a84c;
+  border-color: #c9a84c;
+  color: #fff;
+}
+.tier-btn--sterling.active .tier-btn-sub { color: rgba(255,255,255,0.75); }
+
+[data-theme="dark"] .tier-btn {
+  background: #1a1a1a;
+  border-color: #333;
+  color: #ccc;
+}
+[data-theme="dark"] .tier-btn:hover { border-color: #666; background: #222; }
