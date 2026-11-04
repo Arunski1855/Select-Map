@@ -2667,7 +2667,8 @@ function App() {
       if (activeTab === 'sterling') {
         filtered = filtered.filter(p => p.level === 'Gold')
       } else if (activeTab === 'football') {
-        filtered = filtered.filter(p => p.level === 'Mahomes')
+        // Show Mahomes-tier + legacy programs with no level (pre-tier system)
+        filtered = filtered.filter(p => p.level === 'Mahomes' || !p.level || p.level === '')
       }
       setPrograms(filtered)
       setIsLoading(false)
