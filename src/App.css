@@ -13310,6 +13310,7 @@ textarea {
 .cs-tab--basketball.active  { border-bottom-color: #E500A4; }
 .cs-tab--football.active    { border-bottom-color: #e31837; }
 .cs-tab--sterling.active    { border-bottom-color: #c9a84c; }
+.cs-tab--3ssb.active        { border-bottom-color: #00a0df; }
 .cs-tab--events.active      { border-bottom-color: rgba(255,255,255,0.5); }
 .cs-tab--targets.active     { border-bottom-color: rgba(255,255,255,0.5); }
 

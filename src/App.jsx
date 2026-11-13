@@ -3784,6 +3784,7 @@ function App() {
                 {tab.id === 'basketball' ? 'Basketball'
                   : tab.id === 'football' ? 'Mahomes'
                   : tab.id === 'sterling' ? 'Sterling'
+                  : tab.id === '3ssb' ? '3SSB'
                   : tab.id === 'events' ? 'Events'
                   : 'Targets'}
               </span>

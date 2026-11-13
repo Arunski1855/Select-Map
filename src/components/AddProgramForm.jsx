@@ -5,7 +5,7 @@ import {
   US_STATES, CA_PROVINCES, BS_ISLANDS,
   REGION_LIST, PROGRAM_LEVELS, FOOTBALL_PROGRAM_LEVELS,
   GENDER_OPTIONS, TEAM_TYPE_OPTIONS, TEAM_COLORS,
-  determineRegion
+  determineRegion, BORDERING_STATES, SSB3_DIVISIONS, SSB3_AGE_GROUPS
 } from '../constants'
 
 const initialFormState = {
@@ -34,7 +34,17 @@ const initialFormState = {
   gender: 'Boys',
   teamType: '',
   onboarding2026: false,
-  isSelect: true
+  isSelect: true,
+  // 3SSB-specific fields
+  programDirector: '',
+  ssb3Divisions: [],
+  age15u: false,
+  age16u: false,
+  age17u: false,
+  teamSize15u: '',
+  teamSize16u: '',
+  teamSize17u: '',
+  borderingStates: [],
 }
 
 function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, user, defaultLevel }) {
@@ -78,7 +88,17 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         gender: editProgram.gender || 'Boys',
         teamType: editProgram.teamType || '',
         onboarding2026: editProgram.onboarding2026 || false,
-        isSelect: editProgram.isSelect !== false
+        isSelect: editProgram.isSelect !== false,
+        // 3SSB fields
+        programDirector: editProgram.programDirector || '',
+        ssb3Divisions: editProgram.ssb3Divisions || [],
+        age15u: editProgram.age15u || false,
+        age16u: editProgram.age16u || false,
+        age17u: editProgram.age17u || false,
+        teamSize15u: editProgram.teamSize15u || '',
+        teamSize16u: editProgram.teamSize16u || '',
+        teamSize17u: editProgram.teamSize17u || '',
+        borderingStates: editProgram.borderingStates || (BORDERING_STATES[editProgram.state] || []),
       })
       setLogoPreview(editProgram.logo)
       setLogoData(editProgram.logo)
@@ -107,10 +127,12 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
 
   const handleStateChange = (e) => {
     const state = e.target.value
+    const borders = sport === '3ssb' ? (BORDERING_STATES[state] || []) : undefined
     setFormData(prev => ({
       ...prev,
       state,
-      region: determineRegion(state)
+      region: determineRegion(state),
+      ...(sport === '3ssb' && { borderingStates: borders })
     }))
   }
 
@@ -263,7 +285,19 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         gallery: gallery,
         brandGuide: brandGuide || '',
         brandGuideName: brandGuideName || '',
-        coordinates: coordinates
+        coordinates: coordinates,
+        // 3SSB fields
+        ...(sport === '3ssb' && {
+          programDirector: formData.programDirector || '',
+          ssb3Divisions: formData.ssb3Divisions || [],
+          age15u: formData.age15u || false,
+          age16u: formData.age16u || false,
+          age17u: formData.age17u || false,
+          teamSize15u: formData.age15u ? (formData.teamSize15u || '') : '',
+          teamSize16u: formData.age16u ? (formData.teamSize16u || '') : '',
+          teamSize17u: formData.age17u ? (formData.teamSize17u || '') : '',
+          borderingStates: formData.borderingStates || [],
+        })
       }
 
       if (isEditMode) {
@@ -443,14 +477,14 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
           </div>
 
           <div className="form-group">
-            <label htmlFor="headCoach">Head Coach</label>
+            <label htmlFor="headCoach">{sport === '3ssb' ? 'Program Director' : 'Head Coach'}</label>
             <input
               type="text"
               id="headCoach"
-              name="headCoach"
-              value={formData.headCoach}
+              name={sport === '3ssb' ? 'programDirector' : 'headCoach'}
+              value={sport === '3ssb' ? formData.programDirector : formData.headCoach}
               onChange={handleInputChange}
-              placeholder={placeholders.coach}
+              placeholder={sport === '3ssb' ? 'e.g., John Smith' : placeholders.coach}
             />
           </div>
 
@@ -529,6 +563,126 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
                 ))}
               </select>
             </div>
+          )}
+
+          {sport === '3ssb' && (
+            <>
+              <div className="form-group">
+                <label>Division</label>
+                <div className="ssb3-division-checks">
+                  {SSB3_DIVISIONS.map(div => (
+                    <label key={div} className="ssb3-check-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.ssb3Divisions.includes(div)}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...formData.ssb3Divisions, div]
+                            : formData.ssb3Divisions.filter(d => d !== div)
+                          setFormData(prev => ({ ...prev, ssb3Divisions: next }))
+                        }}
+                      />
+                      {div}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Age Divisions Offered *</label>
+                <div className="ssb3-age-checks">
+                  {SSB3_AGE_GROUPS.map(age => {
+                    const key = `age${age.replace('u','u')}`
+                    return (
+                      <label key={age} className={`ssb3-age-chip${formData[key] ? ' ssb3-age-chip--on' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={formData[key] || false}
+                          onChange={(e) => setFormData(prev => ({ ...prev, [key]: e.target.checked }))}
+                          style={{ display: 'none' }}
+                        />
+                        {age}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {(formData.age15u || formData.age16u || formData.age17u) && (
+                <div className="form-group">
+                  <label>Roster Sizes (by age group)</label>
+                  <div className="ssb3-sizes-row">
+                    {formData.age15u && (
+                      <div className="ssb3-size-field ssb3-size-field--15u">
+                        <span className="ssb3-size-label">15u</span>
+                        <input
+                          type="number"
+                          name="teamSize15u"
+                          value={formData.teamSize15u}
+                          onChange={handleInputChange}
+                          placeholder="e.g. 12"
+                          min="1"
+                        />
+                      </div>
+                    )}
+                    {formData.age16u && (
+                      <div className="ssb3-size-field ssb3-size-field--16u">
+                        <span className="ssb3-size-label">16u</span>
+                        <input
+                          type="number"
+                          name="teamSize16u"
+                          value={formData.teamSize16u}
+                          onChange={handleInputChange}
+                          placeholder="e.g. 10"
+                          min="1"
+                        />
+                      </div>
+                    )}
+                    {formData.age17u && (
+                      <div className="ssb3-size-field ssb3-size-field--17u">
+                        <span className="ssb3-size-label">17u</span>
+                        <input
+                          type="number"
+                          name="teamSize17u"
+                          value={formData.teamSize17u}
+                          onChange={handleInputChange}
+                          placeholder="e.g. 10"
+                          min="1"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>
+                  Bordering States
+                  {formData.state && <span style={{ fontWeight: 400, fontSize: '11px', color: 'var(--text-muted)', marginLeft: '6px' }}>(auto-populated from state)</span>}
+                </label>
+                <div className="ssb3-bordering-states">
+                  {US_STATES.filter(s => (BORDERING_STATES[formData.state] || []).includes(s.abbr)).map(s => (
+                    <label key={s.abbr} className={`ssb3-state-chip${formData.borderingStates.includes(s.abbr) ? ' ssb3-state-chip--on' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={formData.borderingStates.includes(s.abbr)}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...formData.borderingStates, s.abbr]
+                            : formData.borderingStates.filter(a => a !== s.abbr)
+                          setFormData(prev => ({ ...prev, borderingStates: next }))
+                        }}
+                        style={{ display: 'none' }}
+                      />
+                      {s.abbr}
+                    </label>
+                  ))}
+                  {(!formData.state || !(BORDERING_STATES[formData.state] || []).length) && (
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Select a state above to see bordering states</span>
+                  )}
+                </div>
+              </div>
+            </>
           )}
 
           <div className="form-row">
