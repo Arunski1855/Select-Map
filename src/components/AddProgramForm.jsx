@@ -463,21 +463,23 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="conference">Conference</label>
-              <input
-                type="text"
-                id="conference"
-                name="conference"
-                value={formData.conference}
-                onChange={handleInputChange}
-                placeholder="e.g., Big South"
-              />
-            </div>
+            {sport !== '3ssb' && (
+              <div className="form-group">
+                <label htmlFor="conference">Conference</label>
+                <input
+                  type="text"
+                  id="conference"
+                  name="conference"
+                  value={formData.conference}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Big South"
+                />
+              </div>
+            )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="headCoach">{sport === '3ssb' ? 'Program Director' : 'Head Coach'}</label>
+            <label htmlFor="headCoach">{sport === '3ssb' ? 'Program Director *' : 'Head Coach'}</label>
             <input
               type="text"
               id="headCoach"
@@ -488,45 +490,49 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="ranking">National Ranking</label>
-              <input
-                type="text"
-                id="ranking"
-                name="ranking"
-                value={formData.ranking}
-                onChange={handleInputChange}
-                placeholder="e.g., #5, #479, Unranked"
-              />
-            </div>
+          {sport !== '3ssb' && (
+            <>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="ranking">National Ranking</label>
+                  <input
+                    type="text"
+                    id="ranking"
+                    name="ranking"
+                    value={formData.ranking}
+                    onChange={handleInputChange}
+                    placeholder="e.g., #5, #479, Unranked"
+                  />
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="stateRanking">State Ranking</label>
-              <input
-                type="text"
-                id="stateRanking"
-                name="stateRanking"
-                value={formData.stateRanking}
-                onChange={handleInputChange}
-                placeholder="e.g., #1, #50, Unranked"
-              />
-            </div>
-          </div>
+                <div className="form-group">
+                  <label htmlFor="stateRanking">State Ranking</label>
+                  <input
+                    type="text"
+                    id="stateRanking"
+                    name="stateRanking"
+                    value={formData.stateRanking}
+                    onChange={handleInputChange}
+                    placeholder="e.g., #1, #50, Unranked"
+                  />
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="topProspects">Top Prospects</label>
-            <input
-              type="text"
-              id="topProspects"
-              name="topProspects"
-              value={formData.topProspects}
-              onChange={handleInputChange}
-              placeholder="e.g., 3 five-stars"
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="topProspects">Top Prospects</label>
+                <input
+                  type="text"
+                  id="topProspects"
+                  name="topProspects"
+                  value={formData.topProspects}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 3 five-stars"
+                />
+              </div>
+            </>
+          )}
 
-          {sport === 'football' ? (
+          {sport !== '3ssb' && (sport === 'football' ? (
             <div className="form-group">
               <label>Program Tier</label>
               <div className="football-tier-toggle">
@@ -563,7 +569,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
                 ))}
               </select>
             </div>
-          )}
+          ))}
 
           {sport === '3ssb' && (
             <>
@@ -719,31 +725,35 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
             </div>
           </div>
 
-          <div className="form-group form-checkbox">
-            <label>
-              <input
-                type="checkbox"
-                name="isSelect"
-                checked={formData.isSelect}
-                onChange={(e) => setFormData(prev => ({ ...prev, isSelect: e.target.checked }))}
-              />
-              Adidas Select Program
-            </label>
-            <span className="checkbox-hint">Uncheck for elite tier programs that are not officially Select</span>
-          </div>
+          {sport !== '3ssb' && (
+            <>
+              <div className="form-group form-checkbox">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="isSelect"
+                    checked={formData.isSelect}
+                    onChange={(e) => setFormData(prev => ({ ...prev, isSelect: e.target.checked }))}
+                  />
+                  Adidas Select Program
+                </label>
+                <span className="checkbox-hint">Uncheck for elite tier programs that are not officially Select</span>
+              </div>
 
-          <div className="form-group form-checkbox">
-            <label>
-              <input
-                type="checkbox"
-                name="onboarding2026"
-                checked={formData.onboarding2026}
-                onChange={(e) => setFormData(prev => ({ ...prev, onboarding2026: e.target.checked }))}
-              />
-              Onboarding 2026
-            </label>
-            <span className="checkbox-hint">Mark if this program is being onboarded in 2026</span>
-          </div>
+              <div className="form-group form-checkbox">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="onboarding2026"
+                    checked={formData.onboarding2026}
+                    onChange={(e) => setFormData(prev => ({ ...prev, onboarding2026: e.target.checked }))}
+                  />
+                  Onboarding 2026
+                </label>
+                <span className="checkbox-hint">Mark if this program is being onboarded in 2026</span>
+              </div>
+            </>
+          )}
 
           <div className="form-row">
             <div className="form-group">
@@ -823,29 +833,33 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="maxprepsUrl">MaxPreps URL</label>
-            <input
-              type="url"
-              id="maxprepsUrl"
-              name="maxprepsUrl"
-              value={formData.maxprepsUrl}
-              onChange={handleInputChange}
-              placeholder="https://www.maxpreps.com/high-schools/..."
-            />
-          </div>
+          {sport !== '3ssb' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="maxprepsUrl">MaxPreps URL</label>
+                <input
+                  type="url"
+                  id="maxprepsUrl"
+                  name="maxprepsUrl"
+                  value={formData.maxprepsUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://www.maxpreps.com/high-schools/..."
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="tcaStoreUrl">TCA Store URL</label>
-            <input
-              type="url"
-              id="tcaStoreUrl"
-              name="tcaStoreUrl"
-              value={formData.tcaStoreUrl}
-              onChange={handleInputChange}
-              placeholder="https://..."
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="tcaStoreUrl">TCA Store URL</label>
+                <input
+                  type="url"
+                  id="tcaStoreUrl"
+                  name="tcaStoreUrl"
+                  value={formData.tcaStoreUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://..."
+                />
+              </div>
+            </>
+          )}
 
           <div className="form-group">
             <label htmlFor="adiCustomUrl">adiCustom Uniform URL</label>

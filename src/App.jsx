@@ -2746,7 +2746,7 @@ function App() {
     localStorage.setItem('compactMode', compactMode)
   }, [compactMode])
 
-  // Reset filters when switching tabs
+  // Reset filters and clear program data when switching tabs
   useEffect(() => {
     setSearchQuery('')
     setSelectedRegion('all')
@@ -2756,6 +2756,8 @@ function App() {
     setSortBy('name')
     setSelectedProgram(null)
     setSelectedMtZionGroup(null)
+    // Clear stale programs immediately so the previous tab's markers don't flash
+    setPrograms([])
   }, [activeTab])
 
   // Check if any Mt Zion programs exist (to show team type filter)
