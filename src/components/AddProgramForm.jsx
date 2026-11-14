@@ -33,7 +33,7 @@ const initialFormState = {
   instagram: '',
   gender: 'Boys',
   teamType: '',
-  onboarding2026: false,
+  onboarding2027: false,
   isSelect: true,
   // 3SSB-specific fields
   programDirector: '',
@@ -87,7 +87,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         instagram: editProgram.instagram || '',
         gender: editProgram.gender || 'Boys',
         teamType: editProgram.teamType || '',
-        onboarding2026: editProgram.onboarding2026 || false,
+        onboarding2027: editProgram.onboarding2027 || false,
         isSelect: editProgram.isSelect !== false,
         // 3SSB fields
         programDirector: editProgram.programDirector || '',
@@ -106,14 +106,17 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
       setBrandGuide(editProgram.brandGuide || null)
       setBrandGuideName(editProgram.brandGuideName || '')
     } else {
-      setFormData({ ...initialFormState, level: defaultLevel || '' })
+      const ssb3Defaults = sport === '3ssb'
+        ? { name: 'Upward Stars', city: 'Columbia', state: 'SC', region: determineRegion('SC'), borderingStates: BORDERING_STATES['SC'] || [] }
+        : {}
+      setFormData({ ...initialFormState, level: defaultLevel || '', ...ssb3Defaults })
       setLogoPreview(null)
       setLogoData(null)
       setGallery([])
       setBrandGuide(null)
       setBrandGuideName('')
     }
-  }, [editProgram, isOpen, defaultLevel])
+  }, [editProgram, isOpen, defaultLevel, sport])
 
   // Placeholder examples based on sport
   const placeholders = sport === 'basketball'
@@ -279,7 +282,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         instagram: formData.instagram || '',
         gender: sport === 'football' ? 'Boys' : (formData.gender || 'Boys'),
         teamType: formData.name?.toLowerCase().match(/mt\.?\s*zion/) ? (formData.teamType || '') : '',
-        onboarding2026: formData.onboarding2026 || false,
+        onboarding2027: formData.onboarding2027 || false,
         isSelect: formData.isSelect !== false,
         logo: logoData,
         gallery: gallery,
@@ -744,11 +747,11 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
                 <label>
                   <input
                     type="checkbox"
-                    name="onboarding2026"
-                    checked={formData.onboarding2026}
-                    onChange={(e) => setFormData(prev => ({ ...prev, onboarding2026: e.target.checked }))}
+                    name="onboarding2027"
+                    checked={formData.onboarding2027}
+                    onChange={(e) => setFormData(prev => ({ ...prev, onboarding2027: e.target.checked }))}
                   />
-                  Onboarding 2026
+                  Onboarding 2027
                 </label>
                 <span className="checkbox-hint">Mark if this program is being onboarded in 2026</span>
               </div>

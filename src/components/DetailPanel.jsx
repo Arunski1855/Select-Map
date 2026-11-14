@@ -742,8 +742,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             {program.teamType && (
               <span className="detail-gender-badge" style={{ background: '#1a5c2e' }}>{program.teamType}</span>
             )}
-            {program.onboarding2026 && (
-              <span className="detail-onboarding-badge">2026</span>
+            {(program.onboarding2027 || program.onboarding2026) && (
+              <span className="detail-onboarding-badge">{program.onboarding2027 ? '2027' : '2026'}</span>
             )}
             {isUserAllowed && isContractExpiring && (
               <span className="detail-expiring-badge">Expiring {expiringYear}</span>
