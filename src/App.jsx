@@ -15,6 +15,7 @@ import {
   subscribeToAllowedUsers,
   addAllowedUser,
   removeAllowedUser,
+  updateUserTabAccess,
   addEvent,
   deleteEvent,
   editEvent,
@@ -491,6 +492,23 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
     }
   }
 
+  const handleToggle3ssb = async (userEntry) => {
+    try {
+      const has3ssb = userEntry.tabs?.includes('3ssb')
+      let nextTabs
+      if (has3ssb) {
+        // Remove 3ssb — if no tabs left, set null (unrestricted)
+        const remaining = (userEntry.tabs || []).filter(t => t !== '3ssb')
+        nextTabs = remaining.length ? remaining : null
+      } else {
+        nextTabs = [...(userEntry.tabs || []), '3ssb']
+      }
+      await updateUserTabAccess(userEntry.key, nextTabs)
+    } catch (err) {
+      toast.error('Failed to update tab access')
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -499,7 +517,7 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
         <button className="modal-close" onClick={onClose}>&times;</button>
         <h2>Manage Authorized Users</h2>
         <p className="admin-description">
-          Only users on this list can add, edit, or remove programs.
+          Only users on this list can add, edit, or remove programs. Toggle <strong>3SSB</strong> to grant access to the 3 Stripe Summer Basketball tab.
         </p>
 
         <form onSubmit={handleAddUser} className="add-user-form">
@@ -523,14 +541,24 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
             <p className="no-users">No users added yet. Add your email first!</p>
           ) : (
             <ul>
-              {allowedUsers.map(email => (
-                <li key={email}>
-                  <span>{email}</span>
-                  <button onClick={() => handleRemoveUser(email)} className="remove-user-btn">
-                    Remove
-                  </button>
-                </li>
-              ))}
+              {allowedUsers.map(u => {
+                const has3ssb = !u.tabs || u.tabs.includes('3ssb')
+                return (
+                  <li key={u.email} className="admin-user-row">
+                    <span className="admin-user-email">{u.email}</span>
+                    <button
+                      className={`admin-tab-badge${has3ssb ? ' admin-tab-badge--on' : ''}`}
+                      onClick={() => handleToggle3ssb(u)}
+                      title={has3ssb ? 'Revoke 3SSB access' : 'Grant 3SSB access'}
+                    >
+                      3SSB
+                    </button>
+                    <button onClick={() => handleRemoveUser(u.email)} className="remove-user-btn">
+                      Remove
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>
@@ -2578,7 +2606,13 @@ function App() {
   }, [activeTab, isExporting])
 
   // Check if current user is allowed to edit
-  const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
+  const currentUserEntry = user ? allowedUsers.find(u => u.email === user.email?.toLowerCase()) : null
+  const isUserAllowed = !!currentUserEntry
+  const canAccessTab = (tabId) => {
+    if (!currentUserEntry) return false
+    if (!currentUserEntry.tabs) return true
+    return currentUserEntry.tabs.includes(tabId)
+  }
 
   // Handle backup access with PIN verification
   const handleBackupAccess = useCallback(() => {
@@ -3776,7 +3810,7 @@ function App() {
 
         {/* LEFT: Sport tab chips */}
         <nav className="cs-tabs">
-          {TABS.map(tab => (
+          {TABS.filter(tab => tab.id !== '3ssb' || canAccessTab('3ssb')).map(tab => (
             <button
               key={tab.id}
               className={`cs-tab cs-tab--${tab.id}${activeTab === tab.id ? ' active' : ''}`}
