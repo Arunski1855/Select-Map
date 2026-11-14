@@ -494,15 +494,11 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
 
   const handleToggle3ssb = async (userEntry) => {
     try {
-      const has3ssb = userEntry.tabs?.includes('3ssb')
-      let nextTabs
-      if (has3ssb) {
-        // Remove 3ssb — if no tabs left, set null (unrestricted)
-        const remaining = (userEntry.tabs || []).filter(t => t !== '3ssb')
-        nextTabs = remaining.length ? remaining : null
-      } else {
-        nextTabs = [...(userEntry.tabs || []), '3ssb']
-      }
+      const currentTabs = Array.isArray(userEntry.tabs) ? userEntry.tabs : []
+      const has3ssb = currentTabs.includes('3ssb')
+      const nextTabs = has3ssb
+        ? currentTabs.filter(t => t !== '3ssb')
+        : [...currentTabs, '3ssb']
       await updateUserTabAccess(userEntry.key, nextTabs)
     } catch (err) {
       toast.error('Failed to update tab access')
@@ -542,7 +538,7 @@ function AdminPanel({ isOpen, onClose, allowedUsers }) {
           ) : (
             <ul>
               {allowedUsers.map(u => {
-                const has3ssb = !u.tabs || u.tabs.includes('3ssb')
+                const has3ssb = Array.isArray(u.tabs) && u.tabs.includes('3ssb')
                 return (
                   <li key={u.email} className="admin-user-row">
                     <span className="admin-user-email">{u.email}</span>
@@ -2610,8 +2606,8 @@ function App() {
   const isUserAllowed = !!currentUserEntry
   const canAccessTab = (tabId) => {
     if (!currentUserEntry) return false
-    if (!currentUserEntry.tabs) return true
-    return currentUserEntry.tabs.includes(tabId)
+    // tabs array must explicitly include the tabId
+    return Array.isArray(currentUserEntry.tabs) && currentUserEntry.tabs.includes(tabId)
   }
 
   // Handle backup access with PIN verification

@@ -35,8 +35,7 @@ export function AppProvider({ children }) {
   // tabs: null on an entry means unrestricted; otherwise must include the tabId
   const canAccessTab = (tabId) => {
     if (!currentUserEntry) return false
-    if (!currentUserEntry.tabs) return true
-    return currentUserEntry.tabs.includes(tabId)
+    return Array.isArray(currentUserEntry.tabs) && currentUserEntry.tabs.includes(tabId)
   }
 
   // Auth subscription

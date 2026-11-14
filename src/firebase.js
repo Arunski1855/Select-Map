@@ -222,13 +222,13 @@ export const addAllowedUser = async (email) => {
 }
 
 // Grant or revoke access to a restricted tab for a user
-// tabs: array of tab ids the user may access (null = unrestricted)
+// tabs: array of tab ids the user may access (null = unrestricted = remove the field)
 export const updateUserTabAccess = async (userKey, tabs) => {
-  const userRef = ref(database, `allowedUsers/${userKey}`)
-  if (tabs === null || tabs.length === 0) {
-    await update(userRef, { tabs: null })
+  const tabsRef = ref(database, `allowedUsers/${userKey}/tabs`)
+  if (!tabs || tabs.length === 0) {
+    await remove(tabsRef)
   } else {
-    await update(userRef, { tabs })
+    await set(tabsRef, tabs)
   }
 }
 
