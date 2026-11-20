@@ -12170,6 +12170,45 @@ textarea {
   margin: 8px 20px;
 }
 
+.mobile-nav-sheet-label {
+  padding: 4px 20px 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: 'adidasFG', sans-serif;
+}
+
+.mobile-gender-row {
+  display: flex;
+  gap: 8px;
+  padding: 8px 20px 4px;
+}
+
+.mobile-gender-btn {
+  flex: 1;
+  height: 36px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.75rem;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 0;
+}
+
+.mobile-gender-btn.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 700;
+}
+
 /* ===========================================
    COMPACT MODE
    Reduces spacing, smaller text, denser UI

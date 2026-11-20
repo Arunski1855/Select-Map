@@ -5433,6 +5433,23 @@ function App() {
                   </span>
                   <span>Export</span>
                 </button>
+                {activeTab !== 'football' && activeTab !== 'sterling' && activeTab !== 'events' && activeTab !== 'targets' && (
+                  <>
+                    <div className="mobile-nav-sheet-divider" />
+                    <div className="mobile-nav-sheet-label">Gender</div>
+                    <div className="mobile-gender-row">
+                      {['Boys', 'Girls', 'all'].map(g => (
+                        <button
+                          key={g}
+                          className={`mobile-gender-btn${filterGender === g ? ' active' : ''}`}
+                          onClick={() => { setFilterGender(g); setMobileNavExpanded(false) }}
+                        >
+                          {g === 'all' ? 'All' : g}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
                 <div className="mobile-nav-sheet-divider" />
                 <button
                   className={`mobile-nav-sheet-item${compactMode ? ' active' : ''}`}
