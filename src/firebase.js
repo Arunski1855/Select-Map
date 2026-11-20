@@ -191,12 +191,19 @@ export const onAuthChange = (callback) => {
 }
 
 // Allowed users functions
+// Returns array of { email, tabs?, key } objects; tabs absent = access to all tabs
 export const subscribeToAllowedUsers = (callback) => {
   const allowedRef = ref(database, 'allowedUsers')
   return onValue(allowedRef, (snapshot) => {
     const data = snapshot.val()
-    const emails = data ? Object.values(data).map(u => u.email.toLowerCase()) : []
-    callback(emails)
+    const users = data
+      ? Object.entries(data).map(([key, u]) => ({
+          key,
+          email: u.email.toLowerCase(),
+          tabs: u.tabs || null,
+        }))
+      : []
+    callback(users)
   }, (error) => {
     logger.error('Firebase allowedUsers error:', error)
     callback([])
@@ -212,6 +219,17 @@ export const addAllowedUser = async (email) => {
   // Also add to lookup table for security rules
   const lookupRef = ref(database, `allowedEmailLookup/${sanitizeEmailForKey(normalizedEmail)}`)
   await set(lookupRef, { email: normalizedEmail, addedAt: Date.now() })
+}
+
+// Grant or revoke access to a restricted tab for a user
+// tabs: array of tab ids the user may access (null = unrestricted = remove the field)
+export const updateUserTabAccess = async (userKey, tabs) => {
+  const tabsRef = ref(database, `allowedUsers/${userKey}/tabs`)
+  if (!tabs || tabs.length === 0) {
+    await remove(tabsRef)
+  } else {
+    await set(tabsRef, tabs)
+  }
 }
 
 export const removeAllowedUser = async (email) => {

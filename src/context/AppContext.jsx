@@ -14,7 +14,7 @@ export function AppProvider({ children }) {
 
   // Auth
   const [user, setUser] = useState(null)
-  const [allowedUsers, setAllowedUsers] = useState([])
+  const [allowedUsers, setAllowedUsers] = useState([]) // array of { email, tabs, key }
 
   // Programs
   const [programs, setPrograms] = useState([])
@@ -29,7 +29,14 @@ export function AppProvider({ children }) {
   const [selectedProgram, setSelectedProgram] = useState(null)
 
   // Derived
-  const isUserAllowed = user && allowedUsers.includes(user.email?.toLowerCase())
+  const currentUserEntry = user ? allowedUsers.find(u => u.email === user.email?.toLowerCase()) : null
+  const isUserAllowed = !!currentUserEntry
+  // Returns true if the current user can see a given tab
+  // tabs: null on an entry means unrestricted; otherwise must include the tabId
+  const canAccessTab = (tabId) => {
+    if (!currentUserEntry) return false
+    return Array.isArray(currentUserEntry.tabs) && currentUserEntry.tabs.includes(tabId)
+  }
 
   // Auth subscription
   useEffect(() => {
@@ -78,6 +85,7 @@ export function AppProvider({ children }) {
     user,
     allowedUsers,
     isUserAllowed,
+    canAccessTab,
     programs,
     setPrograms,
     isLoading,
