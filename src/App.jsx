@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import React from 'react'
+import JSZip from 'jszip'
 import { MapContainer, Marker, Popup, Tooltip, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
@@ -3565,6 +3566,28 @@ function App() {
     }
   }, [filteredPrograms])
 
+  const handleDownloadLogos = useCallback(async () => {
+    const withLogos = filteredPrograms.filter(p => p.logo)
+    if (!withLogos.length) { alert('No logos found for the current programs.'); return }
+    const zip = new JSZip()
+    withLogos.forEach(p => {
+      const dataUrl = p.logo
+      const match = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/)
+      if (!match) return
+      const ext = match[1] === 'jpeg' ? 'jpg' : match[1]
+      const filename = `${p.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${ext}`
+      zip.file(filename, match[2], { base64: true })
+    })
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${activeTab}-logos.zip`
+    a.click()
+    URL.revokeObjectURL(url)
+    setShowExportMenu(false)
+  }, [filteredPrograms, activeTab])
+
   const handleExportDirectory = useCallback(async () => {
     try {
       const jsPDF = (await import('jspdf')).default
@@ -5664,6 +5687,21 @@ function App() {
                     </svg>
                   </span>
                   <span>Mahomes Deck (PDF)</span>
+                </button>
+              )}
+              {activeTab !== 'events' && activeTab !== 'targets' && (
+                <button className="export-modal-btn" onClick={handleDownloadLogos}>
+                  <span className="export-modal-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="6" height="6" rx="1"/>
+                      <rect x="12" y="2" width="6" height="6" rx="1"/>
+                      <rect x="2" y="12" width="6" height="6" rx="1"/>
+                      <rect x="12" y="12" width="6" height="6" rx="1"/>
+                      <polyline points="10,13 10,18 8,16"/>
+                      <polyline points="10,18 12,16"/>
+                    </svg>
+                  </span>
+                  <span>Download Logos (ZIP)</span>
                 </button>
               )}
             </div>
