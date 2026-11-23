@@ -10787,6 +10787,29 @@ textarea {
   z-index: 10;
 }
 
+/* ── Onboarding 2027 marker ring ─────────────────────────────────── */
+.logo-marker.onboarding-2027 {
+  outline: 2.5px dashed #E500A4;
+  outline-offset: 2px;
+}
+
+.onboarding-badge {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #E500A4;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+  padding: 1px 4px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
 /* ── Map Layer Toggle Button ─────────────────────────────────────── */
 .contract-layer-toggle-btn {
   display: flex;

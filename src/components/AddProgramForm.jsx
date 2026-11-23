@@ -753,7 +753,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
                   />
                   Onboarding 2027
                 </label>
-                <span className="checkbox-hint">Mark if this program is being onboarded in 2026</span>
+                <span className="checkbox-hint">Mark if this program is being onboarded in 2027</span>
               </div>
             </>
           )}

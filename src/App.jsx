@@ -76,12 +76,13 @@ const escapeHtml = (str) => {
 // Create custom icon for each program logo (cached to prevent unnecessary re-renders)
 const ICON_CACHE_MAX = 200
 const iconCache = new Map()
-const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null, levelTier = null) => {
-  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}|${levelTier}`
+const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null, isSelect = true, yearsRemaining = null, contractTier = null, levelTier = null, onboarding2027 = false) => {
+  const cacheKey = `${logoUrl}|${name}|${useContain}|${contractStatus}|${isSelect}|${yearsRemaining}|${contractTier}|${levelTier}|${onboarding2027}`
   if (iconCache.has(cacheKey)) return iconCache.get(cacheKey)
   const statusClass = contractStatus ? ` contract-marker-${contractStatus}` : ''
   const eliteClass = isSelect === false ? ' elite-tier' : ''
   const levelClass = levelTier ? ` tier-${levelTier.toLowerCase().replace(/\s+/g, '-')}` : ''
+  const onboardingClass = onboarding2027 ? ' onboarding-2027' : ''
   // Years remaining gradient class: 0=urgent, 1=warning, 2=caution, 3+=healthy
   let yearsClass = ''
   if (yearsRemaining !== null && contractStatus !== 'none') {
@@ -96,10 +97,11 @@ const createLogoIcon = (logoUrl, name, useContain = false, contractStatus = null
   const icon = L.divIcon({
     className: 'custom-logo-marker',
     html: `
-      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}${levelClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}">
+      <div class="logo-marker${useContain ? ' logo-contain' : ''}${statusClass}${yearsClass}${tierClass}${eliteClass}${levelClass}${onboardingClass}" title="${safeName}${isSelect === false ? ' (Elite)' : ''}${onboarding2027 ? ' · Onboarding 2027' : ''}">
         <img src="${escapeHtml(logoUrl)}" alt="${safeName}" />
         ${isSelect === false ? '<span class="elite-badge">E</span>' : ''}
         ${contractTier === 'premium' ? '<span class="tier-badge">★</span>' : ''}
+        ${onboarding2027 ? '<span class="onboarding-badge">\'27</span>' : ''}
       </div>
     `,
     iconSize: [28, 34],
@@ -2873,7 +2875,7 @@ function App() {
           }
         }
         const levelTier = (activeTab === 'football' || activeTab === 'sterling') ? (program.level || null) : null
-        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier, levelTier)
+        icons[program.id] = createLogoIcon(program.logo, program.name, false, contractStatus, program.isSelect, contractYearsRemaining, contractTier, levelTier, program.onboarding2027)
       }
     })
     return icons
