@@ -2475,6 +2475,8 @@ function App() {
   // New state for features
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true')
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [searchInputValue, setSearchInputValue] = useState('')
   const [selectedRegion, setSelectedRegion] = useState('all')
   const [user, setUser] = useState(null)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
@@ -3851,19 +3853,59 @@ function App() {
 
         {/* CENTER: Search */}
         {activeTab !== 'events' && activeTab !== 'targets' && user && (
-          <div className="cs-search">
+          <div className={`cs-search${searchFocused ? ' cs-search--focused' : ''}`}>
             <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="cs-search-icon">
               <circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="19" y2="19"/>
             </svg>
             <input
               type="text"
               placeholder="Search programs, cities, coaches…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInputValue}
+              onChange={(e) => { setSearchInputValue(e.target.value); setSearchQuery(e.target.value) }}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
               className="cs-search-input"
             />
-            {searchQuery && (
-              <button className="cs-search-clear" onClick={() => setSearchQuery('')}>×</button>
+            {searchInputValue && (
+              <button className="cs-search-clear" onClick={() => { setSearchInputValue(''); setSearchQuery('') }}>×</button>
+            )}
+            {/* Dropdown results */}
+            {searchFocused && searchInputValue.length >= 2 && (
+              <div className="cs-search-dropdown">
+                {(() => {
+                  const q = searchInputValue.toLowerCase()
+                  const matches = programs.filter(p =>
+                    p.name?.toLowerCase().includes(q) ||
+                    p.city?.toLowerCase().includes(q) ||
+                    p.state?.toLowerCase().includes(q) ||
+                    p.headCoach?.toLowerCase().includes(q) ||
+                    p.conference?.toLowerCase().includes(q)
+                  ).slice(0, 7)
+                  if (!matches.length) return <div className="cs-dropdown-empty">No results for "{searchInputValue}"</div>
+                  return matches.map(p => (
+                    <button key={p.id} type="button" className="cs-dropdown-item" onMouseDown={() => {
+                      setSearchInputValue(p.name)
+                      setSearchQuery(p.name)
+                      setSearchFocused(false)
+                      if (p.lat && p.lng) {
+                        setSelectedProgram(p)
+                      }
+                    }}>
+                      {p.logo && <img src={p.logo} alt="" className="cs-dropdown-logo" />}
+                      <div className="cs-dropdown-info">
+                        <span className="cs-dropdown-name">{p.name}</span>
+                        <span className="cs-dropdown-meta">
+                          {[p.city, p.state, p.headCoach ? `· ${p.headCoach}` : '', p.conference ? `· ${p.conference}` : ''].filter(Boolean).join(' ')}
+                        </span>
+                      </div>
+                      {p.level && <span className="cs-dropdown-level">{p.level}</span>}
+                    </button>
+                  ))
+                })()}
+                <div className="cs-dropdown-footer">
+                  {filteredPrograms.length} programs match current filters
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -5348,13 +5390,13 @@ function App() {
               <input
                 type="text"
                 placeholder="Search programs, cities, coaches..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInputValue}
+                onChange={(e) => { setSearchInputValue(e.target.value); setSearchQuery(e.target.value) }}
                 className="mobile-search-input"
                 autoFocus
               />
-              {searchQuery && (
-                <button className="mobile-search-clear" onClick={() => setSearchQuery('')}>
+              {searchInputValue && (
+                <button className="mobile-search-clear" onClick={() => { setSearchInputValue(''); setSearchQuery('') }}>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="5" y1="5" x2="15" y2="15"/>
                     <line x1="15" y1="5" x2="5" y2="15"/>
@@ -5374,6 +5416,21 @@ function App() {
             <div className="mobile-nav-backdrop" onClick={() => setMobileNavExpanded(false)} />
             <div className="mobile-nav-sheet">
               <div className="mobile-nav-sheet-handle" />
+              {/* Filter summary */}
+              {activeTab !== 'events' && activeTab !== 'targets' && (
+                <div className="mobile-sheet-summary">
+                  <span className="mobile-sheet-count">{filteredPrograms.length}</span>
+                  <span className="mobile-sheet-label">
+                    {filterGender !== 'all' ? filterGender : 'All'}{' '}
+                    {activeTab === 'basketball' ? 'Basketball' : activeTab === 'football' ? 'Mahomes' : activeTab === 'sterling' ? 'Sterling' : '3SSB'}{' '}
+                    programs
+                  </span>
+                  {selectedRegion !== 'all' && <span className="mobile-sheet-pill">{selectedRegion}</span>}
+                  {filterConference !== 'all' && <span className="mobile-sheet-pill">{filterConference}</span>}
+                  {searchInputValue && <span className="mobile-sheet-pill">"{searchInputValue}"</span>}
+                </div>
+              )}
+
               <div className="mobile-nav-sheet-header">
                 <h3>Quick Actions</h3>
                 <button className="mobile-nav-sheet-close" onClick={() => setMobileNavExpanded(false)}>

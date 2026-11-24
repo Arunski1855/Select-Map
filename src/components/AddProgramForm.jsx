@@ -57,6 +57,12 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // School lookup
+  const [schoolQuery, setSchoolQuery] = useState('')
+  const [schoolResults, setSchoolResults] = useState([])
+  const [schoolSearching, setSchoolSearching] = useState(false)
+  const [schoolConfirm, setSchoolConfirm] = useState(null) // { name, city, state, lat, lon }
+
   const isEditMode = !!editProgram
 
   // Populate form when editing
@@ -223,6 +229,60 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
       console.error('Geocoding error:', err)
       return null
     }
+  }
+
+  const searchSchool = async (query) => {
+    if (!query || query.length < 3) { setSchoolResults([]); return }
+    setSchoolSearching(true)
+    try {
+      const q = encodeURIComponent(query + ' school')
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=5&addressdetails=1&featuretype=education`,
+        { headers: { 'User-Agent': 'AdidasSelectMap/1.0' } }
+      )
+      const data = await res.json()
+      const results = data
+        .filter(r => r.display_name)
+        .map(r => {
+          const addr = r.address || {}
+          const city = addr.city || addr.town || addr.village || addr.county || ''
+          const stateAbbr = (() => {
+            const stateName = addr.state || ''
+            const found = US_STATES.find(s => s.name === stateName || s.abbr === stateName)
+            if (found) return found.abbr
+            const ca = CA_PROVINCES.find(s => s.name === stateName || s.abbr === stateName)
+            if (ca) return ca.abbr
+            return stateName
+          })()
+          return { display: r.display_name, name: r.name || query, city, state: stateAbbr, lat: r.lat, lon: r.lon }
+        })
+      setSchoolResults(results)
+    } catch {
+      setSchoolResults([])
+    } finally {
+      setSchoolSearching(false)
+    }
+  }
+
+  const confirmSchool = (school) => {
+    setSchoolConfirm(school)
+    setSchoolResults([])
+  }
+
+  const applySchool = () => {
+    if (!schoolConfirm) return
+    const region = determineRegion(schoolConfirm.state)
+    const bordering = BORDERING_STATES[schoolConfirm.state] || []
+    setFormData(prev => ({
+      ...prev,
+      name: schoolConfirm.name,
+      city: schoolConfirm.city,
+      state: schoolConfirm.state,
+      region,
+      ...(sport === '3ssb' ? { borderingStates: bordering } : {}),
+    }))
+    setSchoolConfirm(null)
+    setSchoolQuery('')
   }
 
   const handleSubmit = async (e) => {
@@ -392,7 +452,48 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="name">Program Name *</label>
+            {/* School lookup */}
+          {!isEditMode && (
+            <div className="school-lookup">
+              <label className="school-lookup-label">Auto-fill from School Name</label>
+              <div className="school-lookup-row">
+                <input
+                  type="text"
+                  className="school-lookup-input"
+                  placeholder="e.g. Modesto Christian, CA"
+                  value={schoolQuery}
+                  onChange={e => {
+                    setSchoolQuery(e.target.value)
+                    searchSchool(e.target.value)
+                  }}
+                />
+                {schoolSearching && <span className="school-lookup-spinner" />}
+              </div>
+              {schoolResults.length > 0 && (
+                <div className="school-lookup-results">
+                  {schoolResults.map((r, i) => (
+                    <button key={i} type="button" className="school-lookup-result" onClick={() => confirmSchool(r)}>
+                      <span className="school-result-name">{r.name}</span>
+                      <span className="school-result-location">{r.city}{r.state ? `, ${r.state}` : ''}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {schoolConfirm && (
+                <div className="school-confirm">
+                  <span className="school-confirm-text">
+                    Is this <strong>{schoolConfirm.name}</strong> in {schoolConfirm.city}, {schoolConfirm.state}?
+                  </span>
+                  <div className="school-confirm-actions">
+                    <button type="button" className="school-confirm-yes" onClick={applySchool}>Yes, fill form</button>
+                    <button type="button" className="school-confirm-no" onClick={() => setSchoolConfirm(null)}>No</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <label htmlFor="name">Program Name *</label>
             <input
               type="text"
               id="name"

@@ -13463,6 +13463,154 @@ textarea {
 }
 .cs-search-clear:hover { color: #fff; }
 
+/* ── Search dropdown ── */
+.cs-search {
+  position: relative;
+}
+
+.cs-search--focused {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.25);
+}
+
+.cs-search--focused .cs-search-input { letter-spacing: 0.03em; }
+
+.cs-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -8px;
+  right: -8px;
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,0.1);
+  z-index: 3000;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.8);
+  overflow: hidden;
+}
+
+.cs-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.cs-dropdown-item:last-of-type { border-bottom: none; }
+.cs-dropdown-item:hover { background: rgba(229,0,164,0.12); }
+
+.cs-dropdown-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.05);
+}
+
+.cs-dropdown-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cs-dropdown-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-dropdown-meta {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-dropdown-level {
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.cs-dropdown-empty {
+  padding: 14px 12px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.3);
+  font-style: italic;
+}
+
+.cs-dropdown-footer {
+  padding: 8px 12px;
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.2);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+}
+
+/* ── Mobile sheet summary ── */
+.mobile-sheet-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px 10px;
+  flex-wrap: wrap;
+}
+
+.mobile-sheet-count {
+  font-family: 'adidasFG', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #E500A4;
+  line-height: 1;
+}
+
+.mobile-sheet-label {
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.5);
+}
+
+.mobile-sheet-pill {
+  padding: 3px 8px;
+  background: rgba(229,0,164,0.15);
+  border: 1px solid rgba(229,0,164,0.4);
+  color: #E500A4;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* ── Right actions ── */
 .cs-actions {
   display: flex;
