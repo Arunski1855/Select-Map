@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════════════════
+   ADD TARGET FORM — target-specific overrides
+   Base dark sheet aesthetic comes from AddProgramForm.css
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Banner ── */
+.target-form-banner {
+  padding: 28px 28px 20px;
+  background: linear-gradient(135deg, #0a0a0a 60%, rgba(229,0,164,0.06) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.target-form-banner::before {
+  content: 'TARGET';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  font-family: 'adidasFG', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.03);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.target-form-banner-eyebrow {
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #E500A4;
+  margin-bottom: 4px;
+}
+
+.target-form-banner-title {
+  margin: 0;
+  padding: 0;
+  font-family: 'adidasFG', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  border-bottom: none;
+}
+
+.target-form-banner-name {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.04em;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Wider modal for target (more fields) ── */
+.target-form-content {
+  max-width: 580px;
+}
+
+/* Remove the default h2 top padding since banner replaces it */
+.target-form-content h2 {
+  display: none;
+}
+
+/* ── Pipeline status pills ── */
+.target-status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  margin-top: -8px;
+}
+
+.target-status-pill {
+  padding: 6px 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: rgba(255,255,255,0.3);
+  font-family: 'adidasFG', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 0;
+}
+
+.target-status-pill:hover:not(.active) {
+  color: rgba(255,255,255,0.6);
+  border-color: rgba(255,255,255,0.25);
+}
+
+.target-status-pill.active {
+  background: #E500A4;
+  border-color: #E500A4;
+  color: #fff;
+}

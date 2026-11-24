@@ -728,6 +728,7 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
           <img src={program.logo} alt={program.name} />
         </div>
         <div className="detail-panel-title">
+          <div className="detail-panel-eyebrow">{sport === 'football' ? 'Select Football' : 'Select Basketball'}</div>
           <h2>{program.name}</h2>
           <p>{program.city}, {program.state}</p>
           <div className="detail-badges-row">
@@ -741,8 +742,8 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
             {program.teamType && (
               <span className="detail-gender-badge" style={{ background: '#1a5c2e' }}>{program.teamType}</span>
             )}
-            {program.onboarding2026 && (
-              <span className="detail-onboarding-badge">2026</span>
+            {(program.onboarding2027 || program.onboarding2026) && (
+              <span className="detail-onboarding-badge">{program.onboarding2027 ? '2027' : '2026'}</span>
             )}
             {isUserAllowed && isContractExpiring && (
               <span className="detail-expiring-badge">Expiring {expiringYear}</span>
@@ -848,7 +849,12 @@ function DetailPanel({ program: initialProgram, mtZionPrograms, sport, isOpen, o
                   adiCustom Uniform
                 </a>
               )}
-              {program.brandGuide && (
+              {program.brandGuideUrl && (
+                <a href={program.brandGuideUrl} target="_blank" rel="noopener noreferrer" className="detail-link-btn detail-link-brand">
+                  Brand Guidelines
+                </a>
+              )}
+              {!program.brandGuideUrl && program.brandGuide && (
                 <a href={program.brandGuide} download={program.brandGuideName || 'brand-guidelines.pdf'} className="detail-link-btn detail-link-brand">
                   Brand Guidelines
                 </a>
