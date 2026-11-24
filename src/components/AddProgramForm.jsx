@@ -233,6 +233,28 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
     }
   }
 
+  const parseStateHint = (query) => {
+    // Extract trailing state hint like ", CA" or " CA" or ", California"
+    const trimmed = query.trim()
+    const commaState = trimmed.match(/,\s*([A-Za-z]{2,})\s*$/)
+    if (commaState) {
+      const hint = commaState[1].trim()
+      const found = US_STATES.find(s => s.abbr.toLowerCase() === hint.toLowerCase() || s.name.toLowerCase() === hint.toLowerCase())
+        || CA_PROVINCES.find(s => s.abbr.toLowerCase() === hint.toLowerCase() || s.name.toLowerCase() === hint.toLowerCase())
+      if (found) return { name: trimmed.slice(0, commaState.index).trim(), stateHint: found.abbr, stateHintFull: found.name }
+    }
+    return { name: trimmed, stateHint: null, stateHintFull: null }
+  }
+
+  const resolveState = (stateStr) => {
+    if (!stateStr) return ''
+    const found = US_STATES.find(s => s.name === stateStr || s.abbr === stateStr)
+    if (found) return found.abbr
+    const ca = CA_PROVINCES.find(s => s.name === stateStr || s.abbr === stateStr)
+    if (ca) return ca.abbr
+    return stateStr
+  }
+
   const searchSchool = (query) => {
     if (schoolSearchTimer.current) clearTimeout(schoolSearchTimer.current)
     setSchoolNoResults(false)
@@ -240,30 +262,58 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
     setSchoolSearching(true)
     schoolSearchTimer.current = setTimeout(async () => {
       try {
-        // Strip state hint like ", CA" from query for the search term, keep it for context
-        const q = encodeURIComponent(query)
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=8&addressdetails=1`,
-          { headers: { 'User-Agent': 'AdidasSelectMap/1.0 (contact: select-map-app)' } }
-        )
-        const data = await res.json()
-        const results = data
-          .filter(r => r.display_name)
-          .map(r => {
+        const { name: schoolName, stateHint, stateHintFull } = parseStateHint(query)
+
+        // Build Photon query (better POI/school fuzzy search than Nominatim)
+        const photonQ = encodeURIComponent(schoolName + (stateHintFull ? `, ${stateHintFull}` : ''))
+        const photonUrl = `https://photon.komoot.io/api/?q=${photonQ}&limit=8&lang=en`
+
+        // Also run Nominatim structured search in parallel as fallback
+        const nominatimQ = encodeURIComponent(schoolName + (stateHint ? `, ${stateHint}, USA` : ''))
+        const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${nominatimQ}&limit=5&addressdetails=1&countrycodes=us,ca`
+
+        const [photonRes, nominatimRes] = await Promise.allSettled([
+          fetch(photonUrl, { headers: { 'User-Agent': 'AdidasSelectMap/1.0' } }).then(r => r.json()),
+          fetch(nominatimUrl, { headers: { 'User-Agent': 'AdidasSelectMap/1.0' } }).then(r => r.json()),
+        ])
+
+        const seen = new Set()
+        const results = []
+
+        // Process Photon results first (better for schools/POIs)
+        if (photonRes.status === 'fulfilled' && photonRes.value?.features) {
+          for (const f of photonRes.value.features) {
+            const p = f.properties || {}
+            const city = p.city || p.locality || p.town || p.village || p.county || ''
+            const state = resolveState(p.state || p.state_code || '')
+            // Filter by state hint if provided
+            if (stateHint && state && state !== stateHint) continue
+            const name = p.name || schoolName
+            const key = `${name}|${city}|${state}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            const [lon, lat] = f.geometry?.coordinates || []
+            results.push({ name, city, state, lat: String(lat), lon: String(lon), display: `${name}, ${city}, ${state}` })
+            if (results.length >= 6) break
+          }
+        }
+
+        // Fill remaining slots from Nominatim
+        if (nominatimRes.status === 'fulfilled' && Array.isArray(nominatimRes.value)) {
+          for (const r of nominatimRes.value) {
             const addr = r.address || {}
             const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ''
-            const stateAbbr = (() => {
-              const stateName = addr.state || ''
-              const found = US_STATES.find(s => s.name === stateName || s.abbr === stateName)
-              if (found) return found.abbr
-              const ca = CA_PROVINCES.find(s => s.name === stateName || s.abbr === stateName)
-              if (ca) return ca.abbr
-              return stateName
-            })()
-            // Use r.name (the place name) if available, else take first part of display_name
+            const state = resolveState(addr.state || '')
+            if (stateHint && state && state !== stateHint) continue
             const name = r.name || r.display_name.split(',')[0].trim()
-            return { display: r.display_name, name, city, state: stateAbbr, lat: r.lat, lon: r.lon }
-          })
+            const key = `${name}|${city}|${state}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            results.push({ name, city, state, lat: r.lat, lon: r.lon, display: r.display_name })
+            if (results.length >= 8) break
+          }
+        }
+
         setSchoolResults(results)
         if (results.length === 0) setSchoolNoResults(true)
       } catch (err) {
