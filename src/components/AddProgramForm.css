@@ -849,6 +849,14 @@ input[type="file"]::file-selector-button:hover {
 
 .school-confirm-no:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
 
+.school-no-results {
+  margin-top: 6px;
+  padding: 10px 0;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.3);
+  font-style: italic;
+}
+
 /* ── Target form ── */
 .target-form-content { max-width: 600px; }
 .target-form-content h2 { margin-bottom: 0; }

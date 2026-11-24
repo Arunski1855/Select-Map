@@ -62,6 +62,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
   const [schoolResults, setSchoolResults] = useState([])
   const [schoolSearching, setSchoolSearching] = useState(false)
   const [schoolConfirm, setSchoolConfirm] = useState(null) // { name, city, state, lat, lon }
+  const [schoolNoResults, setSchoolNoResults] = useState(false)
   const schoolSearchTimer = useRef(null)
 
   const isEditMode = !!editProgram
@@ -234,6 +235,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
 
   const searchSchool = (query) => {
     if (schoolSearchTimer.current) clearTimeout(schoolSearchTimer.current)
+    setSchoolNoResults(false)
     if (!query || query.length < 3) { setSchoolResults([]); return }
     setSchoolSearching(true)
     schoolSearchTimer.current = setTimeout(async () => {
@@ -263,9 +265,11 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
             return { display: r.display_name, name, city, state: stateAbbr, lat: r.lat, lon: r.lon }
           })
         setSchoolResults(results)
+        if (results.length === 0) setSchoolNoResults(true)
       } catch (err) {
         console.error('School search error:', err)
         setSchoolResults([])
+        setSchoolNoResults(true)
       } finally {
         setSchoolSearching(false)
       }
@@ -459,8 +463,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            {/* School lookup */}
+          {/* School lookup — outside any form-group so dropdown isn't clipped */}
           {!isEditMode && (
             <div className="school-lookup">
               <label className="school-lookup-label">Auto-fill from School Name</label>
@@ -477,6 +480,9 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
                 />
                 {schoolSearching && <span className="school-lookup-spinner" />}
               </div>
+              {schoolNoResults && !schoolSearching && schoolQuery.length >= 3 && schoolResults.length === 0 && !schoolConfirm && (
+                <div className="school-no-results">No results — try a shorter name or city only</div>
+              )}
               {schoolResults.length > 0 && (
                 <div className="school-lookup-results">
                   {schoolResults.map((r, i) => (
@@ -501,7 +507,8 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
             </div>
           )}
 
-          <label htmlFor="name">Program Name *</label>
+          <div className="form-group">
+            <label htmlFor="name">Program Name *</label>
             <input
               type="text"
               id="name"
