@@ -287,7 +287,7 @@ function AddTargetForm({ isOpen, onClose, onAdd, onEdit, sport, editTarget }) {
                   <input
                     type="text"
                     className="school-lookup-input"
-                    placeholder="e.g. Oak Hill Academy, VA"
+                    placeholder={sport === 'football' || sport === 'sterling' ? 'e.g. Duncanville, TX' : 'e.g. Oak Hill Academy, VA'}
                     value={schoolQuery}
                     onChange={e => { setSchoolQuery(e.target.value); searchSchool(e.target.value) }}
                   />
