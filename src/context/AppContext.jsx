@@ -52,7 +52,11 @@ export function AppProvider({ children }) {
 
   // Programs subscription
   useEffect(() => {
-    if (activeTab === 'events') return
+    const nonSportTabs = ['events', 'targets']
+    if (nonSportTabs.includes(activeTab)) {
+      setPrograms([])
+      return
+    }
     setIsLoading(true)
     const unsubscribe = subscribeToPrograms(activeTab, (data) => {
       setPrograms(data)
