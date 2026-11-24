@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { addRankingMetric } from '../firebase'
 import './AddProgramForm.css'
 import {
@@ -62,6 +62,7 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
   const [schoolResults, setSchoolResults] = useState([])
   const [schoolSearching, setSchoolSearching] = useState(false)
   const [schoolConfirm, setSchoolConfirm] = useState(null) // { name, city, state, lat, lon }
+  const schoolSearchTimer = useRef(null)
 
   const isEditMode = !!editProgram
 
@@ -231,37 +232,44 @@ function AddProgramForm({ isOpen, onClose, onAdd, onEdit, sport, editProgram, us
     }
   }
 
-  const searchSchool = async (query) => {
+  const searchSchool = (query) => {
+    if (schoolSearchTimer.current) clearTimeout(schoolSearchTimer.current)
     if (!query || query.length < 3) { setSchoolResults([]); return }
     setSchoolSearching(true)
-    try {
-      const q = encodeURIComponent(query + ' school')
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=5&addressdetails=1&featuretype=education`,
-        { headers: { 'User-Agent': 'AdidasSelectMap/1.0' } }
-      )
-      const data = await res.json()
-      const results = data
-        .filter(r => r.display_name)
-        .map(r => {
-          const addr = r.address || {}
-          const city = addr.city || addr.town || addr.village || addr.county || ''
-          const stateAbbr = (() => {
-            const stateName = addr.state || ''
-            const found = US_STATES.find(s => s.name === stateName || s.abbr === stateName)
-            if (found) return found.abbr
-            const ca = CA_PROVINCES.find(s => s.name === stateName || s.abbr === stateName)
-            if (ca) return ca.abbr
-            return stateName
-          })()
-          return { display: r.display_name, name: r.name || query, city, state: stateAbbr, lat: r.lat, lon: r.lon }
-        })
-      setSchoolResults(results)
-    } catch {
-      setSchoolResults([])
-    } finally {
-      setSchoolSearching(false)
-    }
+    schoolSearchTimer.current = setTimeout(async () => {
+      try {
+        // Strip state hint like ", CA" from query for the search term, keep it for context
+        const q = encodeURIComponent(query)
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=8&addressdetails=1`,
+          { headers: { 'User-Agent': 'AdidasSelectMap/1.0 (contact: select-map-app)' } }
+        )
+        const data = await res.json()
+        const results = data
+          .filter(r => r.display_name)
+          .map(r => {
+            const addr = r.address || {}
+            const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ''
+            const stateAbbr = (() => {
+              const stateName = addr.state || ''
+              const found = US_STATES.find(s => s.name === stateName || s.abbr === stateName)
+              if (found) return found.abbr
+              const ca = CA_PROVINCES.find(s => s.name === stateName || s.abbr === stateName)
+              if (ca) return ca.abbr
+              return stateName
+            })()
+            // Use r.name (the place name) if available, else take first part of display_name
+            const name = r.name || r.display_name.split(',')[0].trim()
+            return { display: r.display_name, name, city, state: stateAbbr, lat: r.lat, lon: r.lon }
+          })
+        setSchoolResults(results)
+      } catch (err) {
+        console.error('School search error:', err)
+        setSchoolResults([])
+      } finally {
+        setSchoolSearching(false)
+      }
+    }, 500)
   }
 
   const confirmSchool = (school) => {
